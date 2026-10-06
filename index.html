@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Атмосфера</title></head>
+<body>
+  <div class="head"><div class="title">Атмосфера</div><div class="detail" id="now"></div></div>
+
+  <div id="player" class="empty" hidden>Атмосферою керує майстер</div>
+
+  <div id="gm" hidden>
+    <span class="lbl">Настрій сцени</span>
+    <div class="grid" id="presets"></div>
+
+    <span class="lbl">Тонке налаштування</span>
+    <div class="sliders" id="sliders"></div>
+
+    <span class="lbl">Титр для всіх</span>
+    <input type="text" id="big" placeholder="Тихе море" maxlength="60">
+    <input type="text" id="small" placeholder="День дванадцятий плавання" maxlength="90">
+    <div class="foot"><button type="button" id="show">Показати титр</button></div>
+    <div class="hint">Титр зʼявляється в усіх на кілька секунд і зникає сам.</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

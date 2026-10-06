@@ -1,0 +1,16 @@
+{
+  "name": "Атмосфера",
+  "version": "0.1.0",
+  "manifest_version": 1,
+  "description": "Настрій сцени: дощ, шторм, туман, ніч, кольоровий фільтр і титри для всіх гравців.",
+  "author": "Nikita",
+  "icon": "https://treyser.github.io/atmosfera/icon.svg",
+  "background_url": "https://treyser.github.io/atmosfera/background.html",
+  "action": {
+    "title": "Атмосфера",
+    "icon": "https://treyser.github.io/atmosfera/icon.svg",
+    "popover": "https://treyser.github.io/atmosfera/index.html",
+    "width": 360,
+    "height": 600
+  }
+}

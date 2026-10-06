@@ -1,0 +1,68 @@
+:root{
+  color-scheme: dark;
+  --fg:#e8e8ea;
+  --dim:#9a9aa6;
+  --line:#4a4a56;
+  --panel:#2e2e38;
+  --now:#facc15;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding:12px; color:var(--fg);
+  font-family:Inter,system-ui,sans-serif; font-size:14px;
+}
+[hidden]{display:none !important}
+button{
+  font:inherit; cursor:pointer; color:var(--fg);
+  background:#3c3c47; border:1px solid var(--line); border-radius:6px; padding:6px 12px;
+}
+button:hover{background:#4a4a57}
+input[type=text]{
+  width:100%; font:inherit; color:var(--fg); background:#3c3c47;
+  border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin-bottom:6px;
+}
+.head{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px}
+.title{font-size:16px; font-weight:700}
+.detail{font-size:12px; color:var(--dim)}
+.lbl{display:block; font-size:12px; color:var(--dim); margin:12px 0 6px}
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:6px}
+.grid button{padding:9px 8px; background:var(--panel); border-color:transparent}
+.grid button:hover{border-color:var(--line)}
+.grid button.on{border-color:var(--now); background:#3a3524; color:var(--now)}
+.sliders{display:flex; flex-direction:column; gap:6px}
+.slide{display:flex; align-items:center; gap:10px}
+.slide span{width:84px; font-size:13px}
+.slide input{flex:1; accent-color:var(--now)}
+.empty{color:var(--dim); padding:14px 2px; text-align:center}
+.foot{margin-top:4px}
+.foot button{width:100%}
+.hint{font-size:12px; color:var(--dim); margin-top:6px}
+
+/* --- титр --- */
+.card{
+  padding:0; background:transparent; height:100vh; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+}
+.plate{
+  width:100%; text-align:center; padding:18px 24px;
+  background:radial-gradient(ellipse at center, rgba(8,12,20,.82) 0%, rgba(8,12,20,.55) 45%, rgba(8,12,20,0) 72%);
+  animation:card 5.2s ease both;
+}
+.big{
+  font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  font-size:54px; line-height:1.1; letter-spacing:.14em; text-transform:uppercase;
+  color:#f4ead2; text-shadow:0 2px 18px rgba(0,0,0,.8);
+}
+.small{
+  margin-top:8px; font-size:16px; letter-spacing:.22em; text-transform:uppercase; color:#c9c2ae;
+}
+.rule{
+  height:1px; width:46%; margin:10px auto;
+  background:linear-gradient(90deg, transparent, #d8c690, transparent);
+}
+@keyframes card{
+  0%{opacity:0; transform:translateY(8px)}
+  16%{opacity:1; transform:none}
+  80%{opacity:1}
+  100%{opacity:0}
+}
