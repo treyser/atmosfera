@@ -10,5 +10,9 @@ OBR.onReady(async () => {
   const small = document.getElementById("small");
   small.textContent = text.small ?? "";
   small.hidden = !small.textContent;
-  document.querySelector(".plate").classList.add("go");
+
+  // Вікно вантажиться не миттєво, тому появу починаємо лише тепер і закриваємось самі, коли вона дограє.
+  const plate = document.querySelector(".plate");
+  plate.addEventListener("animationend", () => OBR.popover.close(CARD));
+  plate.classList.add("go");
 });

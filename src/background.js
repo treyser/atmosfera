@@ -7,7 +7,7 @@ const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
 
 const EFFECT = `${ID}/effect`;   // позначка нашого ефекту в його метаданих
-const SHOW_MS = 5600;            // скільки висить титр, разом із появою і зникненням
+const SHOW_MS = 12000;           // запасне закриття: зазвичай титр закриває себе сам, коли дограє
 
 let cardTimer = null;
 
@@ -71,7 +71,8 @@ async function showCard(data) {
 
   if (cardTimer) {
     clearTimeout(cardTimer);
-    await OBR.popover.close(CARD);
+    cardTimer = null;
+    await OBR.popover.close(CARD).catch(() => {});   // міг уже закритись сам
   }
 
   // Текст кладемо в метадані гравця: адресу вікна Owlbear доповнює сам, тож на неї покладатись не можна.
@@ -95,6 +96,6 @@ async function showCard(data) {
 
   cardTimer = setTimeout(() => {
     cardTimer = null;
-    OBR.popover.close(CARD);
+    OBR.popover.close(CARD).catch(() => {});
   }, SHOW_MS);
 }

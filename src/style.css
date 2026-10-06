@@ -47,16 +47,16 @@ html.clear{color-scheme:light; background:transparent}
 }
 .plate{
   width:100%; text-align:center; padding:6px 16px; opacity:0;
-  background:radial-gradient(ellipse at center, rgba(8,12,20,.85) 0%, rgba(8,12,20,.6) 45%, rgba(8,12,20,0) 72%);
+  background:radial-gradient(ellipse at center, rgba(6,9,16,.92) 0%, rgba(6,9,16,.78) 40%, rgba(6,9,16,0) 74%);
 }
-.plate.go{animation:card 4.8s ease both}
+.plate.go{animation:card 5s ease both}
 .big{
   font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   font-size:min(50px, 8.5vw); line-height:1.1; letter-spacing:.14em; text-transform:uppercase;
-  color:#f4ead2; text-shadow:0 2px 18px rgba(0,0,0,.8);
+  color:#fbf3dc; text-shadow:0 2px 6px rgba(0,0,0,.95), 0 0 22px rgba(0,0,0,.9);
 }
 .small{
-  margin-top:6px; font-size:min(15px, 2.6vw); letter-spacing:.22em; text-transform:uppercase; color:#c9c2ae;
+  margin-top:6px; font-size:min(15px, 2.6vw); letter-spacing:.22em; text-transform:uppercase; color:#e3dcc6; text-shadow:0 1px 5px rgba(0,0,0,.95);
 }
 .rule{
   height:1px; width:46%; margin:8px auto;
