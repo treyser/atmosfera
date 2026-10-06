@@ -57,7 +57,7 @@ async function apply(s) {
     .effectType("VIEWPORT")
     .sksl(SKSL)
     .uniforms(uniformsOf(s))
-    .layer("POST_PROCESS")
+    .layer("POINTER")   // найвищий шар: погода лягає і на туман війни
     .locked(true)
     .disableHit(true)
     .metadata({ [EFFECT]: true })

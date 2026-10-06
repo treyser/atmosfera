@@ -1,7 +1,9 @@
 // Один шейдер на весь екран: фільтр, темрява, туман, дощ, спалахи.
-// size і time підставляє сам Owlbear, решту — ми через uniforms.
+// size, view і time підставляє сам Owlbear, решту — ми через uniforms.
+// Ефект малюється поверх сцени звичайним накладанням, тому там, де нічого немає, він прозорий.
 export const SKSL = `
 uniform vec2 size;
+uniform mat3 view;
 uniform float time;
 uniform float rain;
 uniform float fog;
@@ -52,7 +54,8 @@ vec4 over(vec4 dst, vec3 color, float a) {
 }
 
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 screen = (vec3(coord, 1) * view).xy;
+  vec2 uv = screen / size;
   vec2 sq = vec2(uv.x * size.x / size.y, uv.y);
   vec4 col = vec4(0.0);
 
