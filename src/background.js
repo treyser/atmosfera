@@ -1,14 +1,13 @@
 // Тримає екранний ефект відповідно до настрою сцени і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, TITLE, normalize, isClear } from "./state.js";
+import { ID, STATE, TITLE, CARD, normalize, isClear } from "./state.js";
 import { SKSL } from "./shader.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
 
 const EFFECT = `${ID}/effect`;   // позначка нашого ефекту в його метаданих
-const CARD = `${ID}/card`;
-const SHOW_MS = 5200;            // скільки висить титр, разом із появою і зникненням
+const SHOW_MS = 5600;            // скільки висить титр, разом із появою і зникненням
 
 let cardTimer = null;
 
@@ -75,14 +74,16 @@ async function showCard(data) {
     await OBR.popover.close(CARD);
   }
 
+  // Текст кладемо в метадані гравця: адресу вікна Owlbear доповнює сам, тож на неї покладатись не можна.
+  await OBR.player.setMetadata({ [CARD]: { big, small } });
+
   const [w, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
-  const q = new URLSearchParams({ big, small });
 
   await OBR.popover.open({
     id: CARD,
-    url: `${url("title.html")}?${q}`,
+    url: url("title.html"),
     width: Math.min(900, w - 40),
-    height: 220,
+    height: 200,
     anchorReference: "POSITION",
     anchorPosition: { top: h * 0.3, left: w / 2 },
     anchorOrigin: { horizontal: "CENTER", vertical: "CENTER" },

@@ -1,8 +1,14 @@
-// Сам титр: бере текст з адреси і грає появу та зникнення.
+// Сам титр: бере текст із метаданих гравця і грає появу та зникнення.
+import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
+import { CARD } from "./state.js";
 
-const q = new URLSearchParams(window.location.search);
-document.getElementById("big").textContent = q.get("big") ?? "";
-const small = document.getElementById("small");
-small.textContent = q.get("small") ?? "";
-small.hidden = !small.textContent;
+OBR.onReady(async () => {
+  const meta = await OBR.player.getMetadata();
+  const text = meta[CARD] ?? {};
+  document.getElementById("big").textContent = text.big ?? "";
+  const small = document.getElementById("small");
+  small.textContent = text.small ?? "";
+  small.hidden = !small.textContent;
+  document.querySelector(".plate").classList.add("go");
+});

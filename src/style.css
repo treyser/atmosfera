@@ -39,25 +39,27 @@ input[type=text]{
 .hint{font-size:12px; color:var(--dim); margin-top:6px}
 
 /* --- титр --- */
+/* Без цього браузер заливає вікно з темною схемою суцільним тлом, і крізь нього не видно мапи. */
+html.clear{color-scheme:light; background:transparent}
 .card{
   padding:0; background:transparent; height:100vh; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
 }
 .plate{
-  width:100%; text-align:center; padding:18px 24px;
-  background:radial-gradient(ellipse at center, rgba(8,12,20,.82) 0%, rgba(8,12,20,.55) 45%, rgba(8,12,20,0) 72%);
-  animation:card 5.2s ease both;
+  width:100%; text-align:center; padding:6px 16px; opacity:0;
+  background:radial-gradient(ellipse at center, rgba(8,12,20,.85) 0%, rgba(8,12,20,.6) 45%, rgba(8,12,20,0) 72%);
 }
+.plate.go{animation:card 4.8s ease both}
 .big{
   font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;
-  font-size:54px; line-height:1.1; letter-spacing:.14em; text-transform:uppercase;
+  font-size:min(50px, 8.5vw); line-height:1.1; letter-spacing:.14em; text-transform:uppercase;
   color:#f4ead2; text-shadow:0 2px 18px rgba(0,0,0,.8);
 }
 .small{
-  margin-top:8px; font-size:16px; letter-spacing:.22em; text-transform:uppercase; color:#c9c2ae;
+  margin-top:6px; font-size:min(15px, 2.6vw); letter-spacing:.22em; text-transform:uppercase; color:#c9c2ae;
 }
 .rule{
-  height:1px; width:46%; margin:10px auto;
+  height:1px; width:46%; margin:8px auto;
   background:linear-gradient(90deg, transparent, #d8c690, transparent);
 }
 @keyframes card{
