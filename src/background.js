@@ -12,6 +12,17 @@ const SHOW_MS = 5200;            // скільки висить титр, раз
 
 let cardTimer = null;
 
+// ТИМЧАСОВО: перевірочні шейдери замість настроїв, щоб зʼясувати, що саме передає Owlbear.
+const TESTS = {
+  rain:  { sksl: `half4 main(float2 c) { return half4(0.5, 0.0, 0.0, 0.5); }`, uniforms: () => [] },
+  storm: { sksl: `uniform vec2 size; half4 main(float2 c) { if (size.x > 1.0 && size.y > 1.0) { return half4(0.0, 0.5, 0.0, 0.5); } return half4(0.5, 0.0, 0.0, 0.5); }`, uniforms: () => [] },
+  fog:   { sksl: `uniform float time; half4 main(float2 c) { float f = fract(time * 0.5); return half4(0.0, 0.0, f * 0.5, 0.5); }`, uniforms: () => [] },
+  night: { sksl: `uniform float dark; uniform vec3 tint; half4 main(float2 c) { return half4(tint * 0.5 + vec3(dark * 0.0), 0.5); }`, uniforms: (s) => [{ name: "dark", value: s.dark }, { name: "tint", value: { x: 0.0, y: 0.8, z: 0.8 } }] },
+  calm:  { sksl: `uniform vec2 size; uniform mat3 view; half4 main(float2 c) { vec2 p = (vec3(c, 1) * view).xy / size; return half4(clamp(p.x, 0.0, 1.0) * 0.6, clamp(p.y, 0.0, 1.0) * 0.6, 0.0, 0.6); }`, uniforms: () => [] },
+  dusk:  { sksl: `uniform vec2 size; half4 main(float2 c) { vec2 p = c / size; return half4(clamp(p.x, 0.0, 1.0) * 0.6, clamp(p.y, 0.0, 1.0) * 0.6, 0.0, 0.6); }`, uniforms: () => [] },
+};
+
+
 OBR.onReady(async () => {
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); });
   OBR.scene.onMetadataChange((m) => apply(normalize(m[STATE])));
@@ -43,6 +54,22 @@ async function apply(s) {
 
   if (isClear(s)) {
     if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
+    return;
+  }
+
+  const test = TESTS[s.preset];
+  if (test) {
+    if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
+    const probe = buildEffect()
+      .effectType("VIEWPORT")
+      .sksl(test.sksl)
+      .uniforms(test.uniforms(s))
+      .layer("POINTER")
+      .locked(true)
+      .disableHit(true)
+      .metadata({ [EFFECT]: true })
+      .build();
+    await OBR.scene.local.addItems([probe]);
     return;
   }
 
