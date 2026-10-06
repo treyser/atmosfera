@@ -12,15 +12,31 @@ const SHOW_MS = 5200;            // скільки висить титр, раз
 
 let cardTimer = null;
 
-// ТИМЧАСОВО: перевірочні шейдери замість настроїв, щоб зʼясувати, що саме передає Owlbear.
+// ТИМЧАСОВО: перевірочні варіанти шейдера замість настроїв.
+const STORM = { rain: 1, fog: 0.25, flash: 1, dark: 0.4, amount: 0.25, tint: [0.15, 0.25, 0.4] };
+const noTime = SKSL.replace("uniform float time;", "const float time = 0.0;");
+const modTime = SKSL.replace("uniform float time;", "uniform float time;\nfloat T() { return mod(time, 1000.0); }").replaceAll("time *", "T() *").replaceAll("time /", "T() /");
+const ownClock = SKSL.replace("uniform float time;", "uniform float clock;").replaceAll("time", "clock");
 const TESTS = {
-  rain:  { sksl: `half4 main(float2 c) { return half4(0.5, 0.0, 0.0, 0.5); }`, uniforms: () => [] },
-  storm: { sksl: `uniform vec2 size; half4 main(float2 c) { if (size.x > 1.0 && size.y > 1.0) { return half4(0.0, 0.5, 0.0, 0.5); } return half4(0.5, 0.0, 0.0, 0.5); }`, uniforms: () => [] },
-  fog:   { sksl: `uniform float time; half4 main(float2 c) { float f = fract(time * 0.5); return half4(0.0, 0.0, f * 0.5, 0.5); }`, uniforms: () => [] },
-  night: { sksl: `uniform float dark; uniform vec3 tint; half4 main(float2 c) { return half4(tint * 0.5 + vec3(dark * 0.0), 0.5); }`, uniforms: (s) => [{ name: "dark", value: s.dark }, { name: "tint", value: { x: 0.0, y: 0.8, z: 0.8 } }] },
-  calm:  { sksl: `uniform vec2 size; uniform mat3 view; half4 main(float2 c) { vec2 p = (vec3(c, 1) * view).xy / size; return half4(clamp(p.x, 0.0, 1.0) * 0.6, clamp(p.y, 0.0, 1.0) * 0.6, 0.0, 0.6); }`, uniforms: () => [] },
-  dusk:  { sksl: `uniform vec2 size; half4 main(float2 c) { vec2 p = c / size; return half4(clamp(p.x, 0.0, 1.0) * 0.6, clamp(p.y, 0.0, 1.0) * 0.6, 0.0, 0.6); }`, uniforms: () => [] },
+  rain:  { sksl: `uniform float time; half4 main(float2 c) { float big = time > 1000000.0 ? 0.5 : 0.0; return half4(big, fract(time) * 0.5, 0.0, 0.5); }`, uniforms: () => [] },
+  storm: { sksl: noTime, uniforms: () => uniformsOf(STORM) },
+  fog:   { sksl: modTime, uniforms: () => uniformsOf(STORM) },
+  night: { sksl: ownClock, uniforms: () => [...uniformsOf(STORM), { name: "clock", value: 0 }], clock: true },
+  calm:  { sksl: SKSL, uniforms: () => uniformsOf(STORM) },
+  dusk:  { sksl: `uniform vec2 size; float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); } half4 main(float2 c) { vec2 p = c / size; float h = hash(floor(p * 40.0)); return half4(h * 0.5, h * 0.5, h * 0.5, 0.5); }`, uniforms: () => [] },
 };
+let ticker = null;
+const started = Date.now();
+function runClock(on) {
+  if (ticker) { clearInterval(ticker); ticker = null; }
+  if (!on) return;
+  ticker = setInterval(() => {
+    const t = ((Date.now() - started) / 1000) % 3600;
+    OBR.scene.local.updateItems((i) => i.metadata?.[EFFECT], (drafts) => {
+      for (const d of drafts) for (const u of d.uniforms) if (u.name === "clock") u.value = t;
+    }, true);
+  }, 40);
+}
 
 
 OBR.onReady(async () => {
@@ -57,6 +73,7 @@ async function apply(s) {
     return;
   }
 
+  runClock(false);
   const test = TESTS[s.preset];
   if (test) {
     if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
@@ -70,6 +87,7 @@ async function apply(s) {
       .metadata({ [EFFECT]: true })
       .build();
     await OBR.scene.local.addItems([probe]);
+    runClock(Boolean(test.clock));
     return;
   }
 
