@@ -12,6 +12,12 @@ uniform float dark;
 uniform float amount;
 uniform vec3 tint;
 
+// Owlbear дає час як unix-секунди. Таке велике число ламає sin() у шумі на відеокарті,
+// тож беремо його по колу в межах години.
+float now() {
+  return mod(time, 3600.0);
+}
+
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -39,7 +45,7 @@ float fbm(vec2 p) {
 }
 
 float streaks(vec2 uv, float scale, float speed) {
-  vec2 p = vec2(uv.x * scale * 3.0 + uv.y * scale * 0.5, uv.y * scale * 0.35 - time * speed);
+  vec2 p = vec2(uv.x * scale * 3.0 + uv.y * scale * 0.5, uv.y * scale * 0.35 - now() * speed);
   vec2 id = floor(p);
   vec2 f = fract(p);
   float pick = step(0.55, hash(id));
@@ -66,8 +72,8 @@ half4 main(float2 coord) {
   col = over(col, vec3(0.0, 0.01, 0.03), dark * (0.45 + 0.55 * vig));
 
   if (fog > 0.0) {
-    float drift = fbm(sq * 2.2 + vec2(time * 0.03, time * 0.012));
-    float wisps = fbm(sq * 5.0 - vec2(time * 0.05, 0.0));
+    float drift = fbm(sq * 2.2 + vec2(now() * 0.03, now() * 0.012));
+    float wisps = fbm(sq * 5.0 - vec2(now() * 0.05, 0.0));
     float m = smoothstep(0.25, 0.85, drift * 0.7 + wisps * 0.3 + vig * 0.35);
     col = over(col, vec3(0.78, 0.82, 0.86), fog * m * 0.75);
   }
@@ -78,8 +84,8 @@ half4 main(float2 coord) {
   }
 
   if (flash > 0.0) {
-    float slot = floor(time / 6.0);
-    float ph = fract(time / 6.0);
+    float slot = floor(now() / 6.0);
+    float ph = fract(now() / 6.0);
     float strike = step(0.45, hash(vec2(slot, 3.0)));
     float glow = exp(-ph * 16.0) * (0.65 + 0.35 * sin(ph * 140.0));
     col = over(col, vec3(0.85, 0.92, 1.0), flash * strike * glow * 0.6);

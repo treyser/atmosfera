@@ -12,33 +12,6 @@ const SHOW_MS = 5200;            // скільки висить титр, раз
 
 let cardTimer = null;
 
-// ТИМЧАСОВО: перевірочні варіанти шейдера замість настроїв.
-const STORM = { rain: 1, fog: 0.25, flash: 1, dark: 0.4, amount: 0.25, tint: [0.15, 0.25, 0.4] };
-const noTime = SKSL.replace("uniform float time;", "const float time = 0.0;");
-const modTime = SKSL.replace("uniform float time;", "uniform float time;\nfloat T() { return mod(time, 1000.0); }").replaceAll("time *", "T() *").replaceAll("time /", "T() /");
-const ownClock = SKSL.replace("uniform float time;", "uniform float clock;").replaceAll("time", "clock");
-const TESTS = {
-  rain:  { sksl: `uniform float time; half4 main(float2 c) { float big = time > 1000000.0 ? 0.5 : 0.0; return half4(big, fract(time) * 0.5, 0.0, 0.5); }`, uniforms: () => [] },
-  storm: { sksl: noTime, uniforms: () => uniformsOf(STORM) },
-  fog:   { sksl: modTime, uniforms: () => uniformsOf(STORM) },
-  night: { sksl: ownClock, uniforms: () => [...uniformsOf(STORM), { name: "clock", value: 0 }], clock: true },
-  calm:  { sksl: SKSL, uniforms: () => uniformsOf(STORM) },
-  dusk:  { sksl: `uniform vec2 size; float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); } half4 main(float2 c) { vec2 p = c / size; float h = hash(floor(p * 40.0)); return half4(h * 0.5, h * 0.5, h * 0.5, 0.5); }`, uniforms: () => [] },
-};
-let ticker = null;
-const started = Date.now();
-function runClock(on) {
-  if (ticker) { clearInterval(ticker); ticker = null; }
-  if (!on) return;
-  ticker = setInterval(() => {
-    const t = ((Date.now() - started) / 1000) % 3600;
-    OBR.scene.local.updateItems((i) => i.metadata?.[EFFECT], (drafts) => {
-      for (const d of drafts) for (const u of d.uniforms) if (u.name === "clock") u.value = t;
-    }, true);
-  }, 40);
-}
-
-
 OBR.onReady(async () => {
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); });
   OBR.scene.onMetadataChange((m) => apply(normalize(m[STATE])));
@@ -70,24 +43,6 @@ async function apply(s) {
 
   if (isClear(s)) {
     if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
-    return;
-  }
-
-  runClock(false);
-  const test = TESTS[s.preset];
-  if (test) {
-    if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
-    const probe = buildEffect()
-      .effectType("VIEWPORT")
-      .sksl(test.sksl)
-      .uniforms(test.uniforms(s))
-      .layer("POINTER")
-      .locked(true)
-      .disableHit(true)
-      .metadata({ [EFFECT]: true })
-      .build();
-    await OBR.scene.local.addItems([probe]);
-    runClock(Boolean(test.clock));
     return;
   }
 
