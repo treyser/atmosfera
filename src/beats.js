@@ -24,9 +24,10 @@ export const PLACES = {
 };
 
 // Моменти по порядку. mood — id настрою зі state.js; big і small — титр (порожній big — без титру).
+// grid — прозорість сітки: на ілюстраціях вона зайва, на бойових мапах ледь помітна.
 export const BEATS = [
-  { id: "lobby",   name: "Заставка",            map: "lobby",  mood: "day",   big: "Тихе море",           small: "Прокляття Неболіусу" },
-  { id: "world",   name: "Мапа світу",          map: "world",  mood: "day",   big: "Курс на північ",      small: "Маршрут плавання" },
+  { id: "lobby", grid: 0,   name: "Заставка",            map: "lobby",  mood: "day",   big: "Тихе море",           small: "Прокляття Неболіусу" },
+  { id: "world", grid: 0,   name: "Мапа світу",          map: "world",  mood: "day",   big: "Курс на північ",      small: "Маршрут плавання" },
   { id: "day",     name: "Відкрите море",       map: "day",    mood: "day",   big: "Відкрите море",       small: "Попутний вітер" },
   { id: "hold",    name: "Під палубою",         map: "hold",   mood: "warm",  big: "Під палубою",         small: "" },
   { id: "volcano", name: "Повз вулкан",         map: "day",    mood: "dusk",  big: "Острів Вальтара",     small: "Вулкан по лівому борту" },

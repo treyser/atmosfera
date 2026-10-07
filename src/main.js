@@ -86,6 +86,7 @@ async function go(next) {
       }
     });
 
+    await OBR.scene.grid.setOpacity(next.grid ?? 0.15);
     state = fromPreset(PRESETS.find((p) => p.id === next.mood) ?? PRESETS[0]);
     beat = next.id;
     draw();
