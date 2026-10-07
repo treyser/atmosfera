@@ -1,75 +1,157 @@
-// Тримає екранний ефект відповідно до настрою сцени і показує титри.
+// Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, TITLE, CUT, CARD, normalize, isClear } from "./state.js";
-import { SKSL } from "./shader.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, normalize, isClear } from "./state.js";
+import { SKSL, GRADE } from "./shader.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
 
-const EFFECT = `${ID}/effect`;   // позначка нашого ефекту в його метаданих
-const SHOW_MS = 12000;           // запасне закриття: зазвичай титр закриває себе сам, коли дограє
+const EFFECT = `${ID}/effect`;   // позначка ефекту поверх сцени (погода, плівка, затемнення, смуги)
+const POST = `${ID}/post`;       // позначка ефекту кольорокорекції
+const SHOW_MS = 12000;           // запасне закриття титру: зазвичай він закриває себе сам
+
+let mood = normalize();          // настрій поточної сцени
+let grade = false;               // чи ввімкнена кольорокорекція
+const anim = { fade: 0, bars: 0 };   // затемнення і смуги: у кожного гравця свої, синхронізує їх лише сигнал
 
 let cardTimer = null;
+let timers = [];                 // відкладені кроки поточного переходу
+let tweens = {};                 // активні плавні зміни anim
+let ticker = null;
+let queue = Promise.resolve();   // щоб два оновлення ефекту не створили його двічі
 
 OBR.onReady(async () => {
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); });
-  OBR.scene.onMetadataChange((m) => apply(normalize(m[STATE])));
+  OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); });
   if (await OBR.scene.isReady()) refresh();
 
-  OBR.broadcast.onMessage(TITLE, (event) => showCard(event.data));
-  OBR.broadcast.onMessage(CUT, (event) => lookAt(event.data));
+  OBR.broadcast.onMessage(TITLE, (event) => titleOnly(event.data));
+  OBR.broadcast.onMessage(CUT, (event) => cut(event.data));
 });
 
 async function refresh() {
-  const meta = await OBR.scene.getMetadata();
-  await apply(normalize(meta[STATE]));
+  const m = await OBR.scene.getMetadata();
+  mood = normalize(m[STATE]);
+  grade = Boolean(m[GRADE_ON]);
+  sync();
 }
 
-function uniformsOf(s) {
-  const [x, y, z] = s.tint;
+function overlayUniforms() {
+  const [x, y, z] = mood.tint;
   return [
-    { name: "rain", value: s.rain },
-    { name: "fog", value: s.fog },
-    { name: "flash", value: s.flash },
-    { name: "dark", value: s.dark },
-    { name: "amount", value: s.amount },
+    { name: "rain", value: mood.rain },
+    { name: "fog", value: mood.fog },
+    { name: "flash", value: grade ? mood.flash * 0.4 : mood.flash },
+    { name: "dark", value: mood.dark },
+    { name: "amount", value: grade ? 0 : mood.amount },   // з корекцією тон дає вона сама
+    { name: "tint", value: { x, y, z } },
+    { name: "film", value: mood.film },
+    { name: "fade", value: anim.fade },
+    { name: "bars", value: anim.bars },
+  ];
+}
+
+function gradeUniforms() {
+  const [x, y, z] = mood.tint;
+  return [
+    { name: "sat", value: mood.sat },
+    { name: "contrast", value: mood.contrast },
+    { name: "sway", value: mood.sway },
+    { name: "flash", value: mood.flash },
+    { name: "amount", value: mood.amount },
     { name: "tint", value: { x, y, z } },
   ];
 }
 
-// Ефект локальний: кожен клієнт малює свій, а спільним є лише настрій у метаданих сцени.
-async function apply(s) {
-  const mine = await OBR.scene.local.getItems((i) => i.metadata?.[EFFECT]);
+const sync = () => (queue = queue.then(apply).catch(() => {}));
 
-  if (isClear(s)) {
+// Ефекти локальні: кожен клієнт малює свої, а спільним є лише настрій у метаданих сцени.
+async function apply() {
+  if (!(await OBR.scene.isReady())) return;
+  await keep(EFFECT, !isClear(mood) || anim.fade > 0 || anim.bars > 0, overlayUniforms, () =>
+    buildEffect().effectType("VIEWPORT").sksl(SKSL).layer("POINTER"));   // найвищий шар: лягає і на туман війни
+  await keep(POST, grade && !isClear(mood), gradeUniforms, () =>
+    buildEffect().effectType("VIEWPORT").sksl(GRADE).layer("POST_PROCESS"));
+}
+
+// Створює, оновлює або прибирає один ефект
+async function keep(mark, wanted, uniforms, make) {
+  const mine = await OBR.scene.local.getItems((i) => i.metadata?.[mark]);
+  if (!wanted) {
     if (mine.length) await OBR.scene.local.deleteItems(mine.map((i) => i.id));
     return;
   }
-
   if (mine.length) {
     await OBR.scene.local.updateItems(mine, (drafts) => {
-      for (const d of drafts) d.uniforms = uniformsOf(s);
+      for (const d of drafts) d.uniforms = uniforms();
     });
     return;
   }
+  const item = make().uniforms(uniforms()).locked(true).disableHit(true).metadata({ [mark]: true }).build();
+  await OBR.scene.local.addItems([item]);
+}
 
-  const effect = buildEffect()
-    .effectType("VIEWPORT")
-    .sksl(SKSL)
-    .uniforms(uniformsOf(s))
-    .layer("POINTER")   // найвищий шар: погода лягає і на туман війни
-    .locked(true)
-    .disableHit(true)
-    .metadata({ [EFFECT]: true })
-    .build();
-  await OBR.scene.local.addItems([effect]);
+// --- плавні зміни затемнення і смуг ---
+
+const ease = (t) => t * t * (3 - 2 * t);
+
+function tween(key, to, ms) {
+  tweens[key] = { from: anim[key], to, start: performance.now(), ms };
+  if (ticker) return;
+  sync();   // ефект має існувати, поки щось рухається
+  ticker = setInterval(() => {
+    const now = performance.now();
+    for (const [k, t] of Object.entries(tweens)) {
+      const p = Math.min(1, (now - t.start) / t.ms);
+      anim[k] = t.from + (t.to - t.from) * ease(p);
+      if (p >= 1) delete tweens[k];
+    }
+    OBR.scene.local.updateItems((i) => i.metadata?.[EFFECT], (drafts) => {
+      for (const d of drafts) d.uniforms = overlayUniforms();
+    }, true).catch(() => {});
+    if (!Object.keys(tweens).length) {
+      clearInterval(ticker);
+      ticker = null;
+      sync();   // прибрати ефект, якщо він більше не потрібен
+    }
+  }, 33);
+}
+
+function later(ms, fn) {
+  timers.push(setTimeout(fn, ms));
+}
+
+function cancel() {
+  timers.forEach(clearTimeout);
+  timers = [];
+}
+
+// Перехід між моментами: затемнення, камера під ним, проявлення, титр, смуги геть.
+function cut(data) {
+  cancel();
+  tween("fade", 1, 600);
+  tween("bars", 1, 700);
+  later(950, () => lookAt(data));
+  later(1750, () => tween("fade", 0, 1200));
+  const big = String(data?.big ?? "").trim();
+  if (big) later(2500, () => showCard(data));
+  later(big ? 8600 : 4200, () => tween("bars", 0, 1000));
+}
+
+// Титр без зміни моменту: смуги зʼїжджаються лише на нього
+function titleOnly(data) {
+  if (!String(data?.big ?? "").trim()) return;
+  cancel();
+  tween("bars", 1, 700);
+  later(500, () => showCard(data));
+  later(6600, () => tween("bars", 0, 1000));
 }
 
 // Наводить камеру цього гравця на показану мапу, з невеликим полем довкола.
 async function lookAt(data) {
   const { min, max } = data ?? {};
   if (!min || !max) return;
-  const pad = Math.max(max.x - min.x, max.y - min.y) * 0.04;
+  const pad = Math.max(max.x - min.x, max.y - min.y) * 0.02;
   const box = {
     min: { x: min.x - pad, y: min.y - pad },
     max: { x: max.x + pad, y: max.y + pad },
@@ -99,10 +181,10 @@ async function showCard(data) {
   await OBR.popover.open({
     id: CARD,
     url: url("title.html"),
-    width: Math.min(900, w - 40),
-    height: 200,
+    width: Math.min(1100, w - 40),
+    height: 220,
     anchorReference: "POSITION",
-    anchorPosition: { top: h * 0.3, left: w / 2 },
+    anchorPosition: { top: h * 0.5, left: w / 2 },
     anchorOrigin: { horizontal: "CENTER", vertical: "CENTER" },
     transformOrigin: { horizontal: "CENTER", vertical: "CENTER" },
     hidePaper: true,

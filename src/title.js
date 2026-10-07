@@ -13,6 +13,8 @@ OBR.onReady(async () => {
 
   // Вікно вантажиться не миттєво, тому появу починаємо лише тепер і закриваємось самі, коли вона дограє.
   const plate = document.querySelector(".plate");
-  plate.addEventListener("animationend", () => OBR.popover.close(CARD));
+  plate.addEventListener("animationend", (e) => { if (e.target === plate) OBR.popover.close(CARD); });
+  // чекаємо шрифт, але не довше пів секунди: без нього титр вийде запасним шрифтом
+  await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 500))]);
   plate.classList.add("go");
 });

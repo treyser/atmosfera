@@ -63,24 +63,45 @@ html.clear{color-scheme:light; background:transparent}
 }
 .plate{
   width:100%; text-align:center; padding:6px 16px; opacity:0;
-  background:radial-gradient(ellipse at center, rgba(6,9,16,.92) 0%, rgba(6,9,16,.78) 40%, rgba(6,9,16,0) 74%);
+  background:linear-gradient(90deg, rgba(4,6,12,0) 0%, rgba(4,6,12,.62) 28%, rgba(4,6,12,.72) 50%, rgba(4,6,12,.62) 72%, rgba(4,6,12,0) 100%);
 }
-.plate.go{animation:card 5s ease both}
+.plate.go{animation:card 5.6s ease both}
 .big{
-  font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;
-  font-size:min(50px, 8.5vw); line-height:1.1; letter-spacing:.14em; text-transform:uppercase;
-  color:#fbf3dc; text-shadow:0 2px 6px rgba(0,0,0,.95), 0 0 22px rgba(0,0,0,.9);
+  font-family:"Cormorant Garamond","Cormorant SC",Georgia,"Times New Roman",serif; font-weight:600;
+  font-size:min(64px, 8.6vw); line-height:1.08; text-transform:uppercase;
+  color:#fbf3dc; text-shadow:0 2px 6px rgba(0,0,0,.95), 0 0 26px rgba(0,0,0,.9), 0 0 60px rgba(216,198,144,.25);
+  letter-spacing:.16em; margin-right:-.16em;
 }
+.plate.go .big{animation:spread 5.6s cubic-bezier(.2,.7,.2,1) both}
 .small{
-  margin-top:6px; font-size:min(15px, 2.6vw); letter-spacing:.22em; text-transform:uppercase; color:#e3dcc6; text-shadow:0 1px 5px rgba(0,0,0,.95);
+  margin-top:8px; font-family:"Cormorant Garamond",Georgia,serif; font-weight:500;
+  font-size:min(20px, 3vw); letter-spacing:.34em; margin-right:-.34em; text-transform:uppercase;
+  color:#e3dcc6; text-shadow:0 1px 5px rgba(0,0,0,.95); opacity:0;
 }
+.plate.go .small{animation:rise 5.6s ease both}
 .rule{
-  height:1px; width:46%; margin:8px auto;
+  height:1px; width:0; margin:10px auto;
   background:linear-gradient(90deg, transparent, #d8c690, transparent);
 }
+.plate.go .rule{animation:draw 5.6s ease both}
 @keyframes card{
-  0%{opacity:0; transform:translateY(8px)}
-  16%{opacity:1; transform:none}
-  80%{opacity:1}
+  0%{opacity:0}
+  12%{opacity:1}
+  82%{opacity:1}
   100%{opacity:0}
 }
+@keyframes spread{
+  0%{letter-spacing:.42em; margin-right:-.42em; filter:blur(6px)}
+  22%{filter:blur(0)}
+  100%{letter-spacing:.16em; margin-right:-.16em}
+}
+@keyframes rise{
+  0%,14%{opacity:0; transform:translateY(8px)}
+  30%,100%{opacity:1; transform:none}
+}
+@keyframes draw{
+  0%{width:0}
+  30%,100%{width:52%}
+}
+.check{display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer}
+.check input{accent-color:var(--now); width:16px; height:16px}

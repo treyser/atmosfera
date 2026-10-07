@@ -25,10 +25,10 @@ export const PLACES = {
 
 // Моменти по порядку. mood — id настрою зі state.js; big і small — титр (порожній big — без титру).
 export const BEATS = [
-  { id: "lobby",   name: "Заставка",            map: "lobby",  mood: "clear", big: "Тихе море",           small: "Прокляття Неболіусу" },
-  { id: "world",   name: "Мапа світу",          map: "world",  mood: "clear", big: "Курс на північ",      small: "Маршрут плавання" },
-  { id: "day",     name: "Відкрите море",       map: "day",    mood: "clear", big: "Відкрите море",       small: "Попутний вітер" },
-  { id: "hold",    name: "Під палубою",         map: "hold",   mood: "clear", big: "Під палубою",         small: "" },
+  { id: "lobby",   name: "Заставка",            map: "lobby",  mood: "day",   big: "Тихе море",           small: "Прокляття Неболіусу" },
+  { id: "world",   name: "Мапа світу",          map: "world",  mood: "day",   big: "Курс на північ",      small: "Маршрут плавання" },
+  { id: "day",     name: "Відкрите море",       map: "day",    mood: "day",   big: "Відкрите море",       small: "Попутний вітер" },
+  { id: "hold",    name: "Під палубою",         map: "hold",   mood: "warm",  big: "Під палубою",         small: "" },
   { id: "volcano", name: "Повз вулкан",         map: "day",    mood: "dusk",  big: "Острів Вальтара",     small: "Вулкан по лівому борту" },
   { id: "storm",   name: "Шторм",               map: "storm",  mood: "storm", big: "Шторм",               small: "" },
   { id: "battle",  name: "Щось під водою",      map: "battle", mood: "rain",  big: "Щось під водою",      small: "" },

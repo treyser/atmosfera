@@ -11,6 +11,9 @@ uniform float flash;
 uniform float dark;
 uniform float amount;
 uniform vec3 tint;
+uniform float film;   // зерно й віньєтка
+uniform float fade;   // затемнення між моментами, 0..1
+uniform float bars;   // кіношні чорні смуги, 0..1
 
 // Owlbear дає час як unix-секунди. Таке велике число ламає sin() у шумі на відеокарті,
 // тож беремо його по колу в межах години.
@@ -91,6 +94,61 @@ half4 main(float2 coord) {
     col = over(col, vec3(0.85, 0.92, 1.0), flash * strike * glow * 0.6);
   }
 
+  if (film > 0.0) {
+    // мʼяка віньєтка і зерно, що міняється 24 рази на секунду, як на плівці
+    col = over(col, vec3(0.0), film * 0.55 * smoothstep(0.35, 0.95, edge));
+    float frame = mod(floor(now() * 24.0), 97.0);
+    float g = hash(floor(screen * 0.75) + vec2(frame * 13.0, frame * 7.0));
+    col = over(col, vec3(step(0.5, g)), abs(g - 0.5) * 0.11 * film);
+  }
+
+  col = over(col, vec3(0.0), fade);
+
+  // чорні смуги зверху і знизу: зʼїжджаються на переходах і титрах
+  float bh = bars * 0.105;
+  float inBar = max(1.0 - step(bh, uv.y), step(1.0 - bh, uv.y)) * step(0.001, bars);
+  col = mix(col, vec4(0.0, 0.0, 0.0, 1.0), inBar);
+
   return half4(col);
+}
+`;
+
+// Кольорокорекція самої картинки (шар постобробки): насиченість, контраст, тон,
+// легке погойдування, спалах блискавки на мапі. Вмикається окремою галочкою.
+export const GRADE = `
+uniform shader scene;
+uniform mat3 modelView;
+uniform float time;
+uniform float sat;
+uniform float contrast;
+uniform float sway;
+uniform float flash;
+uniform float amount;
+uniform vec3 tint;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+half4 main(float2 coord) {
+  vec2 uv = (vec3(coord, 1) * modelView).xy;
+  float t = mod(time, 3600.0);
+
+  vec2 off = vec2(sin(uv.y * 0.012 + t * 1.3), cos(uv.x * 0.010 + t * 1.1)) * sway * 2.5;
+  vec4 c = scene.eval(uv + off);
+
+  float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 rgb = mix(vec3(l), c.rgb, sat);
+  rgb = (rgb - 0.5) * contrast + 0.5;
+  // тіні тягнемо до тону настрою, світле лишаємо теплим
+  rgb = mix(rgb, rgb * (tint * 1.5 + 0.25), amount * 0.6 * (1.0 - l * 0.6));
+
+  float slot = floor(t / 6.0);
+  float ph = fract(t / 6.0);
+  float strike = step(0.45, hash(vec2(slot, 3.0)));
+  float glow = exp(-ph * 16.0) * (0.65 + 0.35 * sin(ph * 140.0));
+  rgb += rgb * flash * strike * glow * 1.4;
+
+  return half4(clamp(rgb, 0.0, 1.0) * c.a, c.a);
 }
 `;
