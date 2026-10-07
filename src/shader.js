@@ -117,7 +117,7 @@ half4 main(float2 coord) {
 // легке погойдування, спалах блискавки на мапі. Вмикається окремою галочкою.
 export const GRADE = `
 uniform shader scene;
-uniform mat3 modelView;
+uniform mat3 view;
 uniform float time;
 uniform float sat;
 uniform float contrast;
@@ -131,7 +131,7 @@ float hash(vec2 p) {
 }
 
 half4 main(float2 coord) {
-  vec2 uv = (vec3(coord, 1) * modelView).xy;
+  vec2 uv = (vec3(coord, 1) * view).xy;   // координати екрана: саме в них Owlbear віддає картинку сцени
   float t = mod(time, 3600.0);
 
   vec2 off = vec2(sin(uv.y * 0.012 + t * 1.3), cos(uv.x * 0.010 + t * 1.1)) * sway * 2.5;

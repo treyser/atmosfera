@@ -21,7 +21,7 @@ OBR.onReady(async () => {
   build();
 
   OBR.scene.onReadyChange((r) => { ready = r; if (r) load(); else draw(); });
-  OBR.scene.onMetadataChange((m) => { state = normalize(m[STATE]); beat = m[BEAT] ?? null; grade = Number(m[GRADE_ON]) || 0; draw(); });
+  OBR.scene.onMetadataChange((m) => { state = normalize(m[STATE]); beat = m[BEAT] ?? null; grade = Boolean(m[GRADE_ON]); draw(); });
   OBR.scene.items.onChange(() => report());
   ready = await OBR.scene.isReady();
   if (ready) await load();
@@ -32,7 +32,7 @@ async function load() {
   state = await getState();
   const meta = await OBR.scene.getMetadata();
   beat = meta[BEAT] ?? null;
-  grade = Number(meta[GRADE_ON]) || 0;
+  grade = Boolean(meta[GRADE_ON]);
   draw();
   report();
 }
@@ -148,7 +148,7 @@ function build() {
     $("sliders").append(row);
   }
 
-  $("grade").onchange = () => { if (ready) OBR.scene.setMetadata({ [GRADE_ON]: (grade + 1) % 5 }); };
+  $("grade").onchange = () => { if (ready) OBR.scene.setMetadata({ [GRADE_ON]: $("grade").checked }); };
 
   $("show").onclick = async () => {
     const big = $("big").value.trim();
@@ -169,8 +169,7 @@ function draw() {
   $("now").textContent = ready ? (current?.name ?? "") : "Відкрий сцену";
   for (const b of $("presets").children) b.classList.toggle("on", b.dataset.id === state.preset);
   for (const b of $("beats").children) b.classList.toggle("on", b.dataset.id === beat);
-  $("grade").checked = grade > 0;
-  $("grade").parentElement.lastChild.textContent = " Кольорокорекція картинки — варіант " + grade;
+  $("grade").checked = grade;
   $("grade").disabled = !ready;
   const at = BEATS.findIndex((b) => b.id === beat);
   $("prev").disabled = !ready || at <= 0;
