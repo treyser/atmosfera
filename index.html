@@ -7,13 +7,20 @@
   <div id="player" class="empty" hidden>Атмосферою керує майстер</div>
 
   <div id="gm" hidden>
-    <span class="lbl">Режисер</span>
+    <span class="lbl">Режисер · <span id="adv"></span></span>
     <div class="steps">
       <button type="button" id="prev" title="Попередній момент">◀ Назад</button>
       <button type="button" id="next" title="Наступний момент">Далі ▶</button>
     </div>
     <div class="beats" id="beats"></div>
     <div class="hint" id="found"></div>
+
+    <span class="lbl">Таймер і прорив</span>
+    <label class="check first"><input type="checkbox" id="hud-on"> Показувати гравцям угорі екрана</label>
+    <div class="counter"><span>Раундів лишилось</span><button type="button" id="rounds-less">−</button><b id="rounds">10</b><button type="button" id="rounds-more">+</button></div>
+    <div class="counter"><span>Успіхи (з 5)</span><button type="button" id="ok-less">−</button><b id="ok">0</b><button type="button" id="ok-more">+</button></div>
+    <div class="counter"><span>Провали (з 3)</span><button type="button" id="fail-less">−</button><b id="fail">0</b><button type="button" id="fail-more">+</button></div>
+    <button type="button" id="hud-reset" class="wide">Скинути: 10 раундів, 0 і 0</button>
 
     <span class="lbl">Настрій сцени</span>
     <div class="grid" id="presets"></div>

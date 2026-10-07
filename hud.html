@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="uk" class="clear">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Таймер</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body class="hud">
+  <div class="hudbar" id="bar" hidden>
+    <div class="cell">
+      <div class="cap">Раундів до Хребта</div>
+      <div class="rounds" id="rounds"></div>
+    </div>
+    <div class="cell">
+      <div class="cap">Успіхи</div>
+      <div class="pips ok" id="ok"></div>
+    </div>
+    <div class="cell">
+      <div class="cap">Провали</div>
+      <div class="pips fail" id="fail"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/hud.js"></script>
+</body>
+</html>
