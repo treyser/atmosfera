@@ -1,6 +1,6 @@
 // Тримає екранний ефект відповідно до настрою сцени і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, TITLE, CARD, normalize, isClear } from "./state.js";
+import { ID, STATE, TITLE, CUT, CARD, normalize, isClear } from "./state.js";
 import { SKSL } from "./shader.js";
 
 const BASE = import.meta.env.BASE_URL;
@@ -17,6 +17,7 @@ OBR.onReady(async () => {
   if (await OBR.scene.isReady()) refresh();
 
   OBR.broadcast.onMessage(TITLE, (event) => showCard(event.data));
+  OBR.broadcast.onMessage(CUT, (event) => lookAt(event.data));
 });
 
 async function refresh() {
@@ -62,6 +63,21 @@ async function apply(s) {
     .metadata({ [EFFECT]: true })
     .build();
   await OBR.scene.local.addItems([effect]);
+}
+
+// Наводить камеру цього гравця на показану мапу, з невеликим полем довкола.
+async function lookAt(data) {
+  const { min, max } = data ?? {};
+  if (!min || !max) return;
+  const pad = Math.max(max.x - min.x, max.y - min.y) * 0.04;
+  const box = {
+    min: { x: min.x - pad, y: min.y - pad },
+    max: { x: max.x + pad, y: max.y + pad },
+  };
+  box.width = box.max.x - box.min.x;
+  box.height = box.max.y - box.min.y;
+  box.center = { x: (box.min.x + box.max.x) / 2, y: (box.min.y + box.max.y) / 2 };
+  await OBR.viewport.animateToBounds(box);
 }
 
 async function showCard(data) {

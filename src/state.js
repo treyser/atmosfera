@@ -4,6 +4,8 @@ import OBR from "@owlbear-rodeo/sdk";
 export const ID = "com.nikita.atmosphere";
 export const STATE = `${ID}/state`;   // настрій — у метаданих сцени, свій у кожної сцени
 export const TITLE = `${ID}/title`;   // канал, яким розсилається титр
+export const BEAT = `${ID}/beat`;     // який момент пригоди зараз — у метаданих сцени
+export const CUT = `${ID}/cut`;       // канал, яким усім розсилається, куди навести камеру
 export const CARD = `${ID}/card`;     // вікно титру і його текст у метаданих гравця
 
 // Усі величини від 0 до 1. tint — колір фільтра, amount — його сила.
