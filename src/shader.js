@@ -77,7 +77,7 @@ float flakes(vec2 uv, float scale, float speed) {
   f.x *= 0.55;   // сніжинки трохи розмазані рухом
   vec2 at = (vec2(hash(id), hash(id + vec2(7.0, 3.0))) - 0.5) * 0.6;
   float pick = step(0.45, hash(id + vec2(3.0, 11.0)));
-  return pick * (1.0 - smoothstep(0.02, 0.11, length(f - at)));
+  return pick * (1.0 - smoothstep(0.015, 0.075, length(f - at)));
 }
 
 vec4 over(vec4 dst, vec3 color, float a) {
@@ -111,7 +111,7 @@ half4 main(float2 coord) {
 
   if (snow > 0.0) {
     float haze = fbm(sq * 3.0 + vec2(now() * 0.5, 0.0));
-    col = over(col, vec3(0.86, 0.9, 0.96), snow * smoothstep(0.35, 0.9, haze) * 0.3);
+    col = over(col, vec3(0.86, 0.9, 0.96), snow * smoothstep(0.4, 0.9, haze) * 0.18);
     float s = gusts(sq, 13.0, 1.9) * 0.6 + gusts(sq + vec2(0.21, 0.43), 23.0, 2.7) * 0.4 + gusts(sq + vec2(0.57, 0.13), 37.0, 3.6) * 0.25;
     s += flakes(sq, 26.0, 1.4) * 0.8 + flakes(sq + vec2(0.3, 0.7), 14.0, 0.9);
     col = over(col, vec3(0.95, 0.97, 1.0), snow * clamp(s, 0.0, 1.0) * 0.75);

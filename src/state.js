@@ -26,11 +26,11 @@ export const PRESETS = [
   { id: "warm",  name: "Ліхтарі",   rain: 0,    fog: 0,    flash: 0, dark: 0.3,  amount: 0.18, tint: [1, 0.6, 0.25],     film: 0.9, sat: 1.05, contrast: 1.1,  sway: 0 },
   // потяг: сніг летить горизонтально, проти руху
   { id: "frost",    name: "Сніг за вікном",  snow: 0.3,  fog: 0.05, flash: 0,   dark: 0.25, amount: 0.14, tint: [0.9, 0.7, 0.45],   film: 0.9, sat: 1,    contrast: 1.08, sway: 0.15 },
-  { id: "blizzard", name: "Хуртовина",       snow: 1,    fog: 0.45, flash: 0,   dark: 0.3,  amount: 0.3,  tint: [0.55, 0.68, 0.85], film: 0.9, sat: 0.65, contrast: 1.1,  sway: 0.8 },
+  { id: "blizzard", name: "Хуртовина",       snow: 1,    fog: 0.28, flash: 0,   dark: 0.28, amount: 0.24,  tint: [0.55, 0.68, 0.85], film: 0.9, sat: 0.65, contrast: 1.1,  sway: 0.8 },
   { id: "alarm",    name: "Аварійне світло", snow: 0,    fog: 0,    flash: 0,   dark: 0.5,  amount: 0.5,  tint: [0.9, 0.08, 0.06],  film: 1,   sat: 0.75, contrast: 1.2,  sway: 0.35 },
-  { id: "breach",   name: "Пробоїна",        snow: 0.55, fog: 0.2,  flash: 0,   dark: 0.5,  amount: 0.42, tint: [0.8, 0.1, 0.1],    film: 1,   sat: 0.7,  contrast: 1.2,  sway: 0.5 },
+  { id: "breach",   name: "Пробоїна",        snow: 0.5,  fog: 0.1,  flash: 0,   dark: 0.5,  amount: 0.42, tint: [0.8, 0.1, 0.1],    film: 1,   sat: 0.7,  contrast: 1.2,  sway: 0.5 },
   { id: "core",     name: "Сердечник",       snow: 0.35, fog: 0.1,  flash: 0,   dark: 0.4,  amount: 0.38, tint: [0.3, 0.35, 0.95],  film: 1,   sat: 0.9,  contrast: 1.2,  sway: 0.6 },
-  { id: "surge",    name: "Перевантаження",  snow: 0.8,  fog: 0.25, flash: 0.9, dark: 0.42, amount: 0.4,  tint: [0.4, 0.3, 0.95],   film: 1,   sat: 0.85, contrast: 1.25, sway: 1 },
+  { id: "surge",    name: "Перевантаження",  snow: 0.8,  fog: 0.15, flash: 0.9, dark: 0.42, amount: 0.4,  tint: [0.4, 0.3, 0.95],   film: 1,   sat: 0.85, contrast: 1.25, sway: 1 },
 ];
 
 export const SLIDERS = [
