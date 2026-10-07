@@ -11,7 +11,8 @@ const POST = `${ID}/post`;       // позначка ефекту кольоро
 const SHOW_MS = 12000;           // запасне закриття титру: зазвичай він закриває себе сам
 
 let mood = normalize();          // настрій поточної сцени
-let grade = false;               // чи ввімкнена кольорокорекція
+let grade = 0;
+let lastGrade = 0;
 const anim = { fade: 0, bars: 0 };   // затемнення і смуги: у кожного гравця свої, синхронізує їх лише сигнал
 
 let cardTimer = null;
@@ -22,7 +23,7 @@ let queue = Promise.resolve();   // щоб два оновлення ефект�
 
 OBR.onReady(async () => {
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); });
-  OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); });
+  OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Number(m[GRADE_ON]) || 0; sync(); });
   if (await OBR.scene.isReady()) refresh();
 
   OBR.broadcast.onMessage(TITLE, (event) => titleOnly(event.data));
@@ -32,7 +33,7 @@ OBR.onReady(async () => {
 async function refresh() {
   const m = await OBR.scene.getMetadata();
   mood = normalize(m[STATE]);
-  grade = Boolean(m[GRADE_ON]);
+  grade = Number(m[GRADE_ON]) || 0;
   sync();
 }
 
@@ -70,8 +71,19 @@ async function apply() {
   if (!(await OBR.scene.isReady())) return;
   await keep(EFFECT, !isClear(mood) || anim.fade > 0 || anim.bars > 0, overlayUniforms, () =>
     buildEffect().effectType("VIEWPORT").sksl(SKSL).layer("POINTER"));   // найвищий шар: лягає і на туман війни
-  await keep(POST, grade && !isClear(mood), gradeUniforms, () =>
-    buildEffect().effectType("VIEWPORT").sksl(GRADE).layer("POST_PROCESS"));
+  if (grade !== lastGrade) {
+    lastGrade = grade;
+    await keep(POST, false);
+  }
+  const UV = {
+    1: "vec2 uv = coord;",
+    2: "vec2 uv = (vec3(coord, 1) * view).xy;",
+    3: "vec2 uv = (modelView * vec3(coord, 1)).xy;",
+    4: "vec2 uv = (view * vec3(coord, 1)).xy;",
+  };
+  const variant = GRADE.replace("uniform mat3 modelView;", "uniform mat3 modelView;\nuniform mat3 view;").replace("vec2 uv = (vec3(coord, 1) * modelView).xy;", UV[grade] ?? "vec2 uv = coord;");
+  await keep(POST, grade > 0 && !isClear(mood), gradeUniforms, () =>
+    buildEffect().effectType("VIEWPORT").sksl(variant).layer("POST_PROCESS"));
 }
 
 // Створює, оновлює або прибирає один ефект
