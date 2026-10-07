@@ -105,3 +105,30 @@ html.clear{color-scheme:light; background:transparent}
 }
 .check{display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer}
 .check input{accent-color:var(--now); width:16px; height:16px}
+.check.first{margin-top:0}
+.counter{display:flex; align-items:center; gap:8px; margin-top:6px}
+.counter span{flex:1; font-size:13px}
+.counter b{width:28px; text-align:center; font-size:16px}
+.counter button{width:32px; padding:4px 0; font-size:16px; line-height:1}
+.wide{width:100%; margin-top:8px}
+
+/* --- таймер для гравців --- */
+.hud{padding:0; background:transparent; height:100vh; overflow:hidden; display:flex; align-items:flex-start; justify-content:center}
+.hudbar{
+  display:flex; align-items:center; gap:26px; padding:8px 30px 10px;
+  background:linear-gradient(180deg, rgba(6,9,16,.9), rgba(6,9,16,.72));
+  border:1px solid rgba(216,198,144,.45); border-radius:10px;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);
+  animation:hudin .6s ease both;
+}
+.cell{text-align:center}
+.cap{font-family:"Cormorant Garamond",Georgia,serif; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:#c9c2ae}
+.rounds{font-family:"Cormorant Garamond",Georgia,serif; font-weight:600; font-size:40px; line-height:1; color:#fbf3dc; min-width:60px}
+.rounds.low{color:#ff6b5e; text-shadow:0 0 18px rgba(255,80,60,.6)}
+.rounds.tick{animation:tick .5s ease}
+.pips{display:flex; gap:7px; justify-content:center; margin-top:9px; height:22px; align-items:center}
+.pips i{width:15px; height:15px; border-radius:50%; border:1.5px solid #8d8672; background:transparent}
+.pips.ok i.on{background:#6ee7a0; border-color:#6ee7a0; box-shadow:0 0 10px rgba(110,231,160,.7)}
+.pips.fail i.on{background:#ff6b5e; border-color:#ff6b5e; box-shadow:0 0 10px rgba(255,107,94,.7)}
+@keyframes tick{0%{transform:scale(1.45)} 100%{transform:scale(1)}}
+@keyframes hudin{0%{opacity:0; transform:translateY(-10px)} 100%{opacity:1; transform:none}}

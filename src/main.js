@@ -1,8 +1,8 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, CUT, GRADE_ON, getState, setState, normalize, STATE } from "./state.js";
-import { MAPS, PLACES, BEATS, placeOf } from "./beats.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, CUT, GRADE_ON, HUD, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { ADVENTURES, placeOf } from "./beats.js";
 
 const $ = (id) => document.getElementById(id);
 let state = normalize();
@@ -10,6 +10,8 @@ let ready = false;
 let beat = null;      // id поточного моменту
 let grade = false;    // кольорокорекція
 let busy = false;     // щоб подвійний клік не запускав перехід двічі
+let adv = ADVENTURES[0];   // пригода відкритої сцени
+let timer = hudOf();  // таймер раундів і лічильник прориву
 
 OBR.onReady(async () => {
   const role = await OBR.player.getRole();
@@ -21,7 +23,7 @@ OBR.onReady(async () => {
   build();
 
   OBR.scene.onReadyChange((r) => { ready = r; if (r) load(); else draw(); });
-  OBR.scene.onMetadataChange((m) => { state = normalize(m[STATE]); beat = m[BEAT] ?? null; grade = Boolean(m[GRADE_ON]); draw(); });
+  OBR.scene.onMetadataChange((m) => { state = normalize(m[STATE]); beat = m[BEAT] ?? null; grade = Boolean(m[GRADE_ON]); timer = hudOf(m[HUD]); draw(); });
   OBR.scene.items.onChange(() => report());
   ready = await OBR.scene.isReady();
   if (ready) await load();
@@ -33,32 +35,56 @@ async function load() {
   const meta = await OBR.scene.getMetadata();
   beat = meta[BEAT] ?? null;
   grade = Boolean(meta[GRADE_ON]);
+  timer = hudOf(meta[HUD]);
+  await report();
   draw();
-  report();
 }
 
 // Мапи пригоди в поточній сцені: ключ → елемент. Шукаємо за назвою.
-async function findMaps() {
-  const images = await OBR.scene.items.getItems((i) => i.layer === "MAP" && i.type === "IMAGE");
+function match(adventure, images) {
   const found = {};
-  for (const [key, part] of Object.entries(MAPS)) {
+  for (const [key, part] of Object.entries(adventure.maps)) {
     const hit = images.find((i) => i.name.toLowerCase().includes(part));
     if (hit) found[key] = hit;
   }
   return found;
 }
 
+const sceneMaps = () => OBR.scene.items.getItems((i) => i.layer === "MAP" && i.type === "IMAGE");
+
+async function findMaps() {
+  return match(adv, await sceneMaps());
+}
+
+// Пригода сцени — та, чиїх мап у ній найбільше. Якщо змінилась, перебудовуємо список моментів.
+async function detect() {
+  const images = await sceneMaps();
+  let best = ADVENTURES[0];
+  let most = -1;
+  for (const a of ADVENTURES) {
+    const n = Object.keys(match(a, images)).length;
+    if (n > most) { most = n; best = a; }
+  }
+  if (best !== adv || !$("beats").children.length) {
+    adv = best;
+    buildBeats();
+  }
+}
+
 // Підказка під пультом: чи всі мапи на місці
 async function report() {
   if (!ready) { $("found").textContent = ""; return; }
+  await detect();
   const found = await findMaps();
-  const missing = Object.keys(MAPS).filter((k) => !found[k]);
+  const missing = Object.keys(adv.maps).filter((k) => !found[k]);
+  $("adv").textContent = adv.name;
   $("found").textContent = missing.length
-    ? `У цій сцені бракує мап: ${missing.map((k) => MAPS[k]).join(", ")}`
+    ? `У цій сцені бракує мап: ${missing.map((k) => adv.maps[k]).join(", ")}`
     : "Усі мапи пригоди на місці.";
   for (const b of $("beats").children) {
-    b.disabled = !found[BEATS.find((x) => x.id === b.dataset.id).map];
+    b.disabled = !found[adv.beats.find((x) => x.id === b.dataset.id).map];
   }
+  draw();
 }
 
 // Один клік: усім сигнал на затемнення, під ним — потрібна мапа нагору, чужі місця сховати,
@@ -70,7 +96,7 @@ async function go(next) {
     const found = await findMaps();
     const target = found[next.map];
     if (!target) return;
-    const place = placeOf(next.map);
+    const place = placeOf(adv, next.map);
     const top = Date.now();
 
     // Межі рахує майстер і шле готовими: гравець сховану мапу не бачить.
@@ -81,7 +107,7 @@ async function go(next) {
     await OBR.scene.items.updateItems(Object.values(found), (drafts) => {
       for (const d of drafts) {
         const key = Object.keys(found).find((k) => found[k].id === d.id);
-        d.visible = PLACES[place].includes(key);
+        d.visible = adv.places[place].includes(key);
         if (d.id === target.id) d.zIndex = top;
       }
     });
@@ -104,13 +130,15 @@ function fromPreset(p) {
 }
 
 function step(by) {
-  const at = BEATS.findIndex((b) => b.id === beat);
-  const to = at < 0 ? 0 : Math.min(BEATS.length - 1, Math.max(0, at + by));
-  if (to !== at) go(BEATS[to]);
+  const at = adv.beats.findIndex((b) => b.id === beat);
+  const to = at < 0 ? 0 : Math.min(adv.beats.length - 1, Math.max(0, at + by));
+  if (to !== at) go(adv.beats[to]);
 }
 
-function build() {
-  BEATS.forEach((b, n) => {
+// Список моментів поточної пригоди
+function buildBeats() {
+  $("beats").replaceChildren();
+  adv.beats.forEach((b, n) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.dataset.id = b.id;
@@ -121,6 +149,26 @@ function build() {
     btn.onclick = () => go(b);
     $("beats").append(btn);
   });
+}
+
+// Зміна таймера чи лічильника: одразу в метадані сцени, вікно в гравців перемалюється само
+function setTimer(patch) {
+  if (!ready) return;
+  timer = { ...timer, ...patch };
+  draw();
+  OBR.scene.setMetadata({ [HUD]: timer });
+}
+
+const clamp = (n, max) => Math.max(0, Math.min(max, n));
+
+function build() {
+  buildBeats();
+  $("hud-on").onchange = () => setTimer({ on: $("hud-on").checked });
+  $("hud-reset").onclick = () => setTimer({ rounds: 10, ok: 0, fail: 0 });
+  for (const [key, max] of [["rounds", 99], ["ok", 5], ["fail", 3]]) {
+    $(`${key}-less`).onclick = () => setTimer({ [key]: clamp(timer[key] - 1, max) });
+    $(`${key}-more`).onclick = () => setTimer({ [key]: clamp(timer[key] + 1, max) });
+  }
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 
@@ -172,9 +220,12 @@ function draw() {
   for (const b of $("beats").children) b.classList.toggle("on", b.dataset.id === beat);
   $("grade").checked = grade;
   $("grade").disabled = !ready;
-  const at = BEATS.findIndex((b) => b.id === beat);
+  const at = adv.beats.findIndex((b) => b.id === beat);
   $("prev").disabled = !ready || at <= 0;
-  $("next").disabled = !ready || at === BEATS.length - 1;
+  $("next").disabled = !ready || at === adv.beats.length - 1;
+  $("hud-on").checked = timer.on;
+  $("hud-on").disabled = !ready;
+  for (const key of ["rounds", "ok", "fail"]) $(key).textContent = String(timer[key]);
   for (const input of $("sliders").querySelectorAll("input")) {
     input.value = String(Math.round((state[input.dataset.key] ?? 0) * 100));
     input.disabled = !ready;

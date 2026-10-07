@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, normalize, isClear } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, normalize, isClear, hudOf } from "./state.js";
 import { SKSL, GRADE } from "./shader.js";
 
 const BASE = import.meta.env.BASE_URL;
@@ -18,11 +18,12 @@ let cardTimer = null;
 let timers = [];                 // відкладені кроки поточного переходу
 let tweens = {};                 // активні плавні зміни anim
 let ticker = null;
+let hudShown = false;            // чи відкрите вікно таймера
 let queue = Promise.resolve();   // щоб два оновлення ефекту не створили його двічі
 
 OBR.onReady(async () => {
-  OBR.scene.onReadyChange((ready) => { if (ready) refresh(); });
-  OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); });
+  OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
+  OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
   if (await OBR.scene.isReady()) refresh();
 
   OBR.broadcast.onMessage(TITLE, (event) => titleOnly(event.data));
@@ -34,12 +35,14 @@ async function refresh() {
   mood = normalize(m[STATE]);
   grade = Boolean(m[GRADE_ON]);
   sync();
+  hud(hudOf(m[HUD]).on);
 }
 
 function overlayUniforms() {
   const [x, y, z] = mood.tint;
   return [
     { name: "rain", value: mood.rain },
+    { name: "snow", value: mood.snow },
     { name: "fog", value: mood.fog },
     { name: "flash", value: grade ? mood.flash * 0.4 : mood.flash },
     { name: "dark", value: mood.dark },
@@ -196,4 +199,29 @@ async function showCard(data) {
     cardTimer = null;
     OBR.popover.close(CARD).catch(() => {});
   }, SHOW_MS);
+}
+
+// Таймер раундів і лічильник прориву: вузьке вікно вгорі екрана в усіх гравців.
+// Саме вікно читає числа з метаданих сцени, тут його лише відкриваємо й закриваємо.
+async function hud(on) {
+  if (on === hudShown) return;
+  hudShown = on;
+  if (!on) {
+    await OBR.popover.close(HUD).catch(() => {});
+    return;
+  }
+  const w = await OBR.viewport.getWidth();
+  await OBR.popover.open({
+    id: HUD,
+    url: url("hud.html"),
+    width: Math.min(560, w - 40),
+    height: 84,
+    anchorReference: "POSITION",
+    anchorPosition: { top: 62, left: w / 2 },
+    anchorOrigin: { horizontal: "CENTER", vertical: "TOP" },
+    transformOrigin: { horizontal: "CENTER", vertical: "TOP" },
+    hidePaper: true,
+    disableClickAway: true,
+    marginThreshold: 0,
+  });
 }

@@ -6,6 +6,7 @@ uniform vec2 size;
 uniform mat3 view;
 uniform float time;
 uniform float rain;
+uniform float snow;
 uniform float fog;
 uniform float flash;
 uniform float dark;
@@ -57,6 +58,28 @@ float streaks(vec2 uv, float scale, float speed) {
   return pick * thin * tail;
 }
 
+// Сніг хуртовини: летить майже горизонтально справа наліво, проти руху потяга
+float gusts(vec2 uv, float scale, float speed) {
+  vec2 p = vec2(uv.y * scale * 2.2 + uv.x * scale * 0.28, uv.x * scale * 0.22 + now() * speed);
+  vec2 id = floor(p);
+  vec2 f = fract(p);
+  float pick = step(0.8, hash(id));
+  float len = 0.35 + 0.5 * hash(id + vec2(5.0, 1.0));
+  float thin = smoothstep(0.86, 1.0, 1.0 - abs(f.x - 0.2 - 0.6 * hash(id + vec2(2.0, 9.0))) * 2.0);
+  float tail = smoothstep(0.0, 0.25, f.y) * (1.0 - smoothstep(len * 0.6, len, f.y));
+  return pick * thin * tail;
+}
+
+float flakes(vec2 uv, float scale, float speed) {
+  vec2 p = uv * scale + vec2(now() * speed, sin(now() * 0.6 + uv.x * 3.0) * 0.15);
+  vec2 id = floor(p);
+  vec2 f = fract(p) - 0.5;
+  f.x *= 0.55;   // сніжинки трохи розмазані рухом
+  vec2 at = (vec2(hash(id), hash(id + vec2(7.0, 3.0))) - 0.5) * 0.6;
+  float pick = step(0.45, hash(id + vec2(3.0, 11.0)));
+  return pick * (1.0 - smoothstep(0.02, 0.11, length(f - at)));
+}
+
 vec4 over(vec4 dst, vec3 color, float a) {
   a = clamp(a, 0.0, 1.0);
   return vec4(color * a + dst.rgb * (1.0 - a), a + dst.a * (1.0 - a));
@@ -84,6 +107,14 @@ half4 main(float2 coord) {
   if (rain > 0.0) {
     float r = streaks(sq, 14.0, 2.6) * 0.6 + streaks(sq + vec2(0.37, 0.11), 22.0, 3.4) * 0.4;
     col = over(col, vec3(0.8, 0.88, 1.0), rain * r * 0.5);
+  }
+
+  if (snow > 0.0) {
+    float haze = fbm(sq * 3.0 + vec2(now() * 0.5, 0.0));
+    col = over(col, vec3(0.86, 0.9, 0.96), snow * smoothstep(0.35, 0.9, haze) * 0.3);
+    float s = gusts(sq, 13.0, 1.9) * 0.6 + gusts(sq + vec2(0.21, 0.43), 23.0, 2.7) * 0.4 + gusts(sq + vec2(0.57, 0.13), 37.0, 3.6) * 0.25;
+    s += flakes(sq, 26.0, 1.4) * 0.8 + flakes(sq + vec2(0.3, 0.7), 14.0, 0.9);
+    col = over(col, vec3(0.95, 0.97, 1.0), snow * clamp(s, 0.0, 1.0) * 0.75);
   }
 
   if (flash > 0.0) {
