@@ -1,8 +1,8 @@
 {
   "name": "Атмосфера",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "manifest_version": 1,
-  "description": "Пульт режисера: моменти пригоди одним кліком, погода, настрій сцени й титри для всіх гравців.",
+  "description": "Пульт режисера, погода, титри й Атлас незвіданих вод для Owlbear Rodeo",
   "author": "Nikita",
   "icon": "https://treyser.github.io/atmosfera/icon.svg",
   "background_url": "https://treyser.github.io/atmosfera/background.html",
