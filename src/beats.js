@@ -20,6 +20,11 @@ const sea = {
     battle: "06 biy",
     wreck:  "07 kladov",
   },
+  // Мапи-типи для Атласу незвіданих вод: необовʼязкові, кожна — окреме місце.
+  extra: Object.fromEntries(Array.from({ length: 12 }, (_, i) => {
+    const n = String(i + 1).padStart(2, "0");
+    return [`at${n}`, `at ${n}`];
+  })),
   places: {
     lobby:  ["lobby"],
     world:  ["world"],
@@ -83,5 +88,8 @@ const express = {
 
 export const ADVENTURES = [sea, express];
 
-export const placeOf = (adventure, mapKey) =>
-  Object.keys(adventure.places).find((p) => adventure.places[p].includes(mapKey));
+// Мапи, що лежать разом із цією в одному місці (сама вона — теж)
+export const placeOf = (adventure, mapKey) => {
+  const p = Object.keys(adventure.places).find((k) => adventure.places[k].includes(mapKey));
+  return p ? adventure.places[p] : [mapKey];
+};

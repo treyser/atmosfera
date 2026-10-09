@@ -1,0 +1,133 @@
+:root{
+  color-scheme: dark;
+  --ink:#0b1016;
+  --paper:#131b24;
+  --line:rgba(232,194,122,.22);
+  --gold:#e8c27a;
+  --fg:#ece6d8;
+  --dim:#9aa3ad;
+  --serif:"Cormorant Garamond", Georgia, serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0}
+body{
+  background:radial-gradient(120% 90% at 30% 10%, #172231 0%, var(--ink) 70%);
+  color:var(--fg); font-family:Inter,system-ui,sans-serif; font-size:14px; overflow:hidden;
+}
+button{font:inherit; color:inherit; cursor:pointer}
+[hidden]{display:none !important}
+.only{display:grid; place-items:center; height:100%; color:var(--dim)}
+
+.atlas{display:grid; grid-template-rows:auto 1fr; height:100%}
+
+header{
+  display:flex; align-items:center; gap:18px; padding:14px 20px 12px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(0,0,0,.35), transparent);
+}
+.brand{min-width:230px}
+.eyebrow{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); opacity:.8}
+h1{font-family:var(--serif); font-weight:700; font-size:28px; margin:0; line-height:1.05; letter-spacing:.01em}
+
+.kinds{display:flex; flex-wrap:wrap; gap:6px; flex:1}
+.kinds button{
+  display:flex; align-items:center; gap:7px; padding:5px 10px 5px 8px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:999px;
+  font-size:12.5px; transition:opacity .2s, background .2s;
+}
+.kinds button:hover{background:rgba(255,255,255,.09)}
+.kinds i{width:10px; height:10px; border-radius:50%; background:var(--c); box-shadow:0 0 8px var(--c)}
+.kinds small{color:var(--dim); font-size:11px}
+.kinds button.off{opacity:.35}
+.kinds button.off i{box-shadow:none}
+
+.seen{font-family:var(--serif); font-size:22px; color:var(--gold); white-space:nowrap; text-align:right; line-height:1}
+.seen span{display:block; font-family:Inter,system-ui,sans-serif; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); margin-top:3px}
+.close{
+  width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:transparent;
+  color:var(--dim); font-size:15px;
+}
+.close:hover{color:var(--fg); border-color:var(--gold)}
+
+main{display:grid; grid-template-columns:1fr 380px; min-height:0}
+
+.sea{position:relative; display:grid; place-items:center; min-height:0; min-width:0}
+.frame{position:relative; border-radius:6px; box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px var(--line)}
+.frame img{display:block; width:100%; height:100%; border-radius:6px; user-select:none;
+  filter:saturate(.9) contrast(1.04)}
+.frame::after{  /* віньєтка над мапою */
+  content:""; position:absolute; inset:0; border-radius:6px; pointer-events:none;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.55);
+}
+.dots{position:absolute; inset:0; z-index:1}
+
+.dot{
+  position:absolute; transform:translate(-50%,-50%);
+  width:24px; height:24px; padding:0; border-radius:50%;
+  display:grid; place-items:center; font-size:10.5px; font-weight:700; color:#0b0f14;
+  background:var(--c); border:2px solid rgba(0,0,0,.55);
+  box-shadow:0 0 0 2px rgba(255,255,255,.18), 0 0 14px var(--c);
+  transition:transform .18s, opacity .2s, box-shadow .2s;
+}
+.dot:hover{transform:translate(-50%,-50%) scale(1.25); z-index:2}
+.dot.hide{opacity:0; pointer-events:none}
+.dot.seen{
+  background:#1b232c; color:var(--c); border-color:var(--c);
+  box-shadow:0 0 0 2px rgba(0,0,0,.4);
+}
+.dot.on{transform:translate(-50%,-50%) scale(1.35); z-index:3; border-color:#fff}
+.dot.on::before{
+  content:""; position:absolute; inset:-9px; border-radius:50%;
+  border:2px solid var(--c); animation:ping 1.6s ease-out infinite;
+}
+@keyframes ping{from{transform:scale(.6); opacity:1} to{transform:scale(1.6); opacity:0}}
+
+aside{
+  border-left:1px solid var(--line); background:linear-gradient(180deg, rgba(19,27,36,.92), rgba(11,16,22,.96));
+  overflow-y:auto; padding:22px 22px 18px;
+}
+.blank{text-align:center; padding-top:80px; color:var(--fg)}
+.blank p{margin:10px 0; font-family:var(--serif); font-size:21px}
+.blank .dim{font-family:Inter,system-ui,sans-serif; font-size:13px; color:var(--dim); line-height:1.55}
+.compass{font-size:40px; color:var(--gold); opacity:.8}
+
+.info{animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+.meta{display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim)}
+.badge{
+  padding:3px 9px; border-radius:999px; color:var(--c);
+  border:1px solid var(--c); background:color-mix(in srgb, var(--c) 14%, transparent);
+}
+h2{font-family:var(--serif); font-weight:700; font-size:32px; line-height:1.05; margin:12px 0 4px}
+h2 .no{color:var(--gold); margin-right:10px; font-weight:500}
+.tag{font-family:var(--serif); font-style:italic; font-size:18px; color:var(--gold); opacity:.9}
+.what{font-size:14.5px; line-height:1.6; margin:14px 0 6px}
+section{border-top:1px solid rgba(255,255,255,.07); padding-top:10px; margin-top:12px}
+h3{margin:0 0 4px; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); font-weight:600}
+section p{margin:0; line-height:1.55}
+.mapline{margin-top:16px; font-size:12.5px; color:var(--dim)}
+.mapline b{color:var(--fg); font-weight:600}
+.warn{
+  margin-top:12px; padding:9px 11px; border-radius:8px; font-size:12.5px; line-height:1.45;
+  background:rgba(255,138,61,.1); border:1px solid rgba(255,138,61,.35); color:#ffc9a3;
+}
+.actions{display:grid; grid-template-columns:1.4fr 1fr; gap:8px; margin-top:16px; position:sticky; bottom:0;
+  padding-top:10px; background:linear-gradient(180deg, transparent, #0f151c 30%)}
+.go{
+  padding:12px 14px; border-radius:10px; border:0; font-weight:700; letter-spacing:.02em;
+  color:#1a1206; background:linear-gradient(180deg, #f3d595, #c99a4c);
+  box-shadow:0 8px 24px rgba(232,194,122,.25);
+}
+.go:hover{filter:brightness(1.08)}
+.go:disabled{opacity:.35; cursor:not-allowed; box-shadow:none}
+.mark{
+  padding:12px 10px; border-radius:10px; background:transparent; border:1px solid var(--line); color:var(--dim);
+}
+.mark:hover{color:var(--fg)}
+.mark.on{color:#4fd18b; border-color:rgba(79,209,139,.5)}
+
+@media (max-width: 900px){
+  main{grid-template-columns:1fr; grid-template-rows:55% 45%}
+  aside{border-left:0; border-top:1px solid var(--line)}
+  .kinds{display:none}
+}

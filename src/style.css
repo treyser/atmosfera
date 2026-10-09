@@ -132,3 +132,11 @@ html.clear{color-scheme:light; background:transparent}
 .pips.fail i.on{background:#ff6b5e; border-color:#ff6b5e; box-shadow:0 0 10px rgba(255,107,94,.7)}
 @keyframes tick{0%{transform:scale(1.45)} 100%{transform:scale(1)}}
 @keyframes hudin{0%{opacity:0; transform:translateY(-10px)} 100%{opacity:1; transform:none}}
+
+.atlas-open{
+  display:block; width:100%; text-align:left; padding:11px 12px; margin-bottom:4px;
+  border:1px solid rgba(232,194,122,.45); border-radius:8px; font-weight:700; color:#f3d595;
+  background:linear-gradient(135deg, #2b2416, #1b2230);
+}
+.atlas-open span{display:block; font-weight:400; font-size:12px; color:var(--dim); margin-top:2px}
+.atlas-open:hover{background:linear-gradient(135deg, #3a301b, #222b3b)}

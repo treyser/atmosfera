@@ -1,15 +1,16 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, CUT, GRADE_ON, HUD, getState, setState, normalize, hudOf, STATE } from "./state.js";
-import { ADVENTURES, placeOf } from "./beats.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { ADVENTURES } from "./beats.js";
+import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
 
 const $ = (id) => document.getElementById(id);
+const url = (p) => new URL(import.meta.env.BASE_URL + p, window.location.origin).href;
 let state = normalize();
 let ready = false;
 let beat = null;      // id поточного моменту
 let grade = false;    // кольорокорекція
-let busy = false;     // щоб подвійний клік не запускав перехід двічі
 let adv = ADVENTURES[0];   // пригода відкритої сцени
 let timer = hudOf();  // таймер раундів і лічильник прориву
 
@@ -40,31 +41,13 @@ async function load() {
   draw();
 }
 
-// Мапи пригоди в поточній сцені: ключ → елемент. Шукаємо за назвою.
-function match(adventure, images) {
-  const found = {};
-  for (const [key, part] of Object.entries(adventure.maps)) {
-    const hit = images.find((i) => i.name.toLowerCase().includes(part));
-    if (hit) found[key] = hit;
-  }
-  return found;
-}
-
-const sceneMaps = () => OBR.scene.items.getItems((i) => i.layer === "MAP" && i.type === "IMAGE");
-
 async function findMaps() {
-  return match(adv, await sceneMaps());
+  return match(adv, await sceneMaps(), false);
 }
 
 // Пригода сцени — та, чиїх мап у ній найбільше. Якщо змінилась, перебудовуємо список моментів.
 async function detect() {
-  const images = await sceneMaps();
-  let best = ADVENTURES[0];
-  let most = -1;
-  for (const a of ADVENTURES) {
-    const n = Object.keys(match(a, images)).length;
-    if (n > most) { most = n; best = a; }
-  }
+  const best = pick(await sceneMaps());
   if (best !== adv || !$("beats").children.length) {
     adv = best;
     buildBeats();
@@ -87,46 +70,13 @@ async function report() {
   draw();
 }
 
-// Один клік: усім сигнал на затемнення, під ним — потрібна мапа нагору, чужі місця сховати,
-// погода; далі в кожного сама наводиться камера, проявляється картинка й виходить титр.
+// Один клік — перехід до моменту (сама логіка — у director.js, спільна з Атласом)
 async function go(next) {
-  if (!ready || busy || !next) return;
-  busy = true;
-  try {
-    const found = await findMaps();
-    const target = found[next.map];
-    if (!target) return;
-    const place = placeOf(adv, next.map);
-    const top = Date.now();
-
-    // Межі рахує майстер і шле готовими: гравець сховану мапу не бачить.
-    const bounds = await OBR.scene.items.getItemBounds([target.id]);
-    await OBR.broadcast.sendMessage(CUT, { min: bounds.min, max: bounds.max, big: next.big, small: next.small }, { destination: "ALL" });
-    await new Promise((r) => setTimeout(r, 850));   // чекаємо, поки екран потемніє
-
-    await OBR.scene.items.updateItems(Object.values(found), (drafts) => {
-      for (const d of drafts) {
-        const key = Object.keys(found).find((k) => found[k].id === d.id);
-        d.visible = adv.places[place].includes(key);
-        if (d.id === target.id) d.zIndex = top;
-      }
-    });
-
-    await OBR.scene.grid.setOpacity(next.grid ?? 0.15);
-    state = fromPreset(PRESETS.find((p) => p.id === next.mood) ?? PRESETS[0]);
-    beat = next.id;
-    draw();
-    await OBR.scene.setMetadata({ [STATE]: state, [BEAT]: beat });
-    await new Promise((r) => setTimeout(r, 1800));   // не даємо запустити наступний перехід, поки цей не проявився
-  } finally {
-    busy = false;
-  }
-}
-
-// Настрій із готового набору: усе, крім службових полів
-function fromPreset(p) {
-  const { id, name, ...values } = p;
-  return normalize({ preset: id, ...values });
+  if (!ready || !next) return;
+  const was = beat;
+  beat = next.id;
+  draw();
+  if (!(await travel(next, adv))) { beat = was; draw(); }
 }
 
 function step(by) {
@@ -169,6 +119,7 @@ function build() {
     $(`${key}-less`).onclick = () => setTimer({ [key]: clamp(timer[key] - 1, max) });
     $(`${key}-more`).onclick = () => setTimer({ [key]: clamp(timer[key] + 1, max) });
   }
+  $("atlas").onclick = () => OBR.modal.open({ id: ATLAS, url: url("atlas.html"), width: 1280, height: 860 });
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 

@@ -1,6 +1,7 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, normalize, isClear, hudOf } from "./state.js";
+import { travel } from "./director.js";
 import { SKSL, GRADE } from "./shader.js";
 
 const BASE = import.meta.env.BASE_URL;
@@ -28,6 +29,18 @@ OBR.onReady(async () => {
 
   OBR.broadcast.onMessage(TITLE, (event) => titleOnly(event.data));
   OBR.broadcast.onMessage(CUT, (event) => cut(event.data));
+
+  // «Пливемо сюди» з Атласу: вікно Атласу закривається одразу, а перехід веде фоновий скрипт майстра
+  OBR.broadcast.onMessage(ATLAS, async (event) => {
+    if ((await OBR.player.getRole()) !== "GM") return;
+    const p = event.data;
+    if (!p?.map) return;
+    if (!(await travel({ id: `atlas-${p.n}`, map: p.map, mood: p.mood, big: p.big, small: p.small }))) return;
+    const room = await OBR.room.getMetadata();
+    const seen = new Set(room[VISITED] ?? []);
+    seen.add(p.n);
+    await OBR.room.setMetadata({ [VISITED]: [...seen].sort((a, b) => a - b) });
+  });
 });
 
 async function refresh() {
