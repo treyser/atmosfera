@@ -11,6 +11,7 @@ export default defineConfig({
         index: resolve(__dirname, "index.html"),
         title: resolve(__dirname, "title.html"),
         hud: resolve(__dirname, "hud.html"),
+        atlas: resolve(__dirname, "atlas.html"),
       },
     },
   },
