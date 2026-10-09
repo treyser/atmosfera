@@ -2,7 +2,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import "./atlas.css";
 import { ATLAS, VISITED, PRESETS } from "./state.js";
-import { PLACES, KINDS, REGIONS, ARCHETYPES } from "./atlas-data.js";
+import { PLACES, KINDS, REGIONS, ARCHETYPES, BESTIARY } from "./atlas-data.js";
 import { sceneMaps, match, pick } from "./director.js";
 
 const $ = (id) => document.getElementById(id);
@@ -133,6 +133,17 @@ function draw() {
   $("tag").textContent = p.tag;
   $("what").textContent = p.what;
   $("fight").textContent = p.fight;
+  // Номери карток із тексту сутички: «Кіготник (#24)» → картка з КД, ХП і рангом
+  const nums = [...new Set([...p.fight.matchAll(/#(\d+)/g)].map((m) => Number(m[1])))].filter((n) => BESTIARY[n]);
+  $("cards-box").hidden = !nums.length;
+  $("cards").replaceChildren(...nums.map((n) => {
+    const b = BESTIARY[n];
+    const row = document.createElement("div");
+    row.className = "card";
+    row.innerHTML = `<span class="cn">#${n}</span><b></b><span class="rk">${b.rank}</span><span class="st">КД ${b.ac} · ХП ${b.hp} · ${b.xp} XP</span>`;
+    row.querySelector("b").textContent = b.name;
+    return row;
+  }));
   $("reward").textContent = p.reward;
   $("hook").textContent = p.hook;
   $("mapname").textContent = ARCHETYPES[p.map] ?? p.map;
