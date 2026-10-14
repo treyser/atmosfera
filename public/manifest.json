@@ -1,8 +1,8 @@
 {
   "name": "Атмосфера",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "manifest_version": 1,
-  "description": "Пульт режисера, погода, титри й Атлас незвіданих вод для Owlbear Rodeo",
+  "description": "Пульт режисера, погода, титри, Атлас незвіданих вод, журнал і музика для Owlbear Rodeo",
   "author": "Nikita",
   "icon": "https://treyser.github.io/atmosfera/icon.svg",
   "background_url": "https://treyser.github.io/atmosfera/background.html",
@@ -12,5 +12,11 @@
     "popover": "https://treyser.github.io/atmosfera/index.html",
     "width": 360,
     "height": 720
-  }
+  },
+  "permissions": [
+    {
+      "name": "autoplay",
+      "reason": "Свист Маркуса, звуки загадки й музика мають звучати без додаткового кліку"
+    }
+  ]
 }
