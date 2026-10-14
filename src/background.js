@@ -1,11 +1,16 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
 import { travel } from "./director.js";
 import { SKSL, GRADE } from "./shader.js";
+import { whistleNotes, audio } from "./synth.js";
+import { FRAGMENTS, ANSWER } from "./melody.js";
+import { routeStats } from "./route.js";
+import { daysBetween } from "./atlas-points.js";
+import { setTarget, targetForMood } from "./hoot.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -97,6 +102,78 @@ OBR.onReady(async () => {
     if ((await OBR.player.getRole()) === "GM") resendNotes(players);
   });
   if (gm) resendNotes(await OBR.party.getPlayers());
+
+  // --- Мелодія Маркуса: кожен чує свист у себе; майстер запам'ятовує, які уривки вже звучали ---
+  OBR.broadcast.onMessage(TUNE, async (event) => {
+    const d = event.data ?? {};
+    const frags = d.all ? [0, 1, 2] : (d.frags ?? []).filter((k) => FRAGMENTS[k]);
+    if (!frags.length) return;
+    audio();
+    whistleNotes(frags.flatMap((k) => FRAGMENTS[k]));
+    OBR.notification.show(d.all ? "♪ Маркус насвистує свою мелодію…" : "♪ Десь звучить знайома мелодія…").catch(() => {});
+    if ((await OBR.player.getRole()) !== "GM" || d.all) return;
+    const room = await OBR.room.getMetadata();
+    const heard = new Set(room[HEARD] ?? []);
+    const fresh = frags.filter((k) => !heard.has(k));
+    if (!fresh.length) return;
+    for (const k of fresh) heard.add(k);
+    await OBR.room.setMetadata({ [HEARD]: [...heard].sort() });
+    const day = 1 + routeStats(room[ROUTE] ?? [], daysBetween).days;
+    for (const k of fresh) await appendLog({ k: "m", n: k + 1, d: day });
+  });
+
+  // --- Загадка Ребер Велетня ---
+  OBR.broadcast.onMessage(RIDDLE_OPEN, (event) => {
+    if (event.data?.open) OBR.modal.open({ id: RIDDLE, url: url("riddle.html"), width: 980, height: 720 }).catch(() => {});
+    else OBR.modal.close(RIDDLE).catch(() => {});
+  });
+  // Хто б не торкнувся предмета, рахує лише майстер — щоб усі бачили одну й ту саму спробу
+  let riddleQueue = Promise.resolve();
+  OBR.broadcast.onMessage(RIDDLE_TAP, (event) => {
+    riddleQueue = riddleQueue.then(async () => {
+      if ((await OBR.player.getRole()) !== "GM") return;
+      const { id, who, c, reset } = event.data ?? {};
+      const room = await OBR.room.getMetadata();
+      const s = room[RIDDLE] ?? { seq: [], fails: 0, solved: false, k: 0 };
+      if (reset) { await OBR.room.setMetadata({ [RIDDLE]: { seq: [], fails: 0, solved: false, k: (s.k ?? 0) + 1, last: null } }); return; }
+      if (s.solved || !id) return;
+      const ok = ANSWER[s.seq.length] === id;
+      const seq = ok ? [...s.seq, id] : [];
+      const solved = ok && seq.length === ANSWER.length;
+      const next = { seq, fails: (s.fails ?? 0) + (ok ? 0 : 1), solved, k: (s.k ?? 0) + 1, last: { id, who, c, ok } };
+      await OBR.room.setMetadata({ [RIDDLE]: next });
+      if (solved) {
+        const day = 1 + routeStats(room[ROUTE] ?? [], daysBetween).days;
+        await appendLog({ k: "r", t: "Ребра Велетня заграли мелодію Маркуса", d: day });
+      }
+    }).catch((err) => console.error("Загадка:", err));
+  });
+
+  // --- Музика через Hoot: лише майстер, за настроєм сцени або за кнопками в пульті ---
+  if (gm) {
+    let preset = null;
+    let music = {};
+    const follow = () => {
+      if (music.override === "silence") return setTarget({ music: null, bg: [] });
+      if (music.override) return setTarget({ ...targetForMood(preset, music.sea !== false), music: music.override });
+      if (music.auto && preset) return setTarget(targetForMood(preset, music.sea !== false));
+    };
+    music = (await OBR.room.getMetadata())[MUSIC] ?? {};
+    OBR.room.onMetadataChange((m) => {
+      const next = m[MUSIC] ?? {};
+      if (JSON.stringify(next) === JSON.stringify(music)) return;
+      music = next;
+      follow();
+    });
+    const takeMood = (m) => {
+      const p = normalize(m[STATE]).preset;
+      if (p === preset) return;
+      preset = p;
+      follow();
+    };
+    OBR.scene.onMetadataChange(takeMood);
+    if (await OBR.scene.isReady()) takeMood(await OBR.scene.getMetadata());
+  }
 });
 
 async function refresh() {

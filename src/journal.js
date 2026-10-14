@@ -6,6 +6,8 @@ import { saveLocal, bytes, plain, book, BOOK, INBOX, NOTES, LIMIT, MAX_TEXT } fr
 import { inbox, openEnvelope, sentNotes, sendNote, forgetNote } from "./notes.js";
 import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
+import { FRAGMENTS } from "./melody.js";
+import { whistleNotes, audio } from "./synth.js";
 
 const $ = (id) => document.getElementById(id);
 const PICK = "atmosfera.inbox.open";
@@ -141,7 +143,21 @@ function entry(e, archived) {
   day.textContent = e.d ? `День ${e.d}` : "";
   const body = document.createElement("div");
   body.className = "ebody";
-  if (e.k === "a" || e.k === "e") {
+  if (e.k === "m" || e.k === "r") {
+    // уривок мелодії Маркуса — його можна переслухати; розгадана загадка Ребер
+    const t = document.createElement("div");
+    t.className = "etitle tune";
+    t.textContent = e.k === "m" ? `♪ Почута мелодія — уривок ${e.n} з ${FRAGMENTS.length}` : `♪ ${e.t}`;
+    body.append(t);
+    if (e.k === "m" && FRAGMENTS[e.n - 1]) {
+      const play = document.createElement("button");
+      play.type = "button";
+      play.className = "listen";
+      play.textContent = "▶ Переслухати";
+      play.onclick = () => { audio(); whistleNotes(FRAGMENTS[e.n - 1]); };
+      body.append(play);
+    }
+  } else if (e.k === "a" || e.k === "e") {
     const t = document.createElement("div");
     t.className = "etitle";
     t.textContent = e.k === "a" ? `⚓ Прибули до №${e.n} — «${e.t}»` : `✦ «${e.t}»`;

@@ -27,6 +27,12 @@ export const LOG_DEL = `${ID}/log-del`; // канал: «викресли мій
 export const JOURNAL = `${ID}/journal`; // вікно журналу
 export const NOTE = `${ID}/note`;     // канал і вікно: запечатаний лист від майстра одному гравцеві
 export const NOTE_ACK = `${ID}/note-ack`; // канал: гравець отримав / розпечатав лист
+export const TUNE = `${ID}/tune`;     // канал: Маркус насвистує — { frags: [номери уривків] } або { all: true }
+export const HEARD = `${ID}/heard`;   // які уривки мелодії гравці вже чули — у метаданих кімнати
+export const RIDDLE = `${ID}/riddle`; // вікно загадки Ребер Велетня і її стан у метаданих кімнати
+export const RIDDLE_OPEN = `${ID}/riddle-open`; // канал: відкрити / закрити загадку всім
+export const RIDDLE_TAP = `${ID}/riddle-tap`;   // канал: хтось торкнувся предмета
+export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 
 // Усі величини від 0 до 1. tint — колір фільтра, amount — його сила, film — зерно й віньєтка.
 // sat, contrast, sway — для кольорокорекції: насиченість, контраст, погойдування картинки.

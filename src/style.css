@@ -147,3 +147,5 @@ html.clear{color-scheme:light; background:transparent}
 
 .log-open{border-color:rgba(185,211,230,.4); color:#cfe2f0; background:linear-gradient(135deg, #18222e, #1b2230)}
 .log-open:hover{background:linear-gradient(135deg, #1f2c3b, #222b3b)}
+.steps.three{grid-template-columns:1fr 1fr 1fr}
+.steps button.on{border-color:var(--now); background:#3a3524; color:var(--now)}

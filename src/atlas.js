@@ -1,7 +1,8 @@
 // Атлас незвіданих вод: мапа світу з 51 точкою, картка локації й перехід «Пливемо сюди».
 import OBR from "@owlbear-rodeo/sdk";
 import "./atlas.css";
-import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE } from "./state.js";
+import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, TUNE, HEARD, RIDDLE_OPEN } from "./state.js";
+import { FRAGMENTS } from "./melody.js";
 import { EVENTS, EVENT_KINDS, eventsFor, daysBetween, chanceFor } from "./events.js";
 import { drawRoute, routeStats } from "./route.js";
 import { getVotes, onVotes, pips } from "./votes.js";
@@ -25,6 +26,7 @@ let here = null;              // де партія зараз
 let route = [];               // пройдений шлях
 let voyage = null;            // подорож, що триває
 let adhoc = null;             // подія «просто зараз», без подорожі
+let heard = [];               // уривки мелодії Маркуса, які гравці вже чули
 
 $("map").src = import.meta.env.BASE_URL + "atlas-map.jpg";
 
@@ -41,6 +43,7 @@ OBR.onReady(async () => {
     here = m[HERE] ?? null;
     route = m[ROUTE] ?? [];
     voyage = m[VOYAGE] ?? null;
+    heard = m[HEARD] ?? [];
   };
   take(room);
   OBR.room.onMetadataChange((m) => { take(m); draw(); });
@@ -94,6 +97,8 @@ function build() {
     setTimeout(() => { $("show").textContent = "Мапу — гравцям"; }, 2500);
   };
   $("reset").onclick = () => OBR.broadcast.sendMessage(VOTE_RESET, {}, { destination: "ALL" });
+  // Мелодія: уривок чують усі, і він записується в журнал; уся мелодія — підказка, в журнал не йде
+  $("riddle").onclick = () => OBR.broadcast.sendMessage(RIDDLE_OPEN, { open: true }, { destination: "ALL" });
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") OBR.modal.close(ATLAS);
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
@@ -253,6 +258,17 @@ function draw() {
     return row;
   }) : [Object.assign(document.createElement("div"), { className: "none", textContent: "Поки порожньо. Кнопка «Мапу — гравцям» відкриє їм мапу з білими точками." })]));
   $("seen").innerHTML = `<b>${seen.size}</b> / ${PLACES.length}<span>відвідано</span>`;
+
+  // Мелодія Маркуса: які уривки вже звучали
+  $("tunes").replaceChildren(...[...FRAGMENTS.map((_, k) => k), "all"].map((k) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `tool small${k !== "all" && heard.includes(k) ? " heard" : ""}`;
+    b.textContent = k === "all" ? "♪ Уся мелодія" : `♪ Уривок ${k + 1}${heard.includes(k) ? " ✓" : ""}`;
+    b.title = k === "all" ? "Маркус насвистує всю мелодію (підказка, у журнал не записується)" : "Гравці чують уривок; новий уривок записується в журнал";
+    b.onclick = () => OBR.broadcast.sendMessage(TUNE, k === "all" ? { all: true } : { frags: [k] }, { destination: "ALL" });
+    return b;
+  }));
 
   // Маршрут на мапі й підсумок під ним
   drawRoute($("frame"), route, voyage);

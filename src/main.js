@@ -1,11 +1,12 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
 import { inbox } from "./notes.js";
+import { addAll } from "./hoot.js";
 import { INBOX } from "./log.js";
 
 const $ = (id) => document.getElementById(id);
@@ -142,6 +143,7 @@ function build() {
   }
   $("atlas").onclick = () => OBR.modal.open({ id: ATLAS, url: url("atlas.html"), width: 1280, height: 860 });
   $("gm-log").onclick = openJournal;
+  musicPanel();
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 
@@ -177,6 +179,36 @@ function build() {
     if (!big) { $("big").focus(); return; }
     await OBR.broadcast.sendMessage(TITLE, { big, small: $("small").value.trim() }, { destination: "ALL" });
   };
+}
+
+// Музика через Hoot: налаштування лежать у кімнаті, а вмикає треки фоновий скрипт майстра
+async function musicPanel() {
+  let music = (await OBR.room.getMetadata())[MUSIC] ?? {};
+  const NAMES = { battle: "бойова музика", boss: "музика боса", silence: "тиша" };
+  const show = () => {
+    $("mus-auto").checked = Boolean(music.auto);
+    $("mus-sea").checked = music.sea !== false;
+    for (const k of ["battle", "boss"]) $(`mus-${k}`).classList.toggle("on", music.override === k);
+    $("mus-quiet").classList.toggle("on", music.override === "silence");
+    $("mus-now").textContent = music.override
+      ? `Зараз: ${NAMES[music.override]}. Натисни ту саму кнопку ще раз, щоб повернутись до музики настрою.`
+      : music.auto ? "Музика змінюється разом із настроєм сцени." : "Автоматика вимкнена — Hoot у твоїх руках.";
+  };
+  const save = (patch) => { music = { ...music, ...patch }; show(); OBR.room.setMetadata({ [MUSIC]: music }); };
+  OBR.room.onMetadataChange((m) => { music = m[MUSIC] ?? {}; show(); });
+  $("mus-auto").onchange = () => save({ auto: $("mus-auto").checked });
+  $("mus-sea").onchange = () => save({ sea: $("mus-sea").checked });
+  $("mus-battle").onclick = () => save({ override: music.override === "battle" ? null : "battle" });
+  $("mus-boss").onclick = () => save({ override: music.override === "boss" ? null : "boss" });
+  $("mus-quiet").onclick = () => save({ override: music.override === "silence" ? null : "silence" });
+  $("mus-add").onclick = async () => {
+    $("mus-add").disabled = true;
+    $("mus-add").textContent = "Додаю…";
+    await addAll();
+    $("mus-add").textContent = "Додано — перевір плейлисти в Hoot";
+    setTimeout(() => { $("mus-add").disabled = false; $("mus-add").textContent = "Додати треки «Атмосфери» в Hoot"; }, 4000);
+  };
+  show();
 }
 
 function openJournal() {
