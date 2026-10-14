@@ -28,16 +28,23 @@
     <!-- Журнал -->
     <section class="pane" id="pane-log">
       <div class="scroll" id="log-scroll">
-        <div class="archived" id="archived" hidden></div>
+        <div class="stale" id="stale" hidden>Майстра зараз немає в кімнаті — показано останню збережену копію журналу.</div>
         <div class="log" id="log"></div>
       </div>
       <form class="write" id="write">
         <textarea id="text" rows="2" maxlength="400" placeholder="Що сталося? Кого зустріли, що знайшли, що вирішили…"></textarea>
         <div class="wrow">
           <span class="who" id="who"></span>
-          <span class="meter" id="meter" data-gm hidden></span>
-          <button type="button" class="ghost" id="copy" data-gm hidden title="Скопіювати весь журнал разом з архівом">Скопіювати журнал</button>
+          <button type="button" class="meter" id="meter" data-gm hidden title="Показати, що займає пам'ять кімнати"></button>
+          <button type="button" class="ghost" id="copy" data-gm hidden title="Скопіювати весь журнал текстом">Скопіювати текстом</button>
+          <button type="button" class="ghost" id="backup" data-gm hidden title="Журнал живе в цьому браузері — тут його можна зберегти або перенести">Резервна копія</button>
           <button type="submit" class="go" id="send">Записати</button>
+        </div>
+        <div class="mem" id="mem" hidden></div>
+        <div class="bk" id="bk" hidden>
+          <textarea id="bktext" rows="3" spellcheck="false"></textarea>
+          <div class="wrow"><span class="dim">Журнал зберігається в цьому браузері. Скопіюй цей текст і збережи де завгодно. Щоб відновити або перенести на інший комп'ютер, встав його сюди й натисни «Завантажити».</span>
+          <button type="button" class="ghost" id="bkcopy">Скопіювати</button><button type="button" class="ghost" id="bkload">Завантажити</button></div>
         </div>
       </form>
     </section>
