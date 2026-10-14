@@ -1,7 +1,8 @@
 // Мапа світу для гравців: лише номери точок, без типів і таємниць. Можна запропонувати курс.
 import OBR from "@owlbear-rodeo/sdk";
 import "./atlas.css";
-import { MAP, VISITED, HERE } from "./state.js";
+import { MAP, VISITED, HERE, ROUTE, VOYAGE } from "./state.js";
+import { drawRoute } from "./route.js";
 import { POINTS, REGIONS } from "./atlas-points.js";
 import { getVotes, onVotes, setVote, pips } from "./votes.js";
 
@@ -9,6 +10,8 @@ const $ = (id) => document.getElementById(id);
 let chosen = null;
 let seen = new Set();
 let here = null;
+let route = [];
+let voyage = null;
 let votes = [];
 
 $("map").src = import.meta.env.BASE_URL + "atlas-map.jpg";
@@ -17,8 +20,9 @@ OBR.onReady(async () => {
   build();
   const room = await OBR.room.getMetadata();
   seen = new Set(room[VISITED] ?? []);
-  here = room[HERE] ?? null;
-  OBR.room.onMetadataChange((m) => { seen = new Set(m[VISITED] ?? []); here = m[HERE] ?? null; draw(); });
+  const take = (m) => { seen = new Set(m[VISITED] ?? []); here = m[HERE] ?? null; route = m[ROUTE] ?? []; voyage = m[VOYAGE] ?? null; };
+  take(room);
+  OBR.room.onMetadataChange((m) => { take(m); draw(); });
   votes = await getVotes();
   onVotes(async () => { votes = await getVotes(); draw(); });
   draw();
@@ -68,6 +72,8 @@ function draw() {
     d.classList.toggle("on", n === chosen);
     pips(d, votes.filter((v) => v.n === n));
   }
+  // Подію гравцям не показуємо — лише курс
+  drawRoute($("frame"), route, voyage ? { from: voyage.from, to: voyage.to, event: voyage.played } : null);
   $("seen").innerHTML = `<b>${seen.size}</b> / ${POINTS.length}<span>відвідано</span>`;
 
   // Список пропозицій

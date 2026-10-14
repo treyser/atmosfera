@@ -1,7 +1,9 @@
 // Атлас незвіданих вод: мапа світу з 51 точкою, картка локації й перехід «Пливемо сюди».
 import OBR from "@owlbear-rodeo/sdk";
 import "./atlas.css";
-import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE } from "./state.js";
+import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE } from "./state.js";
+import { EVENTS, EVENT_KINDS, eventsFor, daysBetween, chanceFor } from "./events.js";
+import { drawRoute, routeStats } from "./route.js";
 import { getVotes, onVotes, pips } from "./votes.js";
 import { PLACES, KINDS, REGIONS, ARCHETYPES, BESTIARY } from "./atlas-data.js";
 import { sceneMaps, match, pick } from "./director.js";
@@ -20,6 +22,9 @@ let present = new Set();      // ключі мап, що є у відкриті�
 let off = new Set();          // вимкнені фільтром типи
 let votes = [];               // пропозиції гравців
 let here = null;              // де партія зараз
+let route = [];               // пройдений шлях
+let voyage = null;            // подорож, що триває
+let adhoc = null;             // подія «просто зараз», без подорожі
 
 $("map").src = import.meta.env.BASE_URL + "atlas-map.jpg";
 
@@ -31,8 +36,14 @@ OBR.onReady(async () => {
   build();
   const room = await OBR.room.getMetadata();
   seen = new Set(room[VISITED] ?? []);
-  here = room[HERE] ?? null;
-  OBR.room.onMetadataChange((m) => { seen = new Set(m[VISITED] ?? []); here = m[HERE] ?? null; draw(); });
+  const take = (m) => {
+    seen = new Set(m[VISITED] ?? []);
+    here = m[HERE] ?? null;
+    route = m[ROUTE] ?? [];
+    voyage = m[VOYAGE] ?? null;
+  };
+  take(room);
+  OBR.room.onMetadataChange((m) => { take(m); draw(); });
   votes = await getVotes();
   onVotes(async () => { votes = await getVotes(); draw(); });
   await scan();
@@ -93,12 +104,66 @@ function build() {
     }
   });
 
+  // «Пливемо сюди»: рахуємо дні в морі й кидаємо d100 на подію в дорозі
   $("go").onclick = async () => {
     const p = PLACES.find((x) => x.n === chosen);
     if (!p || !present.has(p.map)) return;
-    // Перехід веде фоновий скрипт майстра, тож вікно можна закрити одразу — екран темніє вже без нього.
-    await OBR.broadcast.sendMessage(ATLAS, { n: p.n, map: p.map, mood: p.mood, big: p.name, small: p.tag }, { destination: "LOCAL" });
+    if (!here || here === p.n) return arrive(p);
+    const days = daysBetween(PLACES.find((x) => x.n === here), p);
+    const chance = chanceFor(days);
+    const roll = 1 + Math.floor(Math.random() * 100);
+    if (roll > chance) return arrive(p);
+    const ev = randomEvent(here, p.n);
+    await saveVoyage({ from: here, to: p.n, days, chance, roll, event: ev.id, played: false });
+  };
+
+  $("eplay").onclick = async () => {
+    const ev = currentEvent();
+    if (!ev) return;
+    const to = adhoc ? null : voyage?.to;
+    await OBR.broadcast.sendMessage(ATLAS, {
+      kind: "event", map: ev.map, mood: ev.mood, big: ev.name,
+      small: to ? `У дорозі до №${to}` : EVENT_KINDS[ev.kind],
+    }, { destination: "LOCAL" });
+    if (adhoc) adhoc = null;
+    else await saveVoyage({ ...voyage, played: true });
     await OBR.modal.close(ATLAS);
+  };
+  $("eother").onclick = async () => {
+    const cur = currentEvent();
+    const ev = randomEvent(adhoc ? here : voyage?.from, adhoc ? null : voyage?.to, cur?.id);
+    if (adhoc) { adhoc = ev; draw(); } else await saveVoyage({ ...voyage, event: ev.id });
+  };
+  $("eskip").onclick = async () => {
+    if (adhoc) { adhoc = null; draw(); return; }
+    const p = PLACES.find((x) => x.n === voyage?.to);
+    if (p) await arrive(p);
+  };
+  $("roll").onclick = () => {
+    if (voyage?.event && !voyage.played) return $("eother").onclick();
+    adhoc = randomEvent(here, null);
+    draw();
+  };
+  $("onward").onclick = async () => {
+    const p = PLACES.find((x) => x.n === voyage?.to);
+    if (p) await arrive(p);
+  };
+  $("abort").onclick = () => saveVoyage(null);
+
+  // Поставити корабель на точку без переходу (наприклад, звідки починається плавання)
+  $("herebtn").onclick = async () => {
+    if (!chosen) return;
+    seen.add(chosen);
+    const next = route.at(-1) === chosen ? route : [...route, chosen];
+    await OBR.room.setMetadata({ [HERE]: chosen, [ROUTE]: next, [VISITED]: [...seen].sort((a, b) => a - b), [VOYAGE]: null });
+  };
+  $("back").onclick = async () => {
+    if (!route.length) return;
+    const next = route.slice(0, -1);
+    await OBR.room.setMetadata({ [ROUTE]: next, [HERE]: next.at(-1) ?? null, [VOYAGE]: null });
+  };
+  $("clear").onclick = async () => {
+    await OBR.room.setMetadata({ [ROUTE]: here ? [here] : [], [VOYAGE]: null });
   };
 
   $("mark").onclick = async () => {
@@ -119,6 +184,38 @@ function build() {
   };
   new ResizeObserver(fit).observe($("sea"));
   fit();
+}
+
+async function saveVoyage(v) {
+  voyage = v;
+  draw();
+  await OBR.room.setMetadata({ [VOYAGE]: v });
+}
+
+// Перехід на точку: фоновий скрипт майстра веде камеру, а потім дописує точку в маршрут
+async function arrive(p) {
+  await OBR.broadcast.sendMessage(ATLAS, { kind: "arrive", n: p.n, map: p.map, mood: p.mood, big: p.name, small: p.tag }, { destination: "LOCAL" });
+  await OBR.modal.close(ATLAS);
+}
+
+function randomEvent(fromN, toN, not) {
+  const pool = eventsFor(PLACES.find((x) => x.n === fromN), PLACES.find((x) => x.n === toN)).filter((e) => e.id !== not);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+const currentEvent = () => adhoc ?? (voyage?.event && !voyage.played ? EVENTS.find((e) => e.id === voyage.event) : null);
+
+function cardsFor(text, box, list) {
+  const nums = [...new Set([...text.matchAll(/#(\d+)/g)].map((m) => Number(m[1])))].filter((n) => BESTIARY[n]);
+  $(box).hidden = !nums.length;
+  $(list).replaceChildren(...nums.map((n) => {
+    const b = BESTIARY[n];
+    const row = document.createElement("div");
+    row.className = "card";
+    row.innerHTML = `<span class="cn">#${n}</span><b></b><span class="rk">${b.rank}</span><span class="st">КД ${b.ac} · ХП ${b.hp} · ${b.xp} XP</span>`;
+    row.querySelector("b").textContent = b.name;
+    return row;
+  }));
 }
 
 function draw() {
@@ -147,6 +244,45 @@ function draw() {
   }) : [Object.assign(document.createElement("div"), { className: "none", textContent: "Поки порожньо. Кнопка «Мапу — гравцям» відкриє їм мапу з білими точками." })]));
   $("seen").innerHTML = `<b>${seen.size}</b> / ${PLACES.length}<span>відвідано</span>`;
 
+  // Маршрут на мапі й підсумок під ним
+  drawRoute($("frame"), route, voyage);
+  const st = routeStats(route, daysBetween);
+  $("rinfo").textContent = route.length
+    ? `${route.join(" → ")} · переходів: ${st.legs}, ≈ ${st.days} дн. у морі`
+    : "Порожньо. Обери точку, звідки починаєте, і натисни «Ми вже тут».";
+  $("back").hidden = !route.length;
+  $("clear").hidden = route.length < 2;
+
+  // Подорож, що триває
+  $("voyage").hidden = !voyage;
+  if (voyage) {
+    const to = PLACES.find((x) => x.n === voyage.to);
+    const ev = EVENTS.find((e) => e.id === voyage.event);
+    $("vline").textContent = `№${voyage.from} → №${voyage.to} ${to ? "«" + to.name + "»" : ""} · ≈ ${voyage.days} дн.` +
+      (ev ? (voyage.played ? ` · подія «${ev.name}» розіграна` : ` · подія: «${ev.name}»`) : "");
+    $("onward").hidden = !voyage.played;
+  }
+
+  // Подія в дорозі — поверх картки локації
+  const ev = currentEvent();
+  $("event").hidden = !ev;
+  if (ev) {
+    $("blank").hidden = true;
+    $("info").hidden = true;
+    $("ekind").textContent = EVENT_KINDS[ev.kind];
+    $("etrip").textContent = adhoc ? "Просто зараз" : `Між №${voyage.from} і №${voyage.to}`;
+    $("ename").textContent = ev.name;
+    $("etag").textContent = ev.tag;
+    $("ewhat").textContent = ev.what;
+    $("echeck").textContent = ev.check;
+    $("eafter").textContent = ev.after;
+    cardsFor(ev.check, "ecards-box", "ecards");
+    $("eroll").textContent = adhoc ? "" : `≈ ${voyage.days} дн. у морі · шанс події ${voyage.chance}% · кидок d100: ${voyage.roll}`;
+    $("eskip").textContent = adhoc ? "Закрити" : "Без події";
+    $("eplay").disabled = !present.has(ev.map);
+    return;
+  }
+
   const p = PLACES.find((x) => x.n === chosen);
   $("blank").hidden = Boolean(p);
   $("info").hidden = !p;
@@ -160,17 +296,7 @@ function draw() {
   $("tag").textContent = p.tag;
   $("what").textContent = p.what;
   $("fight").textContent = p.fight;
-  // Номери карток із тексту сутички: «Кіготник (#24)» → картка з КД, ХП і рангом
-  const nums = [...new Set([...p.fight.matchAll(/#(\d+)/g)].map((m) => Number(m[1])))].filter((n) => BESTIARY[n]);
-  $("cards-box").hidden = !nums.length;
-  $("cards").replaceChildren(...nums.map((n) => {
-    const b = BESTIARY[n];
-    const row = document.createElement("div");
-    row.className = "card";
-    row.innerHTML = `<span class="cn">#${n}</span><b></b><span class="rk">${b.rank}</span><span class="st">КД ${b.ac} · ХП ${b.hp} · ${b.xp} XP</span>`;
-    row.querySelector("b").textContent = b.name;
-    return row;
-  }));
+  cardsFor(p.fight, "cards-box", "cards");
   $("reward").textContent = p.reward;
   $("hook").textContent = p.hook;
   $("mapname").textContent = ARCHETYPES[p.map] ?? p.map;
@@ -181,6 +307,11 @@ function draw() {
   $("warn").hidden = ok;
   $("warn").textContent = `У відкритій сцені немає мапи «${scene}». Відкрий сцену «Тихе море · Пригода» — там лежать усі мапи атласу.`;
   $("go").disabled = !ok;
+  if (here && here !== p.n) {
+    const days = daysBetween(PLACES.find((x) => x.n === here), p);
+    $("trip").textContent = `Від №${here}: ≈ ${days} дн. у морі · шанс події в дорозі ${chanceFor(days)}%`;
+  } else $("trip").textContent = here === p.n ? "Ви зараз тут." : "Звідки пливете — ще не відомо: постав корабель кнопкою нижче.";
+  $("herebtn").hidden = here === p.n;
   $("mark").classList.toggle("on", seen.has(p.n));
   $("mark").textContent = seen.has(p.n) ? "✓ Відвідано" : "Позначити відвіданою";
 }

@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, normalize, isClear, hudOf } from "./state.js";
 import { setVote } from "./votes.js";
 import { travel } from "./director.js";
 import { SKSL, GRADE } from "./shader.js";
@@ -36,11 +36,20 @@ OBR.onReady(async () => {
     if ((await OBR.player.getRole()) !== "GM") return;
     const p = event.data;
     if (!p?.map) return;
+    // Подія в дорозі: лише перехід на палубу з погодою й титром, маршрут не змінюється
+    if (p.kind === "event") {
+      await travel({ id: "atlas-event", map: p.map, mood: p.mood, big: p.big, small: p.small });
+      return;
+    }
     if (!(await travel({ id: `atlas-${p.n}`, map: p.map, mood: p.mood, big: p.big, small: p.small }))) return;
     const room = await OBR.room.getMetadata();
     const seen = new Set(room[VISITED] ?? []);
     seen.add(p.n);
-    await OBR.room.setMetadata({ [VISITED]: [...seen].sort((a, b) => a - b), [HERE]: p.n });
+    // Маршрут: якщо ще не почато, першою точкою стає та, звідки пливли
+    let route = [...(room[ROUTE] ?? [])];
+    if (!route.length && room[HERE] && room[HERE] !== p.n) route.push(room[HERE]);
+    if (route.at(-1) !== p.n) route.push(p.n);
+    await OBR.room.setMetadata({ [VISITED]: [...seen].sort((a, b) => a - b), [HERE]: p.n, [ROUTE]: route, [VOYAGE]: null });
     // Допливли — старі пропозиції більше не актуальні
     await OBR.broadcast.sendMessage(VOTE_RESET, {}, { destination: "ALL" });
   });
