@@ -1,7 +1,7 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, NOTE, NOTE_ACK, normalize, isClear, hudOf } from "./state.js";
-import { appendLog, removeLog, MAX_TEXT } from "./log.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, normalize, isClear, hudOf } from "./state.js";
+import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
 import { travel } from "./director.js";
@@ -75,6 +75,17 @@ OBR.onReady(async () => {
     const { i, u } = event.data ?? {};
     if (i) await removeLog(i, u ?? null);
   });
+  OBR.broadcast.onMessage(LOG_REQ, async () => {
+    if ((await OBR.player.getRole()) === "GM") await sendAll();
+  });
+  // У гравців — копія журналу в браузері: вікно журналу читає її і чує зміни
+  OBR.broadcast.onMessage(LOG_PUSH, (event) => {
+    const e = event.data;
+    if (e?.i && !book().some((x) => x.i === e.i)) saveLocal(BOOK, [...book(), e]);
+  });
+  OBR.broadcast.onMessage(LOG_DROP, (event) => saveLocal(BOOK, book().filter((x) => x.i !== event.data?.i)));
+  OBR.broadcast.onMessage(LOG_ALL, (event) => takeAll(event.data, (list) => { saveLocal(BOOK, list); saveLocal(`${BOOK}.sync`, Date.now()); }));
+  if (gm) migrate().catch(() => {});
 
   // Запечатані листи: кожен перевіряє, чи лист йому; майстер стежить, хто отримав і хто розпечатав
   OBR.broadcast.onMessage(NOTE, (event) => receiveNote(event.data));

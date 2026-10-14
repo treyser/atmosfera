@@ -1,8 +1,8 @@
 // Корабельний журнал: записи Атласу й гравців; листи гравця; у майстра — листи гравцям і нитки героїв.
 import OBR from "@owlbear-rodeo/sdk";
 import "./journal.css";
-import { JOURNAL, LOG, LOG_ADD, LOG_DEL, ROUTE } from "./state.js";
-import { local, saveLocal, bytes, plain, ARCHIVE, INBOX, NOTES, LIMIT, MAX_TEXT } from "./log.js";
+import { JOURNAL, LOG_ADD, LOG_DEL, LOG_REQ, ROUTE } from "./state.js";
+import { saveLocal, bytes, plain, book, BOOK, INBOX, NOTES, LIMIT, MAX_TEXT } from "./log.js";
 import { inbox, openEnvelope, sentNotes, sendNote, forgetNote } from "./notes.js";
 import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
@@ -24,19 +24,26 @@ OBR.onReady(async () => {
   document.querySelector('[data-tab="mail"]').hidden = gm;
 
   room = await OBR.room.getMetadata();
-  log = room[LOG] ?? [];
-  OBR.room.onMetadataChange((m) => {
-    const grew = (m[LOG] ?? []).length > log.length;
-    room = m;
-    log = m[LOG] ?? [];
-    drawLog(grew);
-  });
-  // Листи й архів змінює фоновий скрипт — інше вікно того ж сайту, тож чуємо це через сховище
+  log = book();
+  OBR.room.onMetadataChange((m) => { room = m; drawLog(false); });
+  // Журнал і листи змінює фоновий скрипт — інше вікно того ж сайту, тож чуємо це через сховище
   window.addEventListener("storage", (e) => {
     if (e.key === INBOX) drawMail();
     if (e.key === NOTES) drawSent();
-    if (e.key === ARCHIVE) drawLog(false);
+    if (e.key === BOOK) {
+      const grew = book().length > log.length;
+      log = book();
+      drawLog(grew);
+    }
   });
+  // Гравець просить у майстра свіжий журнал; поки відповіді немає — показуємо збережену копію
+  if (!gm) {
+    OBR.broadcast.sendMessage(LOG_REQ, {}, { destination: "REMOTE" }).catch(() => {});
+    setTimeout(() => { if (!$("stale").dataset.ok) $("stale").hidden = false; }, 3000);
+    window.addEventListener("storage", (e) => {
+      if (e.key === `${BOOK}.sync`) { $("stale").dataset.ok = "1"; $("stale").hidden = true; }
+    });
+  }
 
   build();
   drawLog(true);
@@ -61,13 +68,35 @@ function build() {
     // якщо майстра немає в кімнаті, записати нікому — скажемо про це
     setTimeout(() => {
       $("send").disabled = false;
-      if (!log.some((x) => x.t === t)) $("who").textContent = "Запис чекає на майстра: журнал веде його Owlbear";
+      if (!book().some((x) => x.t === t)) $("who").textContent = "Запис не дійшов: журнал веде Owlbear майстра, а його зараз немає в кімнаті";
     }, 2500);
   };
   $("text").onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("write").requestSubmit(); };
 
+  $("meter").onclick = () => { $("mem").hidden = !$("mem").hidden; };
+  // Резервна копія журналу: журнал живе в браузері майстра, тож його варто часом зберігати
+  $("backup").onclick = () => {
+    const box = $("bk");
+    box.hidden = !box.hidden;
+    $("bktext").value = JSON.stringify(book());
+  };
+  $("bkcopy").onclick = async () => {
+    $("bktext").select();
+    try { await navigator.clipboard.writeText($("bktext").value); $("bkcopy").textContent = "Скопійовано ✓"; } catch { $("bkcopy").textContent = "Виділено — Ctrl+C"; }
+  };
+  $("bkload").onclick = () => {
+    try {
+      const list = JSON.parse($("bktext").value);
+      if (!Array.isArray(list) || list.some((e) => !e?.i || !e?.k)) throw new Error();
+      saveLocal(BOOK, list);
+      log = list;
+      drawLog(true);
+      $("bk").hidden = true;
+      OBR.broadcast.sendMessage(LOG_REQ, {}, { destination: "LOCAL" });   // роздати гравцям оновлений
+    } catch { $("bkload").textContent = "Це не схоже на копію журналу"; }
+  };
   $("copy").onclick = async () => {
-    const all = [...local(ARCHIVE, []), ...log];
+    const all = log;
     const text = "Корабельний журнал\n\n" + all.map(plain).join("\n");
     try { await navigator.clipboard.writeText(text); $("copy").textContent = "Скопійовано ✓"; }
     catch {
@@ -150,15 +179,14 @@ function drawLog(scroll) {
     Object.assign(document.createElement("div"), { className: "none", textContent: "Журнал порожній. Перший запис з'явиться, щойно корабель кудись припливе, або напиши щось сам." }),
   ]));
   if (gm) {
-    const old = local(ARCHIVE, []);
-    $("archived").hidden = !old.length;
-    $("archived").replaceChildren(
-      Object.assign(document.createElement("div"), { className: "atitle", textContent: `Архів майстра · ${old.length} старих записів (гравці їх уже не бачать)` }),
-      ...old.map((e) => entry(e, true)),
-    );
     const used = bytes(room);
     $("meter").textContent = `Пам'ять кімнати: ${(used / 1000).toFixed(1)} з ${LIMIT / 1000} кБ`;
     $("meter").classList.toggle("warn", used > LIMIT * 0.85);
+    // Хто скільки займає пам'ять кімнати — по кліку на лічильник
+    $("mem").replaceChildren(...Object.entries(room)
+      .map(([k, v]) => [k, bytes({ [k]: v })])
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, n]) => Object.assign(document.createElement("div"), { textContent: `${(n / 1000).toFixed(1)} кБ — ${k}` })));
   }
   $("day").innerHTML = `<b>День ${today()}</b><span>плавання</span>`;
   if (scroll || atEnd) box.scrollTop = box.scrollHeight;

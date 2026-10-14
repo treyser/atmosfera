@@ -157,3 +157,8 @@ body.env{background:transparent; display:grid; place-items:center}
 @keyframes drop{0%{opacity:0; transform:translateY(-40px) rotate(-4deg)} 100%{opacity:1; transform:none}}
 @keyframes crack{0%{transform:translate(-50%,-50%) scale(1)} 40%{transform:translate(-50%,-50%) scale(1.15) rotate(-8deg)} 100%{transform:translate(-50%,40%) scale(.6) rotate(25deg); opacity:0}}
 @keyframes unfold{0%{opacity:0; transform:scaleY(.6) translateY(20px)} 100%{opacity:1; transform:none}}
+.meter{border:0; background:transparent; padding:0; cursor:pointer; text-decoration:underline dotted}
+.mem{margin-top:8px; font:12px/1.5 ui-monospace,Consolas,monospace; color:var(--dim); max-height:140px; overflow:auto}
+.bk{margin-top:8px}
+.bk textarea{width:100%; font:11px ui-monospace,Consolas,monospace; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.3)}
+.stale{max-width:860px; margin:0 auto 10px; padding:8px 12px; border-radius:8px; background:rgba(242,201,76,.1); color:#f2c94c; font-size:12.5px}
