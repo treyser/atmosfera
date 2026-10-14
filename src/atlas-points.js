@@ -62,3 +62,12 @@ export const POINTS = [
   { n: 44, u: 0.894, v: 0.824, r: "east" },
   { n: 51, u: 0.929, v: 0.936, r: "east" },
 ];
+
+// Днів у морі між двома точками (мапа 1402 × 1122 пікселів; ~90 пікселів — день шляху)
+export function daysBetween(a, b) {
+  if (!a || !b) return 1;
+  const dx = (a.u - b.u) * 1402;
+  const dy = (a.v - b.v) * 1122;
+  return Math.max(1, Math.round(Math.hypot(dx, dy) / 90));
+}
+

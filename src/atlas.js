@@ -124,6 +124,8 @@ function build() {
     await OBR.broadcast.sendMessage(ATLAS, {
       kind: "event", map: ev.map, mood: ev.mood, big: ev.show,
       small: "У відкритому морі",
+      // запис у корабельний журнал — лише нейтральна назва, без розгадки
+      log: { k: "e", t: ev.show, s: to ? `У дорозі до №${to}` : "У морі", d: dayNow() + (to ? Math.max(1, Math.floor(voyage.days / 2)) : 0) },
     }, { destination: "LOCAL" });
     if (adhoc) adhoc = null;
     else await saveVoyage({ ...voyage, played: true });
@@ -194,9 +196,17 @@ async function saveVoyage(v) {
 
 // Перехід на точку: фоновий скрипт майстра веде камеру, а потім дописує точку в маршрут
 async function arrive(p) {
-  await OBR.broadcast.sendMessage(ATLAS, { kind: "arrive", n: p.n, map: p.map, mood: p.mood, big: p.show, small: REGIONS[p.r] }, { destination: "LOCAL" });
+  // День прибуття: шлях разом із цим переходом
+  const next = [...route];
+  if (!next.length && here && here !== p.n) next.push(here);
+  if (next.at(-1) !== p.n) next.push(p.n);
+  const log = { k: "a", n: p.n, t: p.show, s: REGIONS[p.r], d: 1 + routeStats(next, daysBetween).days };
+  await OBR.broadcast.sendMessage(ATLAS, { kind: "arrive", n: p.n, map: p.map, mood: p.mood, big: p.show, small: REGIONS[p.r], log }, { destination: "LOCAL" });
   await OBR.modal.close(ATLAS);
 }
+
+// Який сьогодні день плавання: перший день — у першій точці маршруту
+const dayNow = () => 1 + routeStats(route, daysBetween).days;
 
 function randomEvent(fromN, toN, not) {
   const pool = eventsFor(PLACES.find((x) => x.n === fromN), PLACES.find((x) => x.n === toN)).filter((e) => e.id !== not);

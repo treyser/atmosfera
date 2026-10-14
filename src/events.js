@@ -144,13 +144,8 @@ export function eventsFor(from, to) {
   return EVENTS.filter((e) => (!e.cold || cold) && (!e.warm || warm));
 }
 
-// Днів у морі між двома точками (мапа 1402 × 1122 пікселів; ~90 пікселів — день шляху)
-export function daysBetween(a, b) {
-  if (!a || !b) return 1;
-  const dx = (a.u - b.u) * 1402;
-  const dy = (a.v - b.v) * 1122;
-  return Math.max(1, Math.round(Math.hypot(dx, dy) / 90));
-}
+// Днів у морі між двома точками — у atlas-points.js, щоб журнал гравців не тягнув за собою події
+export { daysBetween } from "./atlas-points.js";
 
 // Шанс події: 30% за перший день і +15% за кожен наступний, не більше 85%
 export const chanceFor = (days) => Math.min(85, 30 + (days - 1) * 15);

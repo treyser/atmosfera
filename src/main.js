@@ -1,10 +1,12 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
+import { inbox } from "./notes.js";
+import { INBOX } from "./log.js";
 
 const $ = (id) => document.getElementById(id);
 const url = (p) => new URL(import.meta.env.BASE_URL + p, window.location.origin).href;
@@ -20,6 +22,15 @@ OBR.onReady(async () => {
   if (role !== "GM") {
     $("player").hidden = false;
     $("crew-map").onclick = () => OBR.modal.open({ id: MAP, url: url("map.html"), width: 1280, height: 860 });
+    $("crew-log").onclick = openJournal;
+    // Нерозпечатані листи — видно просто на кнопці
+    const mail = () => {
+      const n = inbox().filter((x) => !x.read).length;
+      $("crew-log-sub").textContent = n ? `Нерозпечатаних листів: ${n}` : "Записи плавання й твої листи";
+      $("crew-log").classList.toggle("ping", n > 0);
+    };
+    window.addEventListener("storage", (e) => { if (e.key === INBOX) mail(); });
+    mail();
     return;
   }
   // Скільки гравців уже запропонували курс — видно просто на кнопці Атласу
@@ -130,6 +141,7 @@ function build() {
     $(`${key}-more`).onclick = () => setTimer({ [key]: clamp(timer[key] + 1, max) });
   }
   $("atlas").onclick = () => OBR.modal.open({ id: ATLAS, url: url("atlas.html"), width: 1280, height: 860 });
+  $("gm-log").onclick = openJournal;
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 
@@ -165,6 +177,10 @@ function build() {
     if (!big) { $("big").focus(); return; }
     await OBR.broadcast.sendMessage(TITLE, { big, small: $("small").value.trim() }, { destination: "ALL" });
   };
+}
+
+function openJournal() {
+  return OBR.modal.open({ id: JOURNAL, url: url("journal.html"), width: 1100, height: 820 });
 }
 
 async function save(next) {

@@ -1,0 +1,220 @@
+// Корабельний журнал: записи Атласу й гравців; листи гравця; у майстра — листи гравцям і нитки героїв.
+import OBR from "@owlbear-rodeo/sdk";
+import "./journal.css";
+import { JOURNAL, LOG, LOG_ADD, LOG_DEL, ROUTE } from "./state.js";
+import { local, saveLocal, bytes, plain, ARCHIVE, INBOX, NOTES, LIMIT, MAX_TEXT } from "./log.js";
+import { inbox, openEnvelope, sentNotes, sendNote, forgetNote } from "./notes.js";
+import { routeStats } from "./route.js";
+import { daysBetween } from "./atlas-points.js";
+
+const $ = (id) => document.getElementById(id);
+const PICK = "atmosfera.inbox.open";
+let gm = false;
+let me = { id: "", name: "", color: "#e8c27a" };
+let log = [];
+let room = {};
+let tab = "log";
+let heroesReady = false;
+
+OBR.onReady(async () => {
+  gm = (await OBR.player.getRole()) === "GM";
+  const [id, name, color] = await Promise.all([OBR.player.getId(), OBR.player.getName(), OBR.player.getColor()]);
+  me = { id, name, color };
+  for (const el of document.querySelectorAll("[data-gm]")) el.hidden = !gm;
+  document.querySelector('[data-tab="mail"]').hidden = gm;
+
+  room = await OBR.room.getMetadata();
+  log = room[LOG] ?? [];
+  OBR.room.onMetadataChange((m) => {
+    const grew = (m[LOG] ?? []).length > log.length;
+    room = m;
+    log = m[LOG] ?? [];
+    drawLog(grew);
+  });
+  // Листи й архів змінює фоновий скрипт — інше вікно того ж сайту, тож чуємо це через сховище
+  window.addEventListener("storage", (e) => {
+    if (e.key === INBOX) drawMail();
+    if (e.key === NOTES) drawSent();
+    if (e.key === ARCHIVE) drawLog(false);
+  });
+
+  build();
+  drawLog(true);
+  drawMail();
+  if (gm) { await fillTo(); drawSent(); OBR.party.onChange(fillTo); }
+});
+
+function build() {
+  for (const b of $("tabs").children) b.onclick = () => go(b.dataset.tab);
+  $("close").onclick = () => OBR.modal.close(JOURNAL);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") OBR.modal.close(JOURNAL); });
+  $("who").textContent = gm ? "Пише майстер" : `Пише ${me.name}`;
+  $("who").style.setProperty("--c", me.color);
+
+  $("write").onsubmit = async (e) => {
+    e.preventDefault();
+    const t = $("text").value.trim().slice(0, MAX_TEXT);
+    if (!t) return;
+    $("send").disabled = true;
+    await OBR.broadcast.sendMessage(LOG_ADD, { k: gm ? "g" : "p", t, w: gm ? "Майстер" : me.name, c: me.color, u: me.id, d: today() }, { destination: "ALL" });
+    $("text").value = "";
+    // якщо майстра немає в кімнаті, записати нікому — скажемо про це
+    setTimeout(() => {
+      $("send").disabled = false;
+      if (!log.some((x) => x.t === t)) $("who").textContent = "Запис чекає на майстра: журнал веде його Owlbear";
+    }, 2500);
+  };
+  $("text").onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("write").requestSubmit(); };
+
+  $("copy").onclick = async () => {
+    const all = [...local(ARCHIVE, []), ...log];
+    const text = "Корабельний журнал\n\n" + all.map(plain).join("\n");
+    try { await navigator.clipboard.writeText(text); $("copy").textContent = "Скопійовано ✓"; }
+    catch {
+      // буфер обміну у вікні розширення може бути заборонено — тоді вибираємо текст у полі
+      $("text").value = text; $("text").select(); $("copy").textContent = "Виділено — Ctrl+C";
+    }
+    setTimeout(() => { $("copy").textContent = "Скопіювати журнал"; }, 2500);
+  };
+
+  $("compose").onsubmit = async (e) => {
+    e.preventDefault();
+    const t = $("note").value.trim();
+    const opt = $("to").selectedOptions[0];
+    if (!t || !opt?.value) return;
+    await sendNote({ to: opt.value, name: opt.dataset.name, t, quiet: $("quiet").checked });
+    $("note").value = "";
+    drawSent();
+  };
+}
+
+function go(next) {
+  tab = next;
+  for (const b of $("tabs").children) b.classList.toggle("on", b.dataset.tab === tab);
+  for (const p of document.querySelectorAll(".pane")) p.hidden = p.id !== `pane-${tab}`;
+  if (tab === "heroes" && !heroesReady) {
+    heroesReady = true;
+    // нитки героїв вантажимо лише в майстра: окремий шматок коду, гравцям він не потрібен
+    import("./heroes.js").then((m) => m.mount($("heroes")));
+  }
+  if (tab === "log") $("log-scroll").scrollTop = $("log-scroll").scrollHeight;
+}
+
+const today = () => 1 + routeStats(room[ROUTE] ?? [], daysBetween).days;
+
+// --- журнал ---
+
+function entry(e, archived) {
+  const row = document.createElement("div");
+  row.className = `entry k-${e.k}${archived ? " old" : ""}`;
+  const day = document.createElement("div");
+  day.className = "eday";
+  day.textContent = e.d ? `День ${e.d}` : "";
+  const body = document.createElement("div");
+  body.className = "ebody";
+  if (e.k === "a" || e.k === "e") {
+    const t = document.createElement("div");
+    t.className = "etitle";
+    t.textContent = e.k === "a" ? `⚓ Прибули до №${e.n} — «${e.t}»` : `✦ «${e.t}»`;
+    const s = document.createElement("div");
+    s.className = "esub";
+    s.textContent = e.s ?? "";
+    body.append(t, s);
+  } else {
+    const w = document.createElement("span");
+    w.className = "ewho";
+    w.textContent = e.k === "g" ? "Майстер" : e.w || "Гравець";
+    w.style.setProperty("--c", e.k === "g" ? "#e8c27a" : e.c || "#9aa3ad");
+    const t = document.createElement("p");
+    t.textContent = e.t;
+    body.append(w, t);
+  }
+  row.append(day, body);
+  // Викреслити: майстер — будь-що, гравець — лише своє
+  if (gm || (e.k === "p" && e.u === me.id)) {
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "del";
+    x.title = "Викреслити запис";
+    x.textContent = "✕";
+    x.onclick = () => OBR.broadcast.sendMessage(LOG_DEL, { i: e.i, u: gm ? null : me.id }, { destination: "ALL" });
+    row.append(x);
+  }
+  return row;
+}
+
+function drawLog(scroll) {
+  const box = $("log-scroll");
+  const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  $("log").replaceChildren(...(log.length ? log.map((e) => entry(e, false)) : [
+    Object.assign(document.createElement("div"), { className: "none", textContent: "Журнал порожній. Перший запис з'явиться, щойно корабель кудись припливе, або напиши щось сам." }),
+  ]));
+  if (gm) {
+    const old = local(ARCHIVE, []);
+    $("archived").hidden = !old.length;
+    $("archived").replaceChildren(
+      Object.assign(document.createElement("div"), { className: "atitle", textContent: `Архів майстра · ${old.length} старих записів (гравці їх уже не бачать)` }),
+      ...old.map((e) => entry(e, true)),
+    );
+    const used = bytes(room);
+    $("meter").textContent = `Пам'ять кімнати: ${(used / 1000).toFixed(1)} з ${LIMIT / 1000} кБ`;
+    $("meter").classList.toggle("warn", used > LIMIT * 0.85);
+  }
+  $("day").innerHTML = `<b>День ${today()}</b><span>плавання</span>`;
+  if (scroll || atEnd) box.scrollTop = box.scrollHeight;
+}
+
+// --- листи гравця ---
+
+function drawMail() {
+  if (gm) return;
+  const list = inbox();
+  const unread = list.filter((n) => !n.read).length;
+  $("unread").hidden = !unread;
+  $("unread").textContent = String(unread);
+  $("mail").replaceChildren(...(list.length ? [...list].reverse().map((n) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = `letterrow${n.read ? "" : " fresh"}`;
+    const when = new Date(n.at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    row.innerHTML = `<i>✉</i><span></span><small></small>`;
+    row.querySelector("span").textContent = n.read ? n.t : "Запечатаний лист — натисни, щоб зламати печатку";
+    row.querySelector("small").textContent = when;
+    row.onclick = () => { saveLocal(PICK, n.id); openEnvelope(); };
+    return row;
+  }) : [Object.assign(document.createElement("div"), { className: "none", textContent: "Листів поки немає. Якщо майстер щось надішле лише тобі, воно з'явиться тут." })]));
+}
+
+// --- майстер: листи гравцям ---
+
+async function fillTo() {
+  const players = await OBR.party.getPlayers();
+  const known = new Map(players.map((p) => [p.id, { name: p.name, on: true }]));
+  // ті, кому вже писали, — навіть якщо зараз їх немає в кімнаті
+  for (const n of sentNotes()) if (!known.has(n.to)) known.set(n.to, { name: n.name, on: false });
+  const keep = $("to").value;
+  $("to").replaceChildren(...(known.size ? [...known].map(([id, p]) => {
+    const o = document.createElement("option");
+    o.value = id;
+    o.dataset.name = p.name;
+    o.textContent = p.on ? p.name : `${p.name} (не в кімнаті)`;
+    return o;
+  }) : [Object.assign(document.createElement("option"), { value: "", textContent: "У кімнаті немає гравців" })]));
+  if (keep && known.has(keep)) $("to").value = keep;
+}
+
+function drawSent() {
+  if (!gm) return;
+  const STATUS = { sent: "надіслано, ще не дійшов", got: "дійшов, ще запечатаний", read: "розпечатано ✓" };
+  const list = [...sentNotes()].reverse();
+  $("sent").replaceChildren(...(list.length ? list.map((n) => {
+    const row = document.createElement("div");
+    row.className = `sentrow st-${n.st}`;
+    row.innerHTML = `<div class="sh"><b></b><span class="st"></span><button type="button" class="del" title="Прибрати зі списку">✕</button></div><p></p>`;
+    row.querySelector("b").textContent = `→ ${n.name}`;
+    row.querySelector(".st").textContent = STATUS[n.st] ?? n.st;
+    row.querySelector("p").textContent = n.t;
+    row.querySelector(".del").onclick = () => { forgetNote(n.id); drawSent(); };
+    return row;
+  }) : [Object.assign(document.createElement("div"), { className: "none", textContent: "Ще жодного листа." })]));
+}

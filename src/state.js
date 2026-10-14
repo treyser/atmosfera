@@ -17,6 +17,12 @@ export const VOTE_RESET = `${ID}/vote-reset`; // канал: кожен знім
 export const HERE = `${ID}/here`;     // остання точка Атласу, куди припливли, — у метаданих кімнати
 export const ROUTE = `${ID}/route`;   // пройдений шлях: номери точок по порядку — у метаданих кімнати
 export const VOYAGE = `${ID}/voyage`; // подорож, що триває: { from, to, days, event } — у метаданих кімнати
+export const LOG = `${ID}/log`;       // корабельний журнал: останні записи — у метаданих кімнати; пише лише майстер
+export const LOG_ADD = `${ID}/log-add`; // канал: «допиши в журнал» (гравці → фоновий скрипт майстра)
+export const LOG_DEL = `${ID}/log-del`; // канал: «викресли мій запис»
+export const JOURNAL = `${ID}/journal`; // вікно журналу
+export const NOTE = `${ID}/note`;     // канал і вікно: запечатаний лист від майстра одному гравцеві
+export const NOTE_ACK = `${ID}/note-ack`; // канал: гравець отримав / розпечатав лист
 
 // Усі величини від 0 до 1. tint — колір фільтра, amount — його сила, film — зерно й віньєтка.
 // sat, contrast, sway — для кольорокорекції: насиченість, контраст, погойдування картинки.

@@ -144,3 +144,6 @@ html.clear{color-scheme:light; background:transparent}
 .atlas-open.ping{border-color:#f3d595; box-shadow:0 0 0 1px #f3d595, 0 0 14px rgba(243,213,149,.35)}
 .atlas-open.ping span{color:#f3d595}
 #player .empty{padding-top:6px}
+
+.log-open{border-color:rgba(185,211,230,.4); color:#cfe2f0; background:linear-gradient(135deg, #18222e, #1b2230)}
+.log-open:hover{background:linear-gradient(135deg, #1f2c3b, #222b3b)}

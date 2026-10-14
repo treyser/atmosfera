@@ -1,6 +1,8 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, NOTE, NOTE_ACK, normalize, isClear, hudOf } from "./state.js";
+import { appendLog, removeLog, MAX_TEXT } from "./log.js";
+import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
 import { travel } from "./director.js";
 import { SKSL, GRADE } from "./shader.js";
@@ -38,10 +40,11 @@ OBR.onReady(async () => {
     if (!p?.map) return;
     // Подія в дорозі: лише перехід на палубу з погодою й титром, маршрут не змінюється
     if (p.kind === "event") {
-      await travel({ id: "atlas-event", map: p.map, mood: p.mood, big: p.big, small: p.small });
+      if ((await travel({ id: "atlas-event", map: p.map, mood: p.mood, big: p.big, small: p.small })) && p.log) await appendLog(p.log);
       return;
     }
     if (!(await travel({ id: `atlas-${p.n}`, map: p.map, mood: p.mood, big: p.big, small: p.small }))) return;
+    if (p.log) appendLog(p.log);
     const room = await OBR.room.getMetadata();
     const seen = new Set(room[VISITED] ?? []);
     seen.add(p.n);
@@ -57,6 +60,32 @@ OBR.onReady(async () => {
   // Майстер відкриває гравцям мапу світу; кожен знімає свою пропозицію за сигналом
   OBR.broadcast.onMessage(MAP, () => openMap());
   OBR.broadcast.onMessage(VOTE_RESET, () => setVote(null).catch(() => {}));
+
+  // Корабельний журнал: записує лише фоновий скрипт майстра, гравці надсилають рядки сюди
+  const gm = (await OBR.player.getRole()) === "GM";
+  OBR.broadcast.onMessage(LOG_ADD, async (event) => {
+    if ((await OBR.player.getRole()) !== "GM") return;
+    const e = event.data ?? {};
+    const t = String(e.t ?? "").trim().slice(0, MAX_TEXT);
+    if (!t) return;
+    await appendLog({ k: e.k === "g" ? "g" : "p", t, w: String(e.w ?? "").slice(0, 40), c: e.c, u: e.u, d: e.d });
+  });
+  OBR.broadcast.onMessage(LOG_DEL, async (event) => {
+    if ((await OBR.player.getRole()) !== "GM") return;
+    const { i, u } = event.data ?? {};
+    if (i) await removeLog(i, u ?? null);
+  });
+
+  // Запечатані листи: кожен перевіряє, чи лист йому; майстер стежить, хто отримав і хто розпечатав
+  OBR.broadcast.onMessage(NOTE, (event) => receiveNote(event.data));
+  OBR.broadcast.onMessage(NOTE_ACK, async (event) => {
+    if ((await OBR.player.getRole()) === "GM") noteAck(event.data);
+  });
+  // Хтось зайшов у кімнату — дошлемо листи, які йому ще не дійшли
+  OBR.party.onChange(async (players) => {
+    if ((await OBR.player.getRole()) === "GM") resendNotes(players);
+  });
+  if (gm) resendNotes(await OBR.party.getPlayers());
 });
 
 async function refresh() {
