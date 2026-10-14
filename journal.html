@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Корабельний журнал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="jr">
+  <div class="book">
+    <header>
+      <div class="brand">
+        <div class="eyebrow">Прокляття Неболіусу</div>
+        <h1>Корабельний журнал</h1>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button type="button" data-tab="log" class="on">Журнал</button>
+        <button type="button" data-tab="mail">Мої листи <b id="unread" hidden></b></button>
+        <button type="button" data-tab="notes" data-gm hidden>Листи гравцям</button>
+        <button type="button" data-tab="heroes" data-gm hidden>Нитки героїв</button>
+      </nav>
+      <div class="day" id="day"></div>
+      <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+    </header>
+
+    <!-- Журнал -->
+    <section class="pane" id="pane-log">
+      <div class="scroll" id="log-scroll">
+        <div class="archived" id="archived" hidden></div>
+        <div class="log" id="log"></div>
+      </div>
+      <form class="write" id="write">
+        <textarea id="text" rows="2" maxlength="400" placeholder="Що сталося? Кого зустріли, що знайшли, що вирішили…"></textarea>
+        <div class="wrow">
+          <span class="who" id="who"></span>
+          <span class="meter" id="meter" data-gm hidden></span>
+          <button type="button" class="ghost" id="copy" data-gm hidden title="Скопіювати весь журнал разом з архівом">Скопіювати журнал</button>
+          <button type="submit" class="go" id="send">Записати</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Листи, які отримав гравець -->
+    <section class="pane" id="pane-mail" hidden>
+      <div class="scroll"><div class="mail" id="mail"></div></div>
+    </section>
+
+    <!-- Майстер: запечатані листи -->
+    <section class="pane two" id="pane-notes" hidden>
+      <form class="compose" id="compose">
+        <h3>Новий лист</h3>
+        <label>Кому
+          <select id="to"></select>
+        </label>
+        <textarea id="note" rows="8" maxlength="1500" placeholder="Текст листа. Його побачить лише адресат."></textarea>
+        <label class="check"><input type="checkbox" id="quiet"> Не казати іншим, що прийшов лист</label>
+        <button type="submit" class="go">Запечатати й надіслати</button>
+        <p class="dim">Лист з'являється в адресата конвертом із печаткою. Інші бачать лише сповіщення «… отримує запечатаний лист» (або нічого, якщо стоїть галочка). Якщо гравця немає в кімнаті, лист дійде, щойно він зайде, поки відкрито Owlbear у тебе.</p>
+      </form>
+      <div class="scroll"><div class="sent" id="sent"></div></div>
+    </section>
+
+    <!-- Майстер: особисті нитки героїв -->
+    <section class="pane" id="pane-heroes" hidden>
+      <div class="scroll"><div id="heroes"></div></div>
+    </section>
+  </div>
+  <script type="module" src="/src/journal.js"></script>
+</body>
+</html>

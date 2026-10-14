@@ -13,6 +13,8 @@ export default defineConfig({
         hud: resolve(__dirname, "hud.html"),
         atlas: resolve(__dirname, "atlas.html"),
         map: resolve(__dirname, "map.html"),
+        journal: resolve(__dirname, "journal.html"),
+        envelope: resolve(__dirname, "envelope.html"),
       },
     },
   },

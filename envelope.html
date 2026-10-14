@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Запечатаний лист</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="env">
+  <div class="stage" id="stage">
+    <div class="who">Лише для твоїх очей</div>
+    <div class="letter" id="letter">
+      <div class="flap"></div>
+      <button type="button" class="seal" id="seal" title="Зламати печатку">✦</button>
+      <div class="hint" id="hint">Натисни на печатку</div>
+    </div>
+    <article class="paper" id="paper" hidden>
+      <div class="from">Від майстра</div>
+      <p id="text"></p>
+      <div class="when" id="when"></div>
+      <div class="row">
+        <button type="button" id="more" hidden>Наступний лист</button>
+        <button type="button" id="hide">Сховати лист</button>
+      </div>
+      <div class="foot">Лист лишається у вкладці «Мої листи» корабельного журналу.</div>
+    </article>
+  </div>
+  <script type="module" src="/src/envelope.js"></script>
+</body>
+</html>
