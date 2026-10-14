@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ребра Велетня</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="rd">
+  <div class="cave">
+    <header>
+      <div>
+        <div class="eyebrow">Острів кісток</div>
+        <h1>Ребра Велетня</h1>
+      </div>
+      <button type="button" class="close" id="close" title="Закрити">✕</button>
+    </header>
+
+    <p class="lead" id="lead">Вітер грає в кістках знайому мелодію — і замовкає. Біля ребер лежать п'ять речей, і кожна звучить по-своєму. Торкніться їх у тому порядку, у якому звучить мелодія.</p>
+
+    <div class="things" id="things"></div>
+
+    <div class="progress" id="progress"></div>
+    <div class="status" id="status"></div>
+
+    <section class="mem">
+      <h3>Уривки мелодії, які ви чули в дорозі</h3>
+      <div class="frags" id="frags"></div>
+    </section>
+
+    <section class="gmbar" id="gmbar" hidden>
+      <button type="button" id="hint">♪ Маркус насвистує всю мелодію</button>
+      <button type="button" id="reset">Почати спочатку</button>
+      <button type="button" id="closeAll">Закрити для всіх</button>
+    </section>
+  </div>
+  <script type="module" src="/src/riddle.js"></script>
+</body>
+</html>

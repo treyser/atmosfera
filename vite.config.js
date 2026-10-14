@@ -15,6 +15,7 @@ export default defineConfig({
         map: resolve(__dirname, "map.html"),
         journal: resolve(__dirname, "journal.html"),
         envelope: resolve(__dirname, "envelope.html"),
+        riddle: resolve(__dirname, "riddle.html"),
       },
     },
   },

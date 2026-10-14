@@ -120,3 +120,46 @@
   початку). Під кожним героєм — усі точки й події Атласу, де він
   згадується. Нитки зберігаються лише в браузері майстра; «Експорт /
   імпорт» переносить їх на інший комп'ютер.
+
+
+## Музика (Hoot) і мелодія Маркуса
+
+**Музика.** «Атмосфера» керує розширенням Hoot. У пульті майстра:
+«Додати треки «Атмосфери» в Hoot» (один раз на комп’ютері, з якого ведеш гру),
+далі галочка «Музика й звуки за настроєм сцени» — і кожен настрій сам вмикає
+свою музику та фон (хвилі, дощ, грозу, вітер, вогонь). Кнопки «Бій», «Бос»,
+«Тиша» перебивають настрій; повторне натискання повертає музику настрою.
+Файли не лежать у репозиторії: збірка на GitHub завантажує їх з OpenGameArt
+(scripts/fetch-audio.mjs) у /audio/.
+
+**Мелодія Маркуса.** В Атласі, блок «Мелодія Маркуса»: «Уривок 1/2/3» — гравці
+чують свист, а новий уривок записується в журнал (його можна переслухати).
+«Уся мелодія» — підказка, без запису. «Загадка Ребер Велетня — відкрити всім»
+відкриває вікно з п’ятьма предметами: кожен звучить однією нотою, і треба
+торкнутися їх у порядку мелодії. Помилка — мелодія обривається, спочатку.
+Звуки синтезуються в браузері, файлів не потрібно.
+
+### Автори музики й звуків
+
+- «Chest of Adventure» — Eldritch Grim, CC0 ([сторінка](https://opengameart.org/content/chest-of-adventure))
+- «A Sailor's Chant» — Thimras, CC0
+- «Sirens in Darkness» — cynicmusic, CC0 ([сторінка](https://opengameart.org/content/sirens-in-darkness))
+- «Mysterious Ambience» — cynicmusic, CC0 ([сторінка](https://opengameart.org/content/mysterious-ambience-song21))
+- «Battle Theme (Wolfgang)» — Wolfgang_, CC0 ([сторінка](https://opengameart.org/content/battle-theme-0))
+- «The Longing» — Ruhinre, CC0 ([сторінка](https://opengameart.org/content/the-longing))
+- «Rising Moon» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/fantasy-rising-moon))
+- «The Old Tower Inn» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/medieval-the-old-tower-inn))
+- «The Bard's Tale» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/medieval-the-bards-tale))
+- «Battle Theme A» — cynicmusic, CC0 ([сторінка](https://opengameart.org/content/battle-theme-a))
+- «Swordfight» — Kistol, CC0 ([сторінка](https://opengameart.org/content/swordfight))
+- «Boss Battle» — tcarisland, CC-BY 4.0 ([сторінка](https://opengameart.org/content/boss-battle-5))
+- «Long Winter» — Indieteur, CC0 ([сторінка](https://opengameart.org/content/long-winter))
+- «Icy Realm» — cynicmusic (The Cynic Project), CC0 ([сторінка](https://opengameart.org/content/icy-realm-seven-and-eight))
+- «The Monster Factory» — Eric Matyas, Soundimage.org, CC-BY 3.0 ([сторінка](https://opengameart.org/content/the-monster-factory-looping))
+- «Хвилі біля берега» — jasinski, CC0 ([сторінка](https://opengameart.org/content/beach-ocean-waves))
+- «Дощ» — Ove Melaa, CC0 ([сторінка](https://opengameart.org/content/rain-ambient-not-loopable-2-versions-available))
+- «Дощ і грім» — DoKashiteru, CC-BY 3.0 ([сторінка](https://opengameart.org/content/rain-and-thunder-loop))
+- «Вітер» — InspectorJ, AntumDeluge, CC-BY 3.0 ([сторінка](https://opengameart.org/content/wind-loop))
+- «Вогонь у каміні» — PagDev, CC0 ([сторінка](https://opengameart.org/content/fireplace-sound-loop))
+
+CC0 — без умов. CC-BY — використання з обов’язковою згадкою автора (вона тут).
