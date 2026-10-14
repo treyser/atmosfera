@@ -21,10 +21,12 @@ const sea = {
     wreck:  "07 kladov",
   },
   // Мапи-типи для Атласу незвіданих вод: необовʼязкові, кожна — окреме місце.
-  extra: Object.fromEntries(Array.from({ length: 12 }, (_, i) => {
-    const n = String(i + 1).padStart(2, "0");
-    return [`at${n}`, `at ${n}`];
-  })),
+  extra: Object.fromEntries(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27].map((i) => {
+      const n = String(i).padStart(2, "0");
+      return [`at${n}`, `at ${n}`];
+    }),
+  ),
   places: {
     lobby:  ["lobby"],
     world:  ["world"],
