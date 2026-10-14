@@ -16,6 +16,7 @@
         <h1>Атлас незвіданих вод</h1>
       </div>
       <div class="kinds" id="kinds"></div>
+      <button type="button" class="tool" id="roll" title="Кинути випадкову подію в дорозі просто зараз">🎲 Подія</button>
       <button type="button" class="tool" id="show" title="Відкрити гравцям мапу з білими точками, щоб вони запропонували курс">Мапу — гравцям</button>
       <div class="seen" id="seen"></div>
       <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
@@ -30,6 +31,31 @@
       </div>
 
       <aside id="card">
+        <section class="voyage" id="voyage" hidden>
+          <div class="vtitle">У дорозі</div>
+          <div class="vline" id="vline"></div>
+          <div class="vrow">
+            <button type="button" class="go small" id="onward">Пливемо далі</button>
+            <button type="button" class="tool" id="abort">Скасувати</button>
+          </div>
+        </section>
+
+        <div class="event" id="event" hidden>
+          <div class="meta"><span class="badge ev" id="ekind"></span><span id="etrip"></span></div>
+          <h2 id="ename"></h2>
+          <div class="tag" id="etag"></div>
+          <p class="what" id="ewhat"></p>
+          <section><h3>Перевірка / сутичка</h3><p id="echeck"></p></section>
+          <section id="ecards-box"><h3>Картки бестіарію</h3><div class="cards" id="ecards"></div></section>
+          <section><h3>Наслідки</h3><p id="eafter"></p></section>
+          <div class="roll" id="eroll"></div>
+          <div class="actions three">
+            <button type="button" class="go" id="eplay">Розіграти</button>
+            <button type="button" class="mark" id="eother">Інша подія</button>
+            <button type="button" class="mark" id="eskip">Без події</button>
+          </div>
+        </div>
+
         <div class="blank" id="blank">
           <div class="compass">✦</div>
           <p>Обери знак питання на мапі.</p>
@@ -46,12 +72,18 @@
           <section><h3>Нагорода</h3><p id="reward"></p></section>
           <section><h3>Зачіпка</h3><p id="hook"></p></section>
           <div class="mapline">Мапа: <b id="mapname"></b> · настрій: <b id="mood"></b></div>
+          <div class="trip" id="trip"></div>
           <div class="warn" id="warn" hidden></div>
           <div class="actions">
             <button type="button" class="go" id="go">Пливемо сюди</button>
             <button type="button" class="mark" id="mark">Відвідано</button>
           </div>
+          <button type="button" class="link" id="herebtn">Ми вже тут — поставити корабель без переходу</button>
         </div>
+        <section class="routebox">
+          <h3>Маршрут <span><button type="button" class="tool small" id="back">Крок назад</button> <button type="button" class="tool small" id="clear">Почати заново</button></span></h3>
+          <div class="rinfo" id="rinfo"></div>
+        </section>
         <section class="votes" id="votes-box">
           <h3>Пропозиції гравців <button type="button" class="tool small" id="reset" hidden>Скинути</button></h3>
           <div id="votes"></div>
