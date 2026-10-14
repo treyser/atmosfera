@@ -1,7 +1,8 @@
 // Атлас незвіданих вод: мапа світу з 51 точкою, картка локації й перехід «Пливемо сюди».
 import OBR from "@owlbear-rodeo/sdk";
 import "./atlas.css";
-import { ATLAS, VISITED, PRESETS } from "./state.js";
+import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE } from "./state.js";
+import { getVotes, onVotes, pips } from "./votes.js";
 import { PLACES, KINDS, REGIONS, ARCHETYPES, BESTIARY } from "./atlas-data.js";
 import { sceneMaps, match, pick } from "./director.js";
 
@@ -17,6 +18,8 @@ let chosen = null;            // номер вибраної точки
 let seen = new Set();         // відвідані
 let present = new Set();      // ключі мап, що є у відкритій сцені
 let off = new Set();          // вимкнені фільтром типи
+let votes = [];               // пропозиції гравців
+let here = null;              // де партія зараз
 
 $("map").src = import.meta.env.BASE_URL + "atlas-map.jpg";
 
@@ -28,7 +31,10 @@ OBR.onReady(async () => {
   build();
   const room = await OBR.room.getMetadata();
   seen = new Set(room[VISITED] ?? []);
-  OBR.room.onMetadataChange((m) => { seen = new Set(m[VISITED] ?? []); draw(); });
+  here = room[HERE] ?? null;
+  OBR.room.onMetadataChange((m) => { seen = new Set(m[VISITED] ?? []); here = m[HERE] ?? null; draw(); });
+  votes = await getVotes();
+  onVotes(async () => { votes = await getVotes(); draw(); });
   await scan();
   OBR.scene.onReadyChange(() => scan());
   draw();
@@ -71,6 +77,12 @@ function build() {
   }
 
   $("close").onclick = () => OBR.modal.close(ATLAS);
+  $("show").onclick = async () => {
+    await OBR.broadcast.sendMessage(MAP, {}, { destination: "REMOTE" });
+    $("show").textContent = "Відкрито гравцям ✓";
+    setTimeout(() => { $("show").textContent = "Мапу — гравцям"; }, 2500);
+  };
+  $("reset").onclick = () => OBR.broadcast.sendMessage(VOTE_RESET, {}, { destination: "ALL" });
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") OBR.modal.close(ATLAS);
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
@@ -117,7 +129,22 @@ function draw() {
     d.classList.toggle("hide", off.has(p.kind));
     d.classList.toggle("seen", seen.has(n));
     d.classList.toggle("on", n === chosen);
+    d.classList.toggle("here", n === here);
+    pips(d, votes.filter((v) => v.n === n));
   }
+  // Пропозиції гравців: хто куди хоче, клік — відкрити ту точку
+  $("reset").hidden = !votes.length;
+  $("votes").replaceChildren(...(votes.length ? votes.map((v) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "vote";
+    const place = PLACES.find((x) => x.n === v.n);
+    row.innerHTML = `<i></i><span></span><b>№${v.n}</b>`;
+    row.querySelector("i").style.background = v.color;
+    row.querySelector("span").textContent = `${v.name} → ${place?.name ?? ""}`;
+    row.onclick = () => { chosen = v.n; draw(); };
+    return row;
+  }) : [Object.assign(document.createElement("div"), { className: "none", textContent: "Поки порожньо. Кнопка «Мапу — гравцям» відкриє їм мапу з білими точками." })]));
   $("seen").innerHTML = `<b>${seen.size}</b> / ${PLACES.length}<span>відвідано</span>`;
 
   const p = PLACES.find((x) => x.n === chosen);

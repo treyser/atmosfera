@@ -140,3 +140,7 @@ html.clear{color-scheme:light; background:transparent}
 }
 .atlas-open span{display:block; font-weight:400; font-size:12px; color:var(--dim); margin-top:2px}
 .atlas-open:hover{background:linear-gradient(135deg, #3a301b, #222b3b)}
+
+.atlas-open.ping{border-color:#f3d595; box-shadow:0 0 0 1px #f3d595, 0 0 14px rgba(243,213,149,.35)}
+.atlas-open.ping span{color:#f3d595}
+#player .empty{padding-top:6px}

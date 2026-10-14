@@ -1,6 +1,7 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, normalize, isClear, hudOf } from "./state.js";
+import { setVote } from "./votes.js";
 import { travel } from "./director.js";
 import { SKSL, GRADE } from "./shader.js";
 
@@ -39,8 +40,14 @@ OBR.onReady(async () => {
     const room = await OBR.room.getMetadata();
     const seen = new Set(room[VISITED] ?? []);
     seen.add(p.n);
-    await OBR.room.setMetadata({ [VISITED]: [...seen].sort((a, b) => a - b) });
+    await OBR.room.setMetadata({ [VISITED]: [...seen].sort((a, b) => a - b), [HERE]: p.n });
+    // Допливли — старі пропозиції більше не актуальні
+    await OBR.broadcast.sendMessage(VOTE_RESET, {}, { destination: "ALL" });
   });
+
+  // Майстер відкриває гравцям мапу світу; кожен знімає свою пропозицію за сигналом
+  OBR.broadcast.onMessage(MAP, () => openMap());
+  OBR.broadcast.onMessage(VOTE_RESET, () => setVote(null).catch(() => {}));
 });
 
 async function refresh() {
@@ -237,4 +244,9 @@ async function hud(on) {
     disableClickAway: true,
     marginThreshold: 0,
   });
+}
+
+// Мапа світу для гравців — велике вікно поверх сцени
+async function openMap() {
+  await OBR.modal.open({ id: MAP, url: url("map.html"), width: 1280, height: 860 });
 }

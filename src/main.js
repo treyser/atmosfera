@@ -1,7 +1,8 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
 
@@ -18,8 +19,17 @@ OBR.onReady(async () => {
   const role = await OBR.player.getRole();
   if (role !== "GM") {
     $("player").hidden = false;
+    $("crew-map").onclick = () => OBR.modal.open({ id: MAP, url: url("map.html"), width: 1280, height: 860 });
     return;
   }
+  // Скільки гравців уже запропонували курс — видно просто на кнопці Атласу
+  const count = async () => {
+    const n = (await getVotes()).length;
+    $("atlas-sub").textContent = n ? `51 точка · пропозицій гравців: ${n}` : "51 точка на мапі світу";
+    $("atlas").classList.toggle("ping", n > 0);
+  };
+  onVotes(count);
+  count();
   $("gm").hidden = false;
   build();
 
