@@ -16,6 +16,7 @@
         <h1>Атлас незвіданих вод</h1>
       </div>
       <div class="kinds" id="kinds"></div>
+      <button type="button" class="tool" id="show" title="Відкрити гравцям мапу з білими точками, щоб вони запропонували курс">Мапу — гравцям</button>
       <div class="seen" id="seen"></div>
       <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
     </header>
@@ -51,6 +52,10 @@
             <button type="button" class="mark" id="mark">Відвідано</button>
           </div>
         </div>
+        <section class="votes" id="votes-box">
+          <h3>Пропозиції гравців <button type="button" class="tool small" id="reset" hidden>Скинути</button></h3>
+          <div id="votes"></div>
+        </section>
       </aside>
     </main>
   </div>

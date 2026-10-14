@@ -12,6 +12,7 @@ export default defineConfig({
         title: resolve(__dirname, "title.html"),
         hud: resolve(__dirname, "hud.html"),
         atlas: resolve(__dirname, "atlas.html"),
+        map: resolve(__dirname, "map.html"),
       },
     },
   },
