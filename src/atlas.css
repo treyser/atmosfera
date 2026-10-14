@@ -211,3 +211,6 @@ svg.route .ship text{fill:#f3d595; font-size:17px}
 .routebox{margin-top:22px}
 .routebox h3{display:flex; align-items:center; justify-content:space-between; gap:8px}
 .rinfo{font-size:13px; line-height:1.5; color:var(--fg)}
+
+/* Що побачать гравці в титрі (без розгадки) */
+.players { margin: 6px 0 10px; padding: 5px 9px; border-left: 2px solid #8fb7d6; background: rgba(143,183,214,.10); color: #b9d3e6; font-size: 12.5px; border-radius: 0 6px 6px 0; }

@@ -122,8 +122,8 @@ function build() {
     if (!ev) return;
     const to = adhoc ? null : voyage?.to;
     await OBR.broadcast.sendMessage(ATLAS, {
-      kind: "event", map: ev.map, mood: ev.mood, big: ev.name,
-      small: to ? `У дорозі до №${to}` : EVENT_KINDS[ev.kind],
+      kind: "event", map: ev.map, mood: ev.mood, big: ev.show,
+      small: "У відкритому морі",
     }, { destination: "LOCAL" });
     if (adhoc) adhoc = null;
     else await saveVoyage({ ...voyage, played: true });
@@ -194,7 +194,7 @@ async function saveVoyage(v) {
 
 // Перехід на точку: фоновий скрипт майстра веде камеру, а потім дописує точку в маршрут
 async function arrive(p) {
-  await OBR.broadcast.sendMessage(ATLAS, { kind: "arrive", n: p.n, map: p.map, mood: p.mood, big: p.name, small: p.tag }, { destination: "LOCAL" });
+  await OBR.broadcast.sendMessage(ATLAS, { kind: "arrive", n: p.n, map: p.map, mood: p.mood, big: p.show, small: REGIONS[p.r] }, { destination: "LOCAL" });
   await OBR.modal.close(ATLAS);
 }
 
@@ -273,6 +273,7 @@ function draw() {
     $("etrip").textContent = adhoc ? "Просто зараз" : `Між №${voyage.from} і №${voyage.to}`;
     $("ename").textContent = ev.name;
     $("etag").textContent = ev.tag;
+    $("eshow").textContent = `Гравці побачать титр: «${ev.show}» · У відкритому морі`;
     $("ewhat").textContent = ev.what;
     $("echeck").textContent = ev.check;
     $("eafter").textContent = ev.after;
@@ -294,6 +295,7 @@ function draw() {
   $("no").textContent = `${p.n}`;
   $("name").textContent = p.name;
   $("tag").textContent = p.tag;
+  $("pshow").textContent = `Гравці побачать титр: «${p.show}» · ${REGIONS[p.r]}`;
   $("what").textContent = p.what;
   $("fight").textContent = p.fight;
   cardsFor(p.fight, "cards-box", "cards");
