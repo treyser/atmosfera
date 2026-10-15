@@ -20,6 +20,7 @@
         <button type="button" data-tab="mail">Мої листи <b id="unread" hidden></b></button>
         <button type="button" data-tab="notes" data-gm hidden>Листи гравцям</button>
         <button type="button" data-tab="heroes" data-gm hidden>Нитки героїв</button>
+        <button type="button" data-tab="recap" data-gm hidden>Підсумок сесії</button>
       </nav>
       <div class="day" id="day"></div>
       <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
@@ -72,6 +73,25 @@
     <!-- Майстер: особисті нитки героїв -->
     <section class="pane" id="pane-heroes" hidden>
       <div class="scroll"><div id="heroes"></div></div>
+    </section>
+
+    <!-- Майстер: підсумок сесії з записів журналу -->
+    <section class="pane" id="pane-recap" hidden>
+      <div class="scroll">
+        <div class="recap">
+          <div class="rtop">
+            <label>Сесія <select id="rc-sess"></select></label>
+            <span class="dim" id="rc-info"></span>
+          </div>
+          <div class="rparts" id="rc-parts"></div>
+          <textarea id="rc-text" rows="15" maxlength="3000" spellcheck="false"></textarea>
+          <div class="wrow">
+            <span class="dim" id="rc-hint">Текст зібрано з журналу — його можна правити. Сесії розділяються там, де між записами минуло понад 6 годин.</span>
+            <button type="button" class="ghost" id="rc-copy">Скопіювати</button>
+            <button type="button" class="go" id="rc-post">Записати в журнал як «Минулого разу…»</button>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
   <script type="module" src="/src/journal.js"></script>
