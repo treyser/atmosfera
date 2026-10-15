@@ -149,3 +149,4 @@ html.clear{color-scheme:light; background:transparent}
 .log-open:hover{background:linear-gradient(135deg, #1f2c3b, #222b3b)}
 .steps.three{grid-template-columns:1fr 1fr 1fr}
 .steps button.on{border-color:var(--now); background:#3a3524; color:var(--now)}
+#mus-add.ping{border-color:#f3d595; color:#f3d595; box-shadow:0 0 0 1px #f3d595, 0 0 12px rgba(243,213,149,.35)}

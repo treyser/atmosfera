@@ -2,6 +2,9 @@
 // за цими адресами (scripts/fetch-audio.mjs) і кладе поруч із сайтом у /audio/.
 // Ліцензії: CC0 — без умов; CC-BY — треба згадати автора (список — у README).
 
+// Міняється щоразу, коли змінюється список треків: пульт підкаже додати нові в Hoot
+export const TRACKS_VERSION = "2026-10-15b";
+
 export const MUSIC_VOL = 0.6;
 export const BG_VOL = 0.35;
 
@@ -16,7 +19,7 @@ export const PL = {
   boss: "Атмосфера · Бос (темний)",
   cold: "Атмосфера · Холод",
   tension: "Атмосфера · Напруга",
-  waves: "Атмосфера · Фон: хвилі",
+  waves: "Атмосфера · Фон: море",
   rainbg: "Атмосфера · Фон: дощ",
   thunder: "Атмосфера · Фон: гроза",
   wind: "Атмосфера · Фон: вітер",
@@ -60,8 +63,8 @@ export const TRACKS = [
   { pl: "tension", file: "tension-1.ogg", name: "The Monster Factory", author: "Eric Matyas, Soundimage.org", license: "CC-BY 3.0",
     url: "https://opengameart.org/sites/default/files/the_monster_factory_looping_0.ogg", page: "https://opengameart.org/content/the-monster-factory-looping" },
 
-  { pl: "waves", file: "waves.flac", name: "Хвилі біля берега", author: "jasinski", license: "CC0", bg: true,
-    url: "https://opengameart.org/sites/default/files/wave_01_cc0-18363__jasinski__alkaibeach.flac", page: "https://opengameart.org/content/beach-ocean-waves" },
+  { pl: "waves", file: "waves-long.mp3", name: "Хвилі (5 хвилин)", author: "RandomMind", license: "CC0", bg: true,
+    url: "https://opengameart.org/sites/default/files/VistulaShort_0.mp3", page: "https://opengameart.org/content/sea-and-river-wave-sounds" },
   { pl: "rainbg", file: "rain.ogg", name: "Дощ", author: "Ove Melaa", license: "CC0", bg: true,
     url: "https://opengameart.org/sites/default/files/Ove%20Melaa%20-%20Rainy%20%28NOT%20loopable%29%20Long%20Version.ogg", page: "https://opengameart.org/content/rain-ambient-not-loopable-2-versions-available" },
   { pl: "thunder", file: "thunder.wav", name: "Дощ і грім", author: "DoKashiteru", license: "CC-BY 3.0", bg: true,

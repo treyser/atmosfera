@@ -7,6 +7,7 @@ import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
 import { inbox } from "./notes.js";
 import { addAll } from "./hoot.js";
+import { TRACKS_VERSION } from "./tracks.js";
 import { INBOX } from "./log.js";
 
 const $ = (id) => document.getElementById(id);
@@ -201,12 +202,21 @@ async function musicPanel() {
   $("mus-battle").onclick = () => save({ override: music.override === "battle" ? null : "battle" });
   $("mus-boss").onclick = () => save({ override: music.override === "boss" ? null : "boss" });
   $("mus-quiet").onclick = () => save({ override: music.override === "silence" ? null : "silence" });
+  // Нові треки, яких Hoot у цьому браузері ще не бачив, — кнопка підсвічується
+  const KEY = "atmosfera.hoot-tracks";
+  const fresh = () => { try { return localStorage.getItem(KEY) !== TRACKS_VERSION; } catch { return true; } };
+  const label = () => {
+    $("mus-add").textContent = fresh() ? "Є нові треки — додати в Hoot" : "Додати треки «Атмосфери» в Hoot";
+    $("mus-add").classList.toggle("ping", fresh());
+  };
+  label();
   $("mus-add").onclick = async () => {
     $("mus-add").disabled = true;
     $("mus-add").textContent = "Додаю…";
     await addAll();
+    try { localStorage.setItem(KEY, TRACKS_VERSION); } catch { /* */ }
     $("mus-add").textContent = "Додано — перевір плейлисти в Hoot";
-    setTimeout(() => { $("mus-add").disabled = false; $("mus-add").textContent = "Додати треки «Атмосфери» в Hoot"; }, 4000);
+    setTimeout(() => { $("mus-add").disabled = false; label(); }, 4000);
   };
   show();
 }

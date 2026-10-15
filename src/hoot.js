@@ -45,12 +45,12 @@ let busy = Promise.resolve();
 export function setTarget(target) {
   busy = busy.then(async () => {
     const next = { music: target.music ?? null, bg: [...new Set(target.bg ?? [])] };
-    const gone = [
-      ...(now.music && now.music !== next.music ? [now.music] : []),
-      ...now.bg.filter((k) => !next.bg.includes(k)),
-    ];
+    // Гасимо все «своє», чого немає в цілі — навіть те, що грало ще до перезавантаження сторінки
+    const keep = new Set([next.music, ...next.bg].filter(Boolean));
+    const gone = Object.keys(PL).filter((k) => !keep.has(k));
     for (const k of gone) await fadeOut(k);
-    if (gone.length) await new Promise((r) => setTimeout(r, FADE_MS));
+    const changed = next.music !== now.music || now.bg.some((k) => !keep.has(k));
+    if (changed) await new Promise((r) => setTimeout(r, FADE_MS));
     if (next.music && next.music !== now.music) await play(next.music);
     for (const k of next.bg) if (!now.bg.includes(k)) await play(k);
     now = next;
