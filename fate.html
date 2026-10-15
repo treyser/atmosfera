@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="uk" class="clear">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Кидок долі</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="fate">
+  <div class="fbox" id="box">
+    <div class="fq" id="q"></div>
+    <div class="die">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <!-- d20 у профіль: шестикутник з гранями; замість чисел — знаки -->
+        <polygon class="f0" points="50,4 90,27 90,73 50,96 10,73 10,27"/>
+        <polygon class="f1" points="50,22 74,62 26,62"/>
+        <polyline class="e" points="50,4 50,22 10,27 26,62 10,73 50,96 74,62 90,73 90,27 50,22"/>
+        <polyline class="e" points="50,4 26,62 50,96"/>
+        <polyline class="e" points="50,4 74,62"/>
+        <polyline class="e" points="10,27 50,22 90,27"/>
+        <polyline class="e" points="26,62 10,73 M 74,62 90,73"/>
+        <text class="rune" x="50" y="51" text-anchor="middle">ᛟ</text>
+      </svg>
+    </div>
+    <div class="fv" id="verdict"></div>
+    <div class="fs" id="sub"></div>
+  </div>
+  <script type="module" src="/src/fate.js"></script>
+</body>
+</html>

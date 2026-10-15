@@ -18,6 +18,7 @@ export default defineConfig({
         riddle: resolve(__dirname, "riddle.html"),
         zone: resolve(__dirname, "zone.html"),
         npc: resolve(__dirname, "npc.html"),
+        fate: resolve(__dirname, "fate.html"),
         "npc-menu": resolve(__dirname, "npc-menu.html"),
       },
     },

@@ -34,6 +34,15 @@
     <button type="button" id="mus-add" class="wide">Додати треки «Атмосфери» в Hoot</button>
     <div class="hint">Один раз на комп'ютері, з якого ведеш гру: треки з'являться в Hoot як плейлисти «Атмосфера · …». Hoot має бути встановлено в кімнаті.</div>
 
+    <span class="lbl">Кидок долі · d20 потай</span>
+    <input type="text" id="fate-q" maxlength="80" placeholder="Що вирішує доля (необов'язково): «Чи витримає щогла?»">
+    <div class="faterow">
+      <span>Успіх від</span><input type="number" id="fate-dc" min="2" max="20" value="11">
+      <button type="button" id="fate-roll" class="hushgo" style="flex:1">🎲 Кинути</button>
+    </div>
+    <label class="check"><input type="checkbox" id="fate-show" checked> Показати гравцям кубик і настрій (без числа)</label>
+    <div class="fatelog" id="fate-log"></div>
+
     <span class="lbl">Таємний звук · для уважних</span>
     <div class="hushgrid" id="hush-sounds"></div>
     <div class="hushdirs" id="hush-dirs"></div>
