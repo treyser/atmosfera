@@ -65,8 +65,10 @@ input:focus,textarea:focus,select:focus{outline:none; border-color:var(--gold)}
 .ware.on{border-color:var(--gold); border-top-color:var(--r); box-shadow:0 0 0 1px var(--gold), 0 8px 24px rgba(0,0,0,.4)}
 .ware.out{opacity:.45}
 .r-uncommon{--r:var(--uncommon)} .r-rare{--r:var(--rare)} .r-trade{--r:var(--trade)}
-.wimg{height:96px; border-radius:8px; display:grid; place-items:center; font-size:44px; background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.08), rgba(0,0,0,.25))}
-.wimg img,.dimg img,.eic img{max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+.wimg{height:124px; border-radius:8px; display:grid; place-items:center; font-size:44px; background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.08), rgba(0,0,0,.25))}
+.wimg,.dimg,.eic{position:relative; overflow:hidden}
+.wimg img,.dimg img,.eic img{position:absolute; inset:6px; width:calc(100% - 12px); height:calc(100% - 12px); object-fit:contain; transform:scale(1.12); filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+.eic img{inset:2px; width:calc(100% - 4px); height:calc(100% - 4px)}
 .wname{font-family:var(--serif); font-weight:700; font-size:17px; line-height:1.1; min-height:2.2em}
 .wfoot{display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px}
 .wprice{color:#f3d595; font-weight:700}
@@ -74,7 +76,7 @@ input:focus,textarea:focus,select:focus{outline:none; border-color:var(--gold)}
 .closed{color:var(--dim); font-style:italic; text-align:center; padding:60px 10px}
 
 .detail{padding:22px 20px; border-left:1px solid var(--line); background:rgba(0,0,0,.2); overflow:auto; display:flex; flex-direction:column; gap:6px}
-.dimg{height:170px; border-radius:12px; display:grid; place-items:center; font-size:76px; background:radial-gradient(circle at 50% 45%, rgba(232,194,122,.12), rgba(0,0,0,.3))}
+.dimg{height:200px; border-radius:12px; display:grid; place-items:center; font-size:76px; background:radial-gradient(circle at 50% 45%, rgba(232,194,122,.12), rgba(0,0,0,.3))}
 .dname{font-family:var(--serif); font-size:28px; font-weight:700; line-height:1.05; margin-top:8px}
 .drar{--r:var(--common); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--r)}
 .ddesc{margin:6px 0 0; line-height:1.5}
