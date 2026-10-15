@@ -204,3 +204,55 @@ body.npcm input[type=text]{margin-bottom:6px}
 @keyframes npcin{0%{opacity:0; transform:translateX(-40px)} 100%{opacity:1; transform:none}}
 @keyframes npcout{0%{opacity:1} 100%{opacity:0; transform:translateX(-20px)}}
 @keyframes npcline{0%{width:0} 100%{width:260px}}
+
+/* --- кидок долі --- */
+.fate{padding:0; margin:0; background:transparent; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center}
+.fbox{display:flex; flex-direction:column; align-items:center; gap:6px; padding:18px 40px 22px; opacity:0;
+  background:radial-gradient(ellipse 50% 50% at center, rgba(4,6,12,.82) 0%, rgba(4,6,12,.55) 45%, rgba(4,6,12,0) 72%)}
+.fbox.roll{animation:fin .5s ease forwards}
+.fbox.out{animation:fout .8s ease forwards}
+.fq{font-family:"Cormorant Garamond",Georgia,serif; font-style:italic; font-size:20px; color:#d9d1b8; text-shadow:0 1px 6px #000}
+.die{position:relative; width:128px; height:128px}
+.die svg{position:relative; width:100%; height:100%; overflow:visible}
+.glow{position:absolute; inset:-30px; border-radius:50%; opacity:0; background:radial-gradient(circle, var(--gc, rgba(232,194,122,.55)), transparent 65%); transition:opacity .6s}
+.die .f0{fill:#1b2130; stroke:#d8c690; stroke-width:2.2; stroke-linejoin:round}
+.die .f1{fill:#262e40; stroke:#d8c690; stroke-width:1.6; stroke-linejoin:round}
+.die .e{fill:none; stroke:rgba(216,198,144,.55); stroke-width:1.1; stroke-linejoin:round}
+.die .rune{font-size:17px; fill:#f1e3b5; font-family:serif}
+.fbox.roll .die svg{animation:tumble 1.7s cubic-bezier(.25,.7,.3,1) both}
+.fbox.done .glow{opacity:1}
+.fv{font-family:"Cormorant Garamond",Georgia,serif; font-weight:700; font-size:40px; letter-spacing:.05em; color:#fbf3dc;
+  text-shadow:0 2px 8px rgba(0,0,0,.95), 0 0 30px rgba(0,0,0,.8); opacity:0; transform:translateY(8px); transition:opacity .6s, transform .6s}
+.fs{font-family:"Cormorant Garamond",Georgia,serif; font-size:17px; letter-spacing:.24em; text-transform:uppercase; color:#cfc6ab; opacity:0; transition:opacity .8s .3s}
+.fbox.done .fv{opacity:1; transform:none}
+.fbox.done .fs{opacity:1}
+.fbox.crit{--gc:rgba(255,214,120,.8)}
+.fbox.crit .fv{color:#ffe7a6; text-shadow:0 0 22px rgba(255,200,90,.7), 0 2px 8px #000}
+.fbox.crit .f0,.fbox.crit .f1{stroke:#ffe08a}
+.fbox.good{--gc:rgba(232,194,122,.45)}
+.fbox.bad{--gc:rgba(170,50,40,.5)}
+.fbox.bad .fv{color:#e7c2b8}
+.fbox.bad .f0,.fbox.bad .f1{stroke:#b5574a}
+.fbox.fumble{--gc:rgba(150,20,20,.8)}
+.fbox.fumble .fv{color:#ff9d8f; text-shadow:0 0 22px rgba(200,30,20,.7), 0 2px 8px #000}
+.fbox.fumble .f0,.fbox.fumble .f1{stroke:#c03a2b}
+@keyframes tumble{
+  0%{transform:translateY(-60px) rotate(-200deg) scale(.6)}
+  45%{transform:translateY(6px) rotate(40deg) scale(1.05)}
+  65%{transform:translateY(-10px) rotate(-12deg) scale(1)}
+  82%{transform:translateY(2px) rotate(5deg)}
+  100%{transform:none}
+}
+@keyframes fin{0%{opacity:0} 100%{opacity:1}}
+@keyframes fout{0%{opacity:1} 100%{opacity:0}}
+
+/* пульт: кидок долі */
+.faterow{display:flex; gap:6px; align-items:center}
+.faterow input[type=number]{width:64px; font:inherit; color:var(--fg); background:#3c3c47; border:1px solid var(--line); border-radius:6px; padding:6px 8px}
+.faterow span{font-size:12.5px; color:var(--dim)}
+.fatelog{display:flex; flex-direction:column; gap:3px; margin-top:6px; font-size:12.5px}
+.fatelog div{display:flex; gap:8px; align-items:baseline}
+.fatelog b{width:26px; text-align:right; font-size:15px}
+.fatelog .crit b,.fatelog .good b{color:#e8c27a}
+.fatelog .bad b,.fatelog .fumble b{color:#ff8a7a}
+.fatelog span{color:var(--dim)}

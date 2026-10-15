@@ -35,6 +35,8 @@ export const RIDDLE_TAP = `${ID}/riddle-tap`;   // канал: хтось тор
 export const ZONE = `${ID}/zone`;     // ефект зони на намальованій фігурі — у метаданих фігури: { fx, cond, saved }
 export const NPC = `${ID}/npc`;       // канал і вікно картки NPC; на токені — { name, sub }
 export const NPC_CARD = `${ID}/npc-card`; // що показати в картці — у метаданих гравця
+export const FATE = `${ID}/fate`;     // канал і вікно кидка долі
+export const FATE_CARD = `${ID}/fate-card`; // що показати у вікні кидка — у метаданих гравця
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

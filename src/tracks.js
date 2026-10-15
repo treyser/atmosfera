@@ -88,6 +88,8 @@ export const SFX = [
     url: "https://bigsoundbank.com/UPLOAD/mp3/0486.mp3", page: "https://bigsoundbank.com/grunts-s0486.html" },
   { k: "breath",  file: "sfx-breath.mp3",  off: 3.5, dur: 6.5, gain: 2.0, name: "Man breathing",
     url: "https://bigsoundbank.com/UPLOAD/mp3/2195.mp3", page: "https://bigsoundbank.com/man-breathing-s2195.html" },
+  { k: "dice",    file: "sfx-dice.mp3",    off: 0,   dur: 1.1, gain: 0.7, name: "Four dice on wooden table",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/0582.mp3", page: "https://bigsoundbank.com/four-dice-on-wooden-table-s0582.html" },
 ];
 
 // Настрій сцени → музика й фонові звуки

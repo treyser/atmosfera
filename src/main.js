@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -147,6 +147,7 @@ function build() {
   $("gm-log").onclick = openJournal;
   musicPanel();
   hushPanel();
+  fatePanel();
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 
@@ -281,6 +282,29 @@ function hushPanel() {
     picked.clear();
     $("hush-text").value = "";
     who();
+  };
+}
+
+// Кидок долі: d20 бачить лише майстер, гравцям — анімація кубика й настрій
+function fatePanel() {
+  const NAMES = { crit: "доля усміхається", good: "вдача", bad: "невдача", fumble: "доля відвернулася" };
+  const log = [];
+  $("fate-roll").onclick = async () => {
+    const dc = Math.max(2, Math.min(20, Number($("fate-dc").value) || 11));
+    const n = 1 + Math.floor(Math.random() * 20);
+    const tier = n === 20 ? "crit" : n === 1 ? "fumble" : n >= dc ? "good" : "bad";
+    const q = $("fate-q").value.trim().slice(0, 80);
+    log.unshift({ n, dc, tier, q, show: $("fate-show").checked });
+    log.length = Math.min(log.length, 5);
+    $("fate-log").replaceChildren(...log.map((x) => {
+      const row = document.createElement("div");
+      row.className = x.tier;
+      row.innerHTML = "<b></b><span></span>";
+      row.querySelector("b").textContent = String(x.n);
+      row.querySelector("span").textContent = `${NAMES[x.tier]} · поріг ${x.dc}${x.q ? ` · ${x.q}` : ""}${x.show ? "" : " · потай"}`;
+      return row;
+    }));
+    if ($("fate-show").checked) await OBR.broadcast.sendMessage(FATE, { tier, q }, { destination: "ALL" });
   };
 }
 

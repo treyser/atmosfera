@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -65,6 +65,7 @@ OBR.onReady(async () => {
     });
   } catch (err) { console.error("Картка персонажа: меню не зареєструвалось", err); }
   OBR.broadcast.onMessage(NPC, (event) => showNpc(event.data));
+  OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -412,6 +413,27 @@ async function showNpc(data) {
     anchorPosition: { top: h - 200, left: 20 },
     anchorOrigin: { horizontal: "LEFT", vertical: "TOP" },
     transformOrigin: { horizontal: "LEFT", vertical: "TOP" },
+    hidePaper: true,
+    disableClickAway: true,
+    marginThreshold: 0,
+  });
+}
+
+// Кидок долі: кубик і настрій посеред екрана
+async function showFate(data) {
+  const tier = ["crit", "good", "bad", "fumble"].includes(data?.tier) ? data.tier : "good";
+  await OBR.popover.close(FATE).catch(() => {});
+  await OBR.player.setMetadata({ [FATE_CARD]: { tier, q: String(data?.q ?? "").slice(0, 80), at: Date.now() } });
+  const [w, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
+  await OBR.popover.open({
+    id: FATE,
+    url: url("fate.html"),
+    width: Math.min(640, w - 40),
+    height: 300,
+    anchorReference: "POSITION",
+    anchorPosition: { top: h * 0.42, left: w / 2 },
+    anchorOrigin: { horizontal: "CENTER", vertical: "CENTER" },
+    transformOrigin: { horizontal: "CENTER", vertical: "CENTER" },
     hidePaper: true,
     disableClickAway: true,
     marginThreshold: 0,
