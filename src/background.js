@@ -157,6 +157,8 @@ OBR.onReady(async () => {
       if (music.override === "silence") return setTarget({ music: null, bg: [] });
       if (music.override) return setTarget({ ...targetForMood(preset, music.sea !== false), music: music.override });
       if (music.auto && preset) return setTarget(targetForMood(preset, music.sea !== false));
+      // Автоматика вимкнена, а бій чи бос щойно скінчились — гасимо їхню музику, а не лишаємо грати
+      return setTarget({ music: null, bg: [] });
     };
     music = (await OBR.room.getMetadata())[MUSIC] ?? {};
     OBR.room.onMetadataChange((m) => {
@@ -169,7 +171,7 @@ OBR.onReady(async () => {
       const p = normalize(m[STATE]).preset;
       if (p === preset) return;
       preset = p;
-      follow();
+      if (music.auto || music.override) follow();   // без автоматики настрій музики не чіпає
     };
     OBR.scene.onMetadataChange(takeMood);
     if (await OBR.scene.isReady()) takeMood(await OBR.scene.getMetadata());
