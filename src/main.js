@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -9,6 +9,7 @@ import { inbox } from "./notes.js";
 import { addAll } from "./hoot.js";
 import { TRACKS_VERSION } from "./tracks.js";
 import { INBOX } from "./log.js";
+import { SOUNDS, DIRS, playSecret } from "./sfx.js";
 
 const $ = (id) => document.getElementById(id);
 const url = (p) => new URL(import.meta.env.BASE_URL + p, window.location.origin).href;
@@ -145,6 +146,7 @@ function build() {
   $("atlas").onclick = () => OBR.modal.open({ id: ATLAS, url: url("atlas.html"), width: 1280, height: 860 });
   $("gm-log").onclick = openJournal;
   musicPanel();
+  hushPanel();
   $("prev").onclick = () => step(-1);
   $("next").onclick = () => step(1);
 
@@ -219,6 +221,67 @@ async function musicPanel() {
     setTimeout(() => { $("mus-add").disabled = false; label(); }, 4000);
   };
   show();
+}
+
+// Таємний звук: майстер обирає звук, напрямок і тих, хто пройшов перевірку; чують лише вони
+function hushPanel() {
+  let sound = SOUNDS[0].k;
+  let dir = "front";
+  const picked = new Set();
+  const mark = (box, key) => { for (const b of $(box).children) b.classList.toggle("on", b.dataset.k === key); };
+
+  for (const s of SOUNDS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = s.k;
+    b.title = s.hear;
+    b.innerHTML = "<i></i><span></span>";
+    b.querySelector("i").textContent = s.icon;
+    b.querySelector("span").textContent = s.name;
+    b.onclick = () => { sound = s.k; mark("hush-sounds", sound); };
+    $("hush-sounds").append(b);
+  }
+  for (const d of DIRS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = d.k;
+    b.textContent = d.name;
+    b.onclick = () => { dir = d.k; mark("hush-dirs", dir); };
+    $("hush-dirs").append(b);
+  }
+  mark("hush-sounds", sound);
+  mark("hush-dirs", dir);
+
+  const who = async () => {
+    const players = await OBR.party.getPlayers();
+    for (const id of [...picked]) if (!players.some((p) => p.id === id)) picked.delete(id);
+    $("hush-who").replaceChildren(...(players.length ? players.map((p) => {
+      const l = document.createElement("label");
+      l.className = picked.has(p.id) ? "on" : "";
+      l.innerHTML = '<input type="checkbox"><i></i><span></span>';
+      l.querySelector("i").style.setProperty("--c", p.color);
+      l.querySelector("span").textContent = p.name;
+      const box = l.querySelector("input");
+      box.checked = picked.has(p.id);
+      box.onchange = () => { if (box.checked) picked.add(p.id); else picked.delete(p.id); l.classList.toggle("on", box.checked); };
+      return l;
+    }) : [Object.assign(document.createElement("div"), { className: "empty", textContent: "У кімнаті немає гравців" })]));
+  };
+  OBR.party.onChange(who);
+  who();
+
+  $("hush-try").onclick = () => playSecret(sound, dir);
+  $("hush-send").onclick = async () => {
+    if (!picked.size) { $("hush-note").textContent = "Спершу позначте, хто почув."; return; }
+    const players = await OBR.party.getPlayers();
+    const names = players.filter((p) => picked.has(p.id)).map((p) => p.name);
+    await OBR.broadcast.sendMessage(HUSH, { to: [...picked], s: sound, dir, t: $("hush-text").value.trim().slice(0, 120) }, { destination: "REMOTE" });
+    $("hush-note").textContent = `Почули: ${names.join(", ")}. Решта нічого не помітила.`;
+    // після надсилання — чистий аркуш для наступної перевірки
+    picked.clear();
+    $("hush-text").value = "";
+    who();
+  };
 }
 
 function openJournal() {

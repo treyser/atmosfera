@@ -91,6 +91,7 @@ export function plain(e) {
   if (e.k === "a") return `${day}Прибули до №${e.n}: «${e.t}»${e.s ? ` (${e.s})` : ""}.`;
   if (e.k === "m") return `${day}Почули уривок мелодії №${e.n}.`;
   if (e.k === "r") return `${day}${e.t}.`;
+  if (e.k === "s") return `${day}Минулого разу:\n${e.t}`;
   if (e.k === "e") return `${day}${e.s ? e.s + ": " : ""}«${e.t}».`;
   return `${day}${e.w ?? "Майстер"}: ${e.t}`;
 }

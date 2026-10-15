@@ -2,7 +2,8 @@
 import OBR from "@owlbear-rodeo/sdk";
 import "./journal.css";
 import { JOURNAL, LOG_ADD, LOG_DEL, LOG_REQ, ROUTE } from "./state.js";
-import { saveLocal, bytes, plain, book, BOOK, INBOX, NOTES, LIMIT, MAX_TEXT } from "./log.js";
+import { saveLocal, bytes, plain, book, appendLog, BOOK, INBOX, NOTES, LIMIT, MAX_TEXT } from "./log.js";
+import { sessions, recap, PARTS } from "./recap.js";
 import { inbox, openEnvelope, sentNotes, sendNote, forgetNote } from "./notes.js";
 import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
@@ -108,6 +109,36 @@ function build() {
     setTimeout(() => { $("copy").textContent = "Скопіювати журнал"; }, 2500);
   };
 
+  // Підсумок сесії
+  const parts = new Set(PARTS.filter((x) => x.on).map((x) => x.k));
+  $("rc-parts").replaceChildren(...PARTS.map((x) => {
+    const l = document.createElement("label");
+    l.className = parts.has(x.k) ? "on" : "";
+    l.innerHTML = '<input type="checkbox"><span></span>';
+    l.querySelector("span").textContent = x.name;
+    const box = l.querySelector("input");
+    box.checked = parts.has(x.k);
+    box.onchange = () => { if (box.checked) parts.add(x.k); else parts.delete(x.k); l.classList.toggle("on", box.checked); makeRecap(parts); };
+    return l;
+  }));
+  $("rc-sess").onchange = () => makeRecap(parts);
+  recapParts = parts;
+  $("rc-copy").onclick = async () => {
+    try { await navigator.clipboard.writeText($("rc-text").value); $("rc-copy").textContent = "Скопійовано ✓"; }
+    catch { $("rc-text").select(); $("rc-copy").textContent = "Виділено — Ctrl+C"; }
+    setTimeout(() => { $("rc-copy").textContent = "Скопіювати"; }, 2500);
+  };
+  $("rc-post").onclick = async () => {
+    const t = $("rc-text").value.trim().slice(0, 3000);
+    if (!t) return;
+    $("rc-post").disabled = true;
+    await appendLog({ k: "s", t, d: today() });
+    log = book();
+    drawLog(true);
+    $("rc-post").textContent = "Записано ✓ — гравці побачать у журналі";
+    setTimeout(() => { $("rc-post").disabled = false; $("rc-post").textContent = "Записати в журнал як «Минулого разу…»"; }, 3000);
+  };
+
   $("compose").onsubmit = async (e) => {
     e.preventDefault();
     const t = $("note").value.trim();
@@ -128,6 +159,7 @@ function go(next) {
     // нитки героїв вантажимо лише в майстра: окремий шматок коду, гравцям він не потрібен
     import("./heroes.js").then((m) => m.mount($("heroes")));
   }
+  if (tab === "recap") drawRecap();
   if (tab === "log") $("log-scroll").scrollTop = $("log-scroll").scrollHeight;
 }
 
@@ -143,7 +175,18 @@ function entry(e, archived) {
   day.textContent = e.d ? `День ${e.d}` : "";
   const body = document.createElement("div");
   body.className = "ebody";
-  if (e.k === "m" || e.k === "r") {
+  if (e.k === "s") {
+    // підсумок попередньої сесії
+    const t = document.createElement("div");
+    t.className = "etitle";
+    // перший рядок «Минулого разу (дні …):» стає заголовком картки
+    const [first, ...rest] = String(e.t).split("\n");
+    const head = /^Минулого разу/.test(first);
+    t.textContent = `📜 ${head ? first.replace(/:\s*$/, "") : "Минулого разу…"}`;
+    const p = document.createElement("p");
+    p.textContent = head ? rest.join("\n") : e.t;
+    body.append(t, p);
+  } else if (e.k === "m" || e.k === "r") {
     // уривок мелодії Маркуса — його можна переслухати; розгадана загадка Ребер
     const t = document.createElement("div");
     t.className = "etitle tune";
@@ -206,6 +249,30 @@ function drawLog(scroll) {
   }
   $("day").innerHTML = `<b>День ${today()}</b><span>плавання</span>`;
   if (scroll || atEnd) box.scrollTop = box.scrollHeight;
+}
+
+// --- майстер: підсумок сесії ---
+
+let recapParts = new Set();
+function drawRecap() {
+  const list = sessions(log);
+  const keep = $("rc-sess").value;
+  $("rc-sess").replaceChildren(...list.map((x, n) => {
+    const o = document.createElement("option");
+    o.value = String(n);
+    o.textContent = x.label;
+    return o;
+  }), Object.assign(document.createElement("option"), { value: "all", textContent: "Усе плавання" }));
+  $("rc-sess").value = keep && [...$("rc-sess").options].some((o) => o.value === keep) ? keep : (list.length ? String(list.length - 1) : "all");
+  makeRecap(recapParts);
+}
+
+function makeRecap(parts) {
+  const list = sessions(log);
+  const v = $("rc-sess").value;
+  const pick = v === "all" ? log.filter((e) => e.k !== "s") : (list[Number(v)]?.items ?? []);
+  $("rc-info").textContent = `${pick.length} записів`;
+  $("rc-text").value = pick.length ? recap(pick, parts) : "У цій сесії журнал порожній.";
 }
 
 // --- листи гравця ---

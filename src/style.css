@@ -165,3 +165,18 @@ body.zone{padding:10px; margin:0}
 .zcheck{display:flex; align-items:center; gap:6px; font-size:12.5px}
 .zoff{font-size:12px}
 .zone select{font:inherit; color:var(--fg); background:#3c3c47; border:1px solid var(--line); border-radius:6px; padding:6px 8px}
+
+/* --- таємний звук --- */
+.hushgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:5px}
+.hushgrid button{display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; font-size:11.5px; background:var(--panel); border-color:transparent}
+.hushgrid button i{font-style:normal; font-size:17px; line-height:1.1}
+.hushdirs{display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-top:6px}
+.hushdirs button{padding:5px 0; font-size:11.5px; background:var(--panel); border-color:transparent}
+.hushgrid button.on,.hushdirs button.on{border-color:var(--now); background:#3a3524; color:var(--now)}
+.hushwho{display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 6px}
+.hushwho label{display:flex; align-items:center; gap:5px; padding:4px 9px; border-radius:999px; border:1px solid var(--line); font-size:12.5px; cursor:pointer}
+.hushwho label i{width:8px; height:8px; border-radius:50%; background:var(--c)}
+.hushwho label.on{border-color:var(--now); color:var(--now); background:#3a3524}
+.hushwho input{display:none}
+.hushwho .empty{padding:4px 0; text-align:left; font-size:12px}
+.hushgo{border-color:rgba(232,194,122,.55)}

@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -12,6 +12,7 @@ import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
 import { setTarget, targetForMood } from "./hoot.js";
 import { startZones } from "./zones.js";
+import { playSecret, soundOf, dirOf } from "./sfx.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -122,6 +123,16 @@ OBR.onReady(async () => {
     if ((await OBR.player.getRole()) === "GM") resendNotes(players);
   });
   if (gm) resendNotes(await OBR.party.getPlayers());
+
+  // Таємний звук: грає лише в тих, кого обрав майстер; інші навіть не знають, що щось було
+  const myId = await OBR.player.getId();
+  OBR.broadcast.onMessage(HUSH, (event) => {
+    const d = event.data ?? {};
+    if (!Array.isArray(d.to) || !d.to.includes(myId)) return;
+    playSecret(d.s, d.dir);
+    const text = d.t ? d.t : `${soundOf(d.s).hear} — ${dirOf(d.dir).say}`;
+    OBR.notification.show(`🔉 ${text} (це помітили лише ви)`).catch(() => {});
+  });
 
   // --- Мелодія Маркуса: кожен чує свист у себе; майстер запам'ятовує, які уривки вже звучали ---
   OBR.broadcast.onMessage(TUNE, async (event) => {
