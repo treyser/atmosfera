@@ -19,6 +19,7 @@ export default defineConfig({
         zone: resolve(__dirname, "zone.html"),
         npc: resolve(__dirname, "npc.html"),
         fate: resolve(__dirname, "fate.html"),
+        shop: resolve(__dirname, "shop.html"),
         "npc-menu": resolve(__dirname, "npc-menu.html"),
       },
     },
