@@ -158,7 +158,7 @@
 - «Long Winter» — Indieteur, CC0 ([сторінка](https://opengameart.org/content/long-winter))
 - «Icy Realm» — cynicmusic (The Cynic Project), CC0 ([сторінка](https://opengameart.org/content/icy-realm-seven-and-eight))
 - «The Monster Factory» — Eric Matyas, Soundimage.org, CC-BY 3.0 ([сторінка](https://opengameart.org/content/the-monster-factory-looping))
-- «Хвилі біля берега» — jasinski, CC0 ([сторінка](https://opengameart.org/content/beach-ocean-waves))
+- «Хвилі (5 хвилин)» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/sea-and-river-wave-sounds))
 - «Дощ» — Ove Melaa, CC0 ([сторінка](https://opengameart.org/content/rain-ambient-not-loopable-2-versions-available))
 - «Дощ і грім» — DoKashiteru, CC-BY 3.0 ([сторінка](https://opengameart.org/content/rain-and-thunder-loop))
 - «Вітер» — InspectorJ, AntumDeluge, CC-BY 3.0 ([сторінка](https://opengameart.org/content/wind-loop))
