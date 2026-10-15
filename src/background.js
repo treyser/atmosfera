@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -13,6 +13,8 @@ import { daysBetween } from "./atlas-points.js";
 import { setTarget, targetForMood } from "./hoot.js";
 import { startZones } from "./zones.js";
 import { playSecret, soundOf, dirOf, preload } from "./sfx.js";
+import { shops, saveShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, takeGear, SHEET_PUSH, owner } from "./shop-data.js";
+import { local } from "./log.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -66,6 +68,7 @@ OBR.onReady(async () => {
   } catch (err) { console.error("Картка персонажа: меню не зареєструвалось", err); }
   OBR.broadcast.onMessage(NPC, (event) => showNpc(event.data));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
+  startShop().catch((err) => console.error("Крамниця:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -417,6 +420,96 @@ async function showNpc(data) {
     disableClickAway: true,
     marginThreshold: 0,
   });
+}
+
+// --- Крамниця ---
+// Майстер: тримає полиці (у своєму браузері), продає, приймає пропозиції.
+// Гравець: отримує крамницю, а коли купівлю підтверджено — сам міняє свій лист персонажа.
+async function startShop() {
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const myId = await OBR.player.getId();
+  const room = OBR.room.id;
+  const openShop = async () => {
+    const m = (await OBR.room.getMetadata())[SHOP] ?? {};
+    return m.open ? shops().find((s) => s.id === m.id) ?? null : null;
+  };
+
+  // гравці: крамниця приходить повідомленням і лежить у браузері
+  OBR.broadcast.onMessage(SHOP_DATA, (event) => { if (event.data?.id) saveLocal(SEEN, event.data); });
+  OBR.broadcast.onMessage(SHOP_REQ, async () => {
+    if (!(await isGM())) return;
+    const s = await openShop();
+    if (s) OBR.broadcast.sendMessage(SHOP_DATA, s, { destination: "REMOTE" }).catch(() => {});
+  });
+
+  // майстер: продаж
+  OBR.broadcast.onMessage(SHOP_BUY, async (event) => {
+    if (!(await isGM())) return;
+    const d = event.data ?? {};
+    const reply = (msg) => OBR.broadcast.sendMessage(SHOP_SOLD, { to: d.to, ...msg }, { destination: "REMOTE" }).catch(() => {});
+    const meta = (await OBR.room.getMetadata())[SHOP] ?? {};
+    const list = shops();
+    const shop = list.find((s) => s.id === d.sid);
+    if (!meta.open || meta.id !== d.sid || !shop) return reply({ ok: false, why: "Крамниця вже зачинена" });
+    const item = shop.items.find((i) => i.id === d.iid);
+    if (!item) return reply({ ok: false, why: "Цього товару вже немає" });
+    if (item.rarity === "trade") return reply({ ok: false, why: "Це не продається за гроші" });
+    const limited = item.qty !== null && item.qty !== "" && item.qty !== undefined;
+    if (limited && Number(item.qty) <= 0) return reply({ ok: false, why: "Хтось уже купив останній" });
+    if (limited) item.qty = Number(item.qty) - 1;
+    saveShops(list);
+    const cp = priceCp(item, Number(meta.discount) || 0);
+    reply({ ok: true, cp, item: { name: item.name, desc: item.desc, mech: item.mech } });
+    OBR.broadcast.sendMessage(SHOP_DATA, shop, { destination: "REMOTE" }).catch(() => {});
+    appendLog({ k: "g", t: `${d.who || "Хтось"} купує «${item.name}» у крамниці «${shop.name}» за ${money(cp)}.`, w: "Майстер" }).catch(() => {});
+    OBR.notification.show(`${d.who}: купив «${item.name}» за ${money(cp)}`).catch(() => {});
+  });
+
+  // майстер: гравець пропонує щось продати
+  OBR.broadcast.onMessage(SHOP_OFFER, async (event) => {
+    if (!(await isGM())) return;
+    const o = event.data ?? {};
+    if (!o.oid || !o.name) return;
+    saveLocal(OFFERS, [...local(OFFERS, []), o]);
+    OBR.notification.show(`${o.who} пропонує продати «${o.name}»${o.ask ? ` за ${o.ask} зм` : ""} — див. «Крамниці» → «Пропозиції»`).catch(() => {});
+  });
+
+  // покупець: гроші й річ — у лист персонажа
+  const pushSheet = (next) => {
+    const id = owner();
+    if (next && id) OBR.broadcast.sendMessage(SHEET_PUSH, { id, data: next.data, at: next.at }, { destination: "REMOTE" }).catch(() => {});
+  };
+  OBR.broadcast.onMessage(SHOP_SOLD, (event) => {
+    const d = event.data ?? {};
+    if (d.to !== myId || !d.ok) return;
+    const next = changeSheet(room, (data, { pay }) => { pay(d.cp); addGear(data, d.item); });
+    pushSheet(next);
+    if (!next) OBR.notification.show(`Куплено «${d.item.name}», але листа персонажа тут немає — допиши в спорядження сам`).catch(() => {});
+  });
+  OBR.broadcast.onMessage(SHOP_DEAL, (event) => {
+    const d = event.data ?? {};
+    if (d.to !== myId || !d.ok) return;
+    const next = changeSheet(room, (data, { earn }) => { if (takeGear(data, d.name)) earn(d.cp); });
+    pushSheet(next);
+  });
+
+  // гравці: майстер відкрив крамницю — вітрина відкривається сама; зачинив — закривається
+  if (!(await isGM())) {
+    let shown = null;
+    const follow = (m) => {
+      const s = m[SHOP] ?? {};
+      if (s.open && s.rev !== shown) {
+        shown = s.rev;
+        OBR.modal.open({ id: SHOP, url: url("shop.html"), width: 1180, height: 760 }).catch(() => {});
+      } else if (!s.open && shown) {
+        shown = null;
+        OBR.modal.close(SHOP).catch(() => {});
+      }
+    };
+    OBR.room.onMetadataChange(follow);
+    const m0 = await OBR.room.getMetadata();
+    if (m0[SHOP]?.open) shown = m0[SHOP].rev;   // уже відкрита — не вискакувати при вході, є кнопка в панелі
+  }
 }
 
 // Кидок долі: кубик і настрій посеред екрана

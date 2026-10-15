@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -34,6 +34,15 @@ OBR.onReady(async () => {
     };
     window.addEventListener("storage", (e) => { if (e.key === INBOX) mail(); });
     mail();
+    // відкрита крамниця — кнопка в панелі
+    const shopBtn = (m) => {
+      const s = m[SHOP] ?? {};
+      $("crew-shop").hidden = !s.open;
+      $("crew-shop-sub").textContent = s.open ? `«${s.name}» відчинена` : "";
+    };
+    OBR.room.onMetadataChange(shopBtn);
+    shopBtn(await OBR.room.getMetadata());
+    $("crew-shop").onclick = openShop;
     return;
   }
   // Скільки гравців уже запропонували курс — видно просто на кнопці Атласу
@@ -145,6 +154,14 @@ function build() {
   }
   $("atlas").onclick = () => OBR.modal.open({ id: ATLAS, url: url("atlas.html"), width: 1280, height: 860 });
   $("gm-log").onclick = openJournal;
+  $("gm-shop").onclick = openShop;
+  const shopSub = (m) => {
+    const s = m[SHOP] ?? {};
+    $("gm-shop-sub").textContent = s.open ? `Відчинена для гравців: «${s.name}»` : "Вітрини торговців, ціни, пропозиції гравців";
+    $("gm-shop").classList.toggle("ping", Boolean(s.open));
+  };
+  OBR.room.onMetadataChange(shopSub);
+  OBR.room.getMetadata().then(shopSub);
   musicPanel();
   hushPanel();
   fatePanel();
@@ -306,6 +323,10 @@ function fatePanel() {
     }));
     if ($("fate-show").checked) await OBR.broadcast.sendMessage(FATE, { tier, q }, { destination: "ALL" });
   };
+}
+
+function openShop() {
+  return OBR.modal.open({ id: SHOP, url: url("shop.html"), width: 1180, height: 760 });
 }
 
 function openJournal() {

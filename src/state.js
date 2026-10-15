@@ -37,6 +37,13 @@ export const NPC = `${ID}/npc`;       // канал і вікно картки N
 export const NPC_CARD = `${ID}/npc-card`; // що показати в картці — у метаданих гравця
 export const FATE = `${ID}/fate`;     // канал і вікно кидка долі
 export const FATE_CARD = `${ID}/fate-card`; // що показати у вікні кидка — у метаданих гравця
+export const SHOP = `${ID}/shop`;     // вікно крамниці; у кімнаті — { open, id, name, discount, rev }
+export const SHOP_DATA = `${ID}/shop-data`; // канал: сама крамниця (майстер → гравці)
+export const SHOP_REQ = `${ID}/shop-req`;   // канал: гравець просить крамницю
+export const SHOP_BUY = `${ID}/shop-buy`;   // канал: гравець купує
+export const SHOP_SOLD = `${ID}/shop-sold`; // канал: майстер підтвердив покупку (або ні)
+export const SHOP_OFFER = `${ID}/shop-offer`; // канал: гравець пропонує щось продати
+export const SHOP_DEAL = `${ID}/shop-deal`; // канал: майстер купив (або відмовив)
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

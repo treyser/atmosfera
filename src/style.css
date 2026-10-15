@@ -256,3 +256,5 @@ body.npcm input[type=text]{margin-bottom:6px}
 .fatelog .crit b,.fatelog .good b{color:#e8c27a}
 .fatelog .bad b,.fatelog .fumble b{color:#ff8a7a}
 .fatelog span{color:var(--dim)}
+.shop-open{border-color:rgba(214,170,110,.45); color:#f0d2a0; background:linear-gradient(135deg, #2b2016, #1f1c24)}
+.shop-open:hover{background:linear-gradient(135deg, #3a2a1b, #29242f)}
