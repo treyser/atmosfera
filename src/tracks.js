@@ -69,6 +69,27 @@ export const TRACKS = [
     url: "https://opengameart.org/sites/default/files/fire.wav", page: "https://opengameart.org/content/fireplace-sound-loop" },
 ];
 
+// Таємні звуки для уважних (не для Hoot — грає сама «Атмосфера»). Записи BigSoundBank (Joseph Sardin), CC0.
+// off/dur — який шматок запису грати (секунди), gain — підсилення тихих записів.
+export const SFX = [
+  { k: "steps",   file: "sfx-steps.mp3",   off: 0,   dur: 5.0, gain: 1.6, name: "Man footsteps on the wooden floor",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/0165.mp3", page: "https://bigsoundbank.com/man-footsteps-on-the-wooden-floor-s0165.html" },
+  { k: "creak",   file: "sfx-creak.mp3",   off: 0,   dur: 4.9, gain: 1.2, name: "Creaking door 3",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/3206.mp3", page: "https://bigsoundbank.com/creaking-door-3-s3206.html" },
+  { k: "whisper", file: "sfx-whisper.mp3", off: 9.0, dur: 6.0, gain: 2.6, name: "Whisper 1",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/3255.mp3", page: "https://bigsoundbank.com/whisper-1-s3255.html" },
+  { k: "knock",   file: "sfx-knock.mp3",   off: 2.9, dur: 3.9, gain: 0.9, name: "Knock on a light door",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/0374.mp3", page: "https://bigsoundbank.com/knock-on-a-light-door-s0374.html" },
+  { k: "splash",  file: "sfx-splash.mp3",  off: 0,   dur: 3.3, gain: 0.8, name: "Splash big 1",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/1519.mp3", page: "https://bigsoundbank.com/splash-big-1-s1519.html" },
+  { k: "metal",   file: "sfx-blade.mp3",   off: 0,   dur: 1.0, gain: 0.9, name: "Sword",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/0129.mp3", page: "https://bigsoundbank.com/sword-s0129.html" },
+  { k: "growl",   file: "sfx-growl.mp3",   off: 0,   dur: 4.2, gain: 1.0, name: "Grunts",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/0486.mp3", page: "https://bigsoundbank.com/grunts-s0486.html" },
+  { k: "breath",  file: "sfx-breath.mp3",  off: 3.5, dur: 6.5, gain: 2.0, name: "Man breathing",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/2195.mp3", page: "https://bigsoundbank.com/man-breathing-s2195.html" },
+];
+
 // Настрій сцени → музика й фонові звуки
 export const BY_MOOD = {
   clear:    { music: "sea",     bg: ["waves"] },

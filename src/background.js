@@ -12,7 +12,7 @@ import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
 import { setTarget, targetForMood } from "./hoot.js";
 import { startZones } from "./zones.js";
-import { playSecret, soundOf, dirOf } from "./sfx.js";
+import { playSecret, soundOf, dirOf, preload } from "./sfx.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -126,6 +126,7 @@ OBR.onReady(async () => {
 
   // Таємний звук: грає лише в тих, кого обрав майстер; інші навіть не знають, що щось було
   const myId = await OBR.player.getId();
+  if (!gm) setTimeout(preload, 15000);   // гравці тихенько завантажують записи заздалегідь
   OBR.broadcast.onMessage(HUSH, (event) => {
     const d = event.data ?? {};
     if (!Array.isArray(d.to) || !d.to.includes(myId)) return;
