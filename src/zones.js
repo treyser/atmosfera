@@ -2,12 +2,11 @@
 // поверх фігури. Майстер, крім того, стежить за учасниками бою: хто стоїть у зоні — отримує її стан.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
 import { ID, ZONE } from "./state.js";
-import { FX } from "./zone-fx.js";
+import { FX, ZONE_CONDS, LINGER } from "./zone-fx.js";
 
 const MARK = `${ID}/zonefx`;                    // позначка локального ефекту
 const BATTLE = "com.nikita.battle/state";        // стан розширення «Бій»
-const CONDS = { poisoned: "Отруєний", blinded: "Засліплений", restrained: "Обплутаний", prone: "Збитий з ніг",
-  frightened: "Наляканий", deafened: "Оглушений", charmed: "Зачарований", invisible: "Невидимий", blessed: "Благословенний" };
+const CONDS = Object.fromEntries(ZONE_CONDS.filter(([k]) => k).map(([k, v]) => [k, v.replace(/^\S+\s/, "")]));
 
 let gm = false;
 let timer = null;
@@ -135,7 +134,8 @@ async function watchFight(zones) {
     for (const zid of here) {
       if (!before.has(zid)) {
         const z = active.find((x) => x.id === zid);
-        OBR.notification.show(`${e.name}: у зоні «${FX[z.metadata[ZONE].fx].name}»`).catch(() => {});
+        const k = z.metadata[ZONE].cond;
+        OBR.notification.show(`${e.name}: у зоні «${FX[z.metadata[ZONE].fx].name}»${k && CONDS[k] ? ` — ${CONDS[k].toLowerCase()}` : ""}`).catch(() => {});
       }
     }
     // стани від зон: додати тим, хто всередині, зняти з тих, хто вийшов
@@ -144,8 +144,15 @@ async function watchFight(zones) {
       const k = active.find((x) => x.id === zid).metadata[ZONE].cond;
       if (k && CONDS[k] && !want.has(k)) want.set(k, zid);
     }
-    let conds = (e.conds ?? []).filter((x) => !x.z || (want.get(x.k) === x.z));
-    for (const [k, zid] of want) if (!conds.some((x) => x.k === k)) conds.push({ k, r: null, z: zid });
+    // вийшов із зони: стан або зникає, або ще кілька раундів тримається (вогонь догорає, одяг мокрий)
+    let conds = (e.conds ?? []).flatMap((x) => {
+      if (!x.z || want.get(x.k) === x.z) return [x];
+      return LINGER[x.k] ? [{ k: x.k, r: LINGER[x.k] }] : [];
+    });
+    for (const [k, zid] of want) {
+      conds = conds.filter((x) => !(x.k === k && !x.z));   // повернувся в зону — знову «поки стоїть тут»
+      if (!conds.some((x) => x.k === k)) conds.push({ k, r: null, z: zid });
+    }
     if (JSON.stringify(conds) !== JSON.stringify(e.conds ?? [])) { changed = true; return { ...e, conds }; }
     return e;
   }));

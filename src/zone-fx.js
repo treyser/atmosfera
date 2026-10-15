@@ -200,25 +200,33 @@ half4 main(float2 coord) {
 
 // Ефекти й те, де вони лежать: туман і темрява — поверх токенів, решта — під ними
 export const FX = {
-  fog:    { name: "Туман",           sksl: FOG,    layer: "ATTACHMENT", cond: "",          color: "#c9d0d6" },
-  fire:   { name: "Вогонь",          sksl: FIRE,   layer: "DRAWING",    cond: "",          color: "#f97316" },
+  fog:    { name: "Туман",           sksl: FOG,    layer: "ATTACHMENT", cond: "obscured",          color: "#c9d0d6" },
+  fire:   { name: "Вогонь",          sksl: FIRE,   layer: "DRAWING",    cond: "burning",          color: "#f97316" },
   poison: { name: "Отруйна хмара",   sksl: POISON, layer: "ATTACHMENT", cond: "poisoned",  color: "#84cc16" },
   dark:   { name: "Магічна темрява", sksl: DARK,   layer: "ATTACHMENT", cond: "blinded",   color: "#3b1d4a" },
-  ice:    { name: "Крига",           sksl: ICE,    layer: "DRAWING",    cond: "",          color: "#bae6fd" },
-  water:  { name: "Вода",            sksl: WATER,  layer: "DRAWING",    cond: "",          color: "#0e7490" },
+  ice:    { name: "Крига",           sksl: ICE,    layer: "DRAWING",    cond: "chilled",          color: "#bae6fd" },
+  water:  { name: "Вода",            sksl: WATER,  layer: "DRAWING",    cond: "wet",          color: "#0e7490" },
   magic:  { name: "Магічне коло",    sksl: MAGIC,  layer: "DRAWING",    cond: "",          color: "#facc15", free: true },
 };
 
 // Стани з «Бою» (ключі ті самі), які зона може накладати на тих, хто в ній стоїть
 export const ZONE_CONDS = [
   ["", "Без стану"],
-  ["poisoned", "Отруєний"],
-  ["blinded", "Засліплений"],
-  ["restrained", "Обплутаний"],
-  ["prone", "Збитий з ніг"],
-  ["frightened", "Наляканий"],
-  ["deafened", "Оглушений"],
-  ["charmed", "Зачарований"],
-  ["invisible", "Невидимий"],
-  ["blessed", "Благословенний"],
+  ["burning", "🔥 Горить"],
+  ["poisoned", "🧪 Отруєний"],
+  ["chilled", "❄️ Замерзає"],
+  ["wet", "💧 Мокрий"],
+  ["obscured", "🌫 У тумані"],
+  ["blinded", "🕶 Засліплений"],
+  ["slowed", "🐌 Сповільнений"],
+  ["restrained", "⛓ Обплутаний"],
+  ["prone", "⤵ Збитий з ніг"],
+  ["frightened", "😱 Наляканий"],
+  ["deafened", "🔇 Оглушений"],
+  ["charmed", "💗 Зачарований"],
+  ["invisible", "👻 Невидимий"],
+  ["blessed", "✨ Благословенний"],
 ];
+
+// Скільки раундів стан тримається після того, як учасник вийшов із зони (0 — зникає одразу)
+export const LINGER = { burning: 1, wet: 2, chilled: 1, poisoned: 1 };
