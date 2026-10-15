@@ -33,6 +33,8 @@ export const RIDDLE = `${ID}/riddle`; // вікно загадки Ребер В
 export const RIDDLE_OPEN = `${ID}/riddle-open`; // канал: відкрити / закрити загадку всім
 export const RIDDLE_TAP = `${ID}/riddle-tap`;   // канал: хтось торкнувся предмета
 export const ZONE = `${ID}/zone`;     // ефект зони на намальованій фігурі — у метаданих фігури: { fx, cond, saved }
+export const NPC = `${ID}/npc`;       // канал і вікно картки NPC; на токені — { name, sub }
+export const NPC_CARD = `${ID}/npc-card`; // що показати в картці — у метаданих гравця
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

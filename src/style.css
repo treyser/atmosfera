@@ -180,3 +180,27 @@ body.zone{padding:10px; margin:0}
 .hushwho input{display:none}
 .hushwho .empty{padding:4px 0; text-align:left; font-size:12px}
 .hushgo{border-color:rgba(232,194,122,.55)}
+
+/* --- картка персонажа --- */
+body.npcm{padding:10px; margin:0}
+body.npcm input[type=text]{margin-bottom:6px}
+.npc{padding:0; margin:0; background:transparent; height:100vh; overflow:hidden; display:flex; align-items:flex-end}
+.who{display:flex; align-items:center; gap:18px; padding:14px 34px 14px 14px; margin:0 0 6px 6px; opacity:0;
+  background:linear-gradient(90deg, rgba(6,9,16,.92) 0%, rgba(6,9,16,.8) 70%, rgba(6,9,16,0) 100%);
+  border-left:2px solid rgba(216,198,144,.75); border-radius:4px}
+.who.in{animation:npcin .9s cubic-bezier(.2,.8,.2,1) forwards}
+.who.out{animation:npcout .8s ease forwards}
+.face{flex:none; width:118px; height:118px; border-radius:50%; overflow:hidden; position:relative;
+  border:2px solid #d8c690; box-shadow:0 0 0 4px rgba(6,9,16,.9), 0 0 0 5px rgba(216,198,144,.4), 0 6px 22px rgba(0,0,0,.7);
+  background:radial-gradient(circle at 50% 40%, #2a2f3b, #0d1016)}
+.face img{width:100%; height:100%; object-fit:cover; transform:scale(1.15)}
+.txt{min-width:0}
+.nm{font-family:"Cormorant Garamond",Georgia,serif; font-weight:700; font-size:40px; line-height:1.02; color:#fbf3dc;
+  letter-spacing:.04em; text-shadow:0 2px 8px rgba(0,0,0,.95); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ln{height:1px; width:0; margin:8px 0 7px; background:linear-gradient(90deg, #d8c690, transparent)}
+.who.in .ln{animation:npcline 1.1s .35s ease forwards}
+.sb{font-family:"Cormorant Garamond",Georgia,serif; font-weight:500; font-size:19px; letter-spacing:.18em; text-transform:uppercase;
+  color:#d9d1b8; text-shadow:0 1px 5px rgba(0,0,0,.95)}
+@keyframes npcin{0%{opacity:0; transform:translateX(-40px)} 100%{opacity:1; transform:none}}
+@keyframes npcout{0%{opacity:1} 100%{opacity:0; transform:translateX(-20px)}}
+@keyframes npcline{0%{width:0} 100%{width:260px}}

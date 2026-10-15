@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -51,6 +51,20 @@ OBR.onReady(async () => {
     });
   } catch (err) { console.error("Зони: меню не зареєструвалось", err); }
   startZones().catch((err) => console.error("Зони:", err));
+
+  // Картка персонажа: ПКМ на токені → «Представити» (лише майстер)
+  try {
+    OBR.contextMenu.create({
+      id: `${ID}/npc-menu`,
+      icons: [{
+        icon: url("npc.svg"),
+        label: "Представити",
+        filter: { roles: ["GM"], max: 1, every: [{ key: "type", value: "IMAGE" }] },
+      }],
+      embed: { url: url("npc-menu.html"), height: 150 },
+    });
+  } catch (err) { console.error("Картка персонажа: меню не зареєструвалось", err); }
+  OBR.broadcast.onMessage(NPC, (event) => showNpc(event.data));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -379,6 +393,29 @@ async function showCard(data) {
     cardTimer = null;
     OBR.popover.close(CARD).catch(() => {});
   }, SHOW_MS);
+}
+
+// Картка персонажа внизу ліворуч: дані — в метадані гравця, вікно саме їх прочитає
+async function showNpc(data) {
+  const name = String(data?.name ?? "").trim().slice(0, 40);
+  if (!name) return;
+  await OBR.popover.close(NPC).catch(() => {});
+  await OBR.player.setMetadata({ [NPC_CARD]: { name, sub: String(data?.sub ?? "").slice(0, 60), img: String(data?.img ?? "") } });
+  const [w, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
+  const width = Math.min(720, w - 40);
+  await OBR.popover.open({
+    id: NPC,
+    url: url("npc.html"),
+    width,
+    height: 170,
+    anchorReference: "POSITION",
+    anchorPosition: { top: h - 200, left: 20 },
+    anchorOrigin: { horizontal: "LEFT", vertical: "TOP" },
+    transformOrigin: { horizontal: "LEFT", vertical: "TOP" },
+    hidePaper: true,
+    disableClickAway: true,
+    marginThreshold: 0,
+  });
 }
 
 // Таймер раундів і лічильник прориву: вузьке вікно вгорі екрана в усіх гравців.
