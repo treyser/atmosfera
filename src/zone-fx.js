@@ -1,6 +1,7 @@
 // Ефекти зон: шейдери, що заповнюють межі намальованої фігури.
 // Кожен клієнт малює їх у себе (ефекти в Owlbear лише локальні), фігура в сцені — спільна.
-// Owlbear сам підставляє size і time; shape (0 — прямокутник, 1 — коло) і ghost (яскравість) — ми.
+// Owlbear сам підставляє size і time і обрізає ефект по фігурі. Координати йдуть від точки прив'язки фігури
+// (у кола це центр), тому габарити box і зсув off рахуємо самі; shape (0 — прямокутник, 1 — коло), ghost — яскравість.
 
 const HEAD = `
 uniform vec2 size;
@@ -8,6 +9,8 @@ uniform float time;
 uniform float shape;
 uniform float ghost;
 uniform float seed;
+uniform vec2 box;   // розмір фігури (габарити) у її власних одиницях
+uniform vec2 off;   // зсув від точки прив'язки фігури до її лівого верхнього кута
 
 float now() { return mod(time, 3600.0); }
 
@@ -44,7 +47,7 @@ vec4 over(vec4 dst, vec3 color, float a) {
 
 const FOG = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 110.0 + seed;
   float t = now();
   float n = fbm(p + vec2(t * 0.05, t * 0.018));
@@ -55,7 +58,7 @@ half4 main(float2 coord) {
 
 const FIRE = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 70.0 + seed;
   float t = now();
   float n = fbm(vec2(p.x * 1.2, p.y * 0.9 + t * 1.5));
@@ -76,7 +79,7 @@ half4 main(float2 coord) {
 
 const POISON = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 95.0 + seed;
   float t = now();
   vec2 q = vec2(fbm(p + vec2(t * 0.08, 0.0)), fbm(p + vec2(5.2, t * 0.07)));
@@ -94,7 +97,7 @@ half4 main(float2 coord) {
 
 const DARK = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 120.0 + seed;
   float t = now();
   float n = fbm(p * 1.3 + vec2(t * 0.03, -t * 0.02));
@@ -106,7 +109,7 @@ half4 main(float2 coord) {
 
 const ICE = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 60.0 + seed;
   float t = now();
   float m = edge(uv) * ghost;
@@ -127,7 +130,7 @@ half4 main(float2 coord) {
 
 const WATER = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 p = coord / 90.0 + seed;
   float t = now();
   float m = edge(uv) * ghost;
@@ -141,7 +144,7 @@ half4 main(float2 coord) {
 
 const MAGIC = HEAD + `
 half4 main(float2 coord) {
-  vec2 uv = coord / size;
+  vec2 uv = (coord + off) / box;
   vec2 c = uv - 0.5;
   float d = length(c) * 2.0;
   float t = now();

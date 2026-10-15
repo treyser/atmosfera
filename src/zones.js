@@ -44,13 +44,16 @@ async function sync() {
   const wanted = new Map();
   for (const z of zones) {
     if (!z.visible && !gm) continue;
-    wanted.set(z.id, { fx: z.metadata[ZONE].fx, ghost: z.visible ? 1 : 0.35, circle: isCircle(z) });
+    const g = await geometry(z);
+    if (!g) continue;
+    wanted.set(z.id, { fx: z.metadata[ZONE].fx, ghost: z.visible ? 1 : 0.35, circle: isCircle(z), ...g });
   }
 
   const mine = await OBR.scene.local.getItems((i) => i.metadata?.[MARK]);
   const stale = mine.filter((e) => {
     const w = wanted.get(e.metadata[MARK].id);
-    return !w || w.fx !== e.metadata[MARK].fx || w.ghost !== e.metadata[MARK].ghost || w.circle !== e.metadata[MARK].circle;
+    const m = e.metadata[MARK];
+    return !w || w.fx !== m.fx || w.ghost !== m.ghost || w.circle !== m.circle || w.geo !== m.geo;
   });
   if (stale.length) await OBR.scene.local.deleteItems(stale.map((e) => e.id));
   const have = new Set(mine.filter((e) => !stale.includes(e)).map((e) => e.metadata[MARK].id));
@@ -66,6 +69,8 @@ async function sync() {
         { name: "shape", value: w.circle ? 1 : 0 },
         { name: "ghost", value: w.ghost },
         { name: "seed", value: seedOf(id) },
+        { name: "box", value: { x: w.bw, y: w.bh } },
+        { name: "off", value: { x: w.ox, y: w.oy } },
       ])
       .layer(FX[w.fx].layer)
       .locked(true)
@@ -76,6 +81,21 @@ async function sync() {
   if (add.length) await OBR.scene.local.addItems(add);
 
   if (gm) await watchFight(zones);
+}
+
+// Габарити фігури в її власних координатах: ефект малюється від точки прив'язки фігури
+// (у кола й багатокутника це центр, у прямокутника — кут), тож переводимо світові межі назад
+async function geometry(z) {
+  let b;
+  try { b = await OBR.scene.items.getItemBounds([z.id]); } catch { return null; }
+  const sx = Math.abs(z.scale?.x || 1), sy = Math.abs(z.scale?.y || 1);
+  const r = Math.round;
+  const g = {
+    bw: Math.max(1, r(b.width / sx)), bh: Math.max(1, r(b.height / sy)),
+    ox: r((z.position.x - b.min.x) / sx), oy: r((z.position.y - b.min.y) / sy),
+  };
+  g.geo = `${g.bw}x${g.bh}@${g.ox},${g.oy}`;
+  return g;
 }
 
 // --- Майстер: хто з учасників бою стоїть у зоні ---
