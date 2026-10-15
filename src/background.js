@@ -11,6 +11,7 @@ import { FRAGMENTS, ANSWER } from "./melody.js";
 import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
 import { setTarget, targetForMood } from "./hoot.js";
+import { startZones } from "./zones.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -31,6 +32,20 @@ let hudShown = false;            // чи відкрите вікно тайме�
 let queue = Promise.resolve();   // щоб два оновлення ефекту не створили його двічі
 
 OBR.onReady(async () => {
+  // Зони: ПКМ на намальованій фігурі → «Зона» (лише майстер); ефекти малює кожен клієнт у себе
+  try {
+    OBR.contextMenu.create({
+      id: `${ID}/zone-menu`,
+      icons: [{
+        icon: url("zone.svg"),
+        label: "Зона",
+        filter: { roles: ["GM"], some: [{ key: "type", value: "SHAPE" }, { key: "type", value: "CURVE" }, { key: "type", value: "PATH" }] },
+      }],
+      embed: { url: url("zone.html"), height: 250 },
+    });
+  } catch (err) { console.error("Зони: меню не зареєструвалось", err); }
+  startZones().catch((err) => console.error("Зони:", err));
+
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
   if (await OBR.scene.isReady()) refresh();

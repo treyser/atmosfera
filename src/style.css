@@ -150,3 +150,18 @@ html.clear{color-scheme:light; background:transparent}
 .steps.three{grid-template-columns:1fr 1fr 1fr}
 .steps button.on{border-color:var(--now); background:#3a3524; color:var(--now)}
 #mus-add.ping{border-color:#f3d595; color:#f3d595; box-shadow:0 0 0 1px #f3d595, 0 0 12px rgba(243,213,149,.35)}
+
+/* --- меню зони --- */
+body.zone{padding:10px; margin:0}
+.zhead{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px}
+.zhead span{font-size:12px; color:var(--dim)}
+.fxgrid{display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:10px}
+.fxbtn{display:flex; align-items:center; gap:7px; padding:6px 8px; font-size:12.5px; text-align:left}
+.fxbtn i{width:12px; height:12px; border-radius:50%; flex:none; box-shadow:0 0 6px rgba(255,255,255,.2)}
+.fxbtn.on{border-color:var(--now); color:var(--now)}
+.zl{display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--dim); margin-bottom:10px}
+.zl select{width:100%}
+.zrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.zcheck{display:flex; align-items:center; gap:6px; font-size:12.5px}
+.zoff{font-size:12px}
+.zone select{font:inherit; color:var(--fg); background:#3c3c47; border:1px solid var(--line); border-radius:6px; padding:6px 8px}

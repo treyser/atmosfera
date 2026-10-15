@@ -32,6 +32,7 @@ export const HEARD = `${ID}/heard`;   // які уривки мелодії гр
 export const RIDDLE = `${ID}/riddle`; // вікно загадки Ребер Велетня і її стан у метаданих кімнати
 export const RIDDLE_OPEN = `${ID}/riddle-open`; // канал: відкрити / закрити загадку всім
 export const RIDDLE_TAP = `${ID}/riddle-tap`;   // канал: хтось торкнувся предмета
+export const ZONE = `${ID}/zone`;     // ефект зони на намальованій фігурі — у метаданих фігури: { fx, cond, saved }
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 
 // Усі величини від 0 до 1. tint — колір фільтра, amount — його сила, film — зерно й віньєтка.
