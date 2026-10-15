@@ -82,6 +82,7 @@ function drawStore() {
   $("greet").textContent = shop.greet ? `«${shop.greet}»` : "";
   $("greet").hidden = !shop.greet;
   $("about").textContent = shop.about ?? "";
+  $("store").style.setProperty("--bg", shop.bg ? `url("${shop.bg}")` : "none");
   const pic = $("portrait");
   pic.style.backgroundImage = shop.img ? `url("${shop.img}")` : "";
   $("initial").textContent = shop.img ? "" : (shop.owner || shop.name || "?").slice(0, 1);
@@ -304,9 +305,10 @@ async function fromSelection() {
 
 function buildEditor() {
   const bind = (id, key, num) => { $(id).oninput = () => { shop[key] = num ? Number($(id).value) : $(id).value; commit(); }; };
-  bind("e-name", "name"); bind("e-owner", "owner"); bind("e-greet", "greet"); bind("e-about", "about"); bind("e-img", "img");
+  bind("e-name", "name"); bind("e-owner", "owner"); bind("e-greet", "greet"); bind("e-about", "about"); bind("e-img", "img"); bind("e-bg", "bg");
   $("e-buy").onchange = () => { shop.buy = Number($("e-buy").value); commit(); };
   $("e-img-sel").onclick = async () => { const u = await fromSelection(); if (u) { shop.img = u; $("e-img").value = u; commit(); } };
+  $("e-bg-sel").onclick = async () => { const u = await fromSelection(); if (u) { shop.bg = u; $("e-bg").value = u; commit(); } };
   $("e-add").onclick = () => { const it = newItem(); shop.items.push(it); commit(); fillEditor(it.id); };
 }
 
@@ -316,6 +318,7 @@ function fillEditor(openId) {
   $("e-greet").value = shop.greet ?? "";
   $("e-about").value = shop.about ?? "";
   $("e-img").value = shop.img ?? "";
+  $("e-bg").value = shop.bg ?? "";
   $("e-buy").value = String(shop.buy ?? 0.5);
   const box = $("e-items");
   const opened = new Set([...box.querySelectorAll(".erow.open")].map((r) => r.dataset.id));

@@ -35,10 +35,11 @@ input:focus,textarea:focus,select:focus{outline:none; border-color:var(--gold)}
 #open.live{background:linear-gradient(180deg,#e7b3a6,#c47a6a); border-color:#c47a6a}
 
 /* вітрина */
-.store{display:grid; grid-template-columns:270px 1fr 330px; height:100%; min-height:0}
+.store{display:grid; grid-template-columns:270px 1fr 330px; height:100%; min-height:0;
+  background:linear-gradient(180deg, rgba(10,12,18,.72), rgba(10,12,18,.9)), var(--bg, none) center/cover no-repeat}
 .keeper{position:relative; padding:22px 20px; border-right:1px solid var(--line); background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.05)); overflow:auto; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px}
 .pclose{position:absolute; top:12px; right:12px}
-.portrait{width:150px; height:150px; border-radius:50%; background:#1e2530 center/cover; border:2px solid var(--gold);
+.portrait{width:160px; height:160px; background-position:center 18% !important; border-radius:50%; background:#1e2530 center/cover; border:2px solid var(--gold);
   box-shadow:0 0 0 5px rgba(0,0,0,.6), 0 0 0 6px rgba(232,194,122,.35), 0 10px 30px rgba(0,0,0,.6); display:grid; place-items:center;
   font-family:var(--serif); font-size:64px; color:var(--gold); margin-bottom:6px}
 .sname{font-family:var(--serif); font-size:30px; font-weight:700; line-height:1.05; color:#fbf3dc}
@@ -59,7 +60,7 @@ input:focus,textarea:focus,select:focus{outline:none; border-color:var(--gold)}
 .cats button.on{border-color:var(--gold); color:var(--gold); background:rgba(232,194,122,.1)}
 .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; overflow:auto; padding:2px 4px 10px; align-content:start}
 .ware{--r:var(--common); display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:12px; text-align:left;
-  border:1px solid rgba(255,255,255,.08); border-top:2px solid var(--r); background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); transition:transform .15s, border-color .15s}
+  border:1px solid rgba(255,255,255,.08); border-top:2px solid var(--r); background:linear-gradient(180deg, rgba(20,24,32,.82), rgba(12,15,21,.88)); backdrop-filter:blur(3px); transition:transform .15s, border-color .15s}
 .ware:hover{transform:translateY(-2px); border-color:rgba(232,194,122,.4); border-top-color:var(--r)}
 .ware.on{border-color:var(--gold); border-top-color:var(--r); box-shadow:0 0 0 1px var(--gold), 0 8px 24px rgba(0,0,0,.4)}
 .ware.out{opacity:.45}
