@@ -39,7 +39,12 @@ OBR.onReady(async () => {
       icons: [{
         icon: url("zone.svg"),
         label: "Зона",
-        filter: { roles: ["GM"], some: [{ key: "type", value: "SHAPE" }, { key: "type", value: "CURVE" }, { key: "type", value: "PATH" }] },
+        // умови в some за замовчуванням з'єднуються через «і» — тут потрібне «або»
+        filter: { roles: ["GM"], some: [
+          { key: "type", value: "SHAPE", coordinator: "||" },
+          { key: "type", value: "CURVE", coordinator: "||" },
+          { key: "type", value: "PATH" },
+        ] },
       }],
       embed: { url: url("zone.html"), height: 250 },
     });
