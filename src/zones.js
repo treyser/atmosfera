@@ -61,22 +61,25 @@ async function sync() {
   const add = [];
   for (const [id, w] of wanted) {
     if (have.has(id)) continue;
-    add.push(buildEffect()
-      .effectType("ATTACHMENT")
+    const free = FX[w.fx].free;   // магічне коло: завжди повне коло, не обрізане контуром фігури
+    let b = buildEffect()
       .attachedTo(id)
       .sksl(FX[w.fx].sksl)
       .uniforms([
         { name: "shape", value: w.circle ? 1 : 0 },
         { name: "ghost", value: w.ghost },
         { name: "seed", value: seedOf(id) },
-        { name: "box", value: { x: w.bw, y: w.bh } },
-        { name: "off", value: { x: w.ox, y: w.oy } },
+        { name: "box", value: free ? { x: w.ww, y: w.wh } : { x: w.bw, y: w.bh } },
+        { name: "off", value: free ? { x: 0, y: 0 } : { x: w.ox, y: w.oy } },
       ])
       .layer(FX[w.fx].layer)
       .locked(true)
       .disableHit(true)
-      .metadata({ [MARK]: { id, ...w } })
-      .build());
+      .metadata({ [MARK]: { id, ...w } });
+    b = free
+      ? b.effectType("STANDALONE").position({ x: w.mx, y: w.my }).width(w.ww).height(w.wh)
+      : b.effectType("ATTACHMENT");
+    add.push(b.build());
   }
   if (add.length) await OBR.scene.local.addItems(add);
 
@@ -93,8 +96,11 @@ async function geometry(z) {
   const g = {
     bw: Math.max(1, r(b.width / sx)), bh: Math.max(1, r(b.height / sy)),
     ox: r((z.position.x - b.min.x) / sx), oy: r((z.position.y - b.min.y) / sy),
+    // для окремого (не обрізаного) ефекту — світові межі: квадрат по меншій стороні, по центру
+    ww: r(Math.min(b.width, b.height)), wh: r(Math.min(b.width, b.height)),
   };
-  g.geo = `${g.bw}x${g.bh}@${g.ox},${g.oy}`;
+  g.mx = r(b.center.x - g.ww / 2); g.my = r(b.center.y - g.wh / 2);
+  g.geo = `${g.bw}x${g.bh}@${g.ox},${g.oy}|${g.mx},${g.my},${g.ww}`;
   return g;
 }
 

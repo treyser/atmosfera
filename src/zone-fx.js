@@ -142,20 +142,59 @@ half4 main(float2 coord) {
   return half4(col);
 }`;
 
-const MAGIC = HEAD + `
+// Трикутник з центром у нулі: відстань до його контуру (лише по самих сторонах)
+const TRI = `
+float tri(vec2 q, float R, float rot) {
+  float best = 1.0;
+  for (int k = 0; k < 3; k++) {
+    float a = rot + float(k) * 2.0944;
+    vec2 n = vec2(cos(a), sin(a));
+    float dl = abs(dot(q, n) - R * 0.5);
+    // точка має лежати всередині двох інших сторін, інакше це продовження лінії
+    float ok = 1.0;
+    for (int j = 0; j < 3; j++) {
+      if (j == k) continue;
+      float b = rot + float(j) * 2.0944;
+      ok *= step(dot(q, vec2(cos(b), sin(b))), R * 0.5 + 0.004);
+    }
+    best = min(best, mix(1.0, dl, ok));
+  }
+  return best;
+}
+`;
+
+const MAGIC = HEAD + TRI + `
 half4 main(float2 coord) {
   vec2 uv = (coord + off) / box;
-  vec2 c = uv - 0.5;
-  float d = length(c) * 2.0;
+  vec2 q = (uv - 0.5) * 2.0;           // -1..1, коло вписане в габарити
+  float d = length(q);
   float t = now();
-  float pulse = 0.75 + 0.25 * sin(t * 2.2);
-  float ring = (1.0 - smoothstep(0.0, 0.025, abs(d - 0.9))) + (1.0 - smoothstep(0.0, 0.018, abs(d - 0.72)));
-  float ang = atan(c.y, c.x) / 6.2832 + 0.5;
-  float seg = floor(ang * 24.0 + t * 0.15);
-  float rune = step(0.45, hash(vec2(seg, seed))) * step(0.75, d) * step(d, 0.87) * (1.0 - smoothstep(0.0, 0.25, abs(fract(ang * 24.0 + t * 0.15) - 0.5) - 0.18));
-  float inner = (1.0 - smoothstep(0.0, 0.9, d)) * 0.18;
-  vec3 gold = vec3(1.0, 0.82, 0.38);
-  float a = clamp((ring * 0.95 + rune * 0.8) * pulse + inner * pulse, 0.0, 1.0) * step(d, 1.0) * ghost;
+  float px = 2.0 / min(box.x, box.y);   // один піксель у цих одиницях
+  float aa = px * 1.5;
+  float pulse = 0.8 + 0.2 * sin(t * 2.0);
+  float line = 0.0;
+  line += 1.0 - smoothstep(px, px + aa, abs(d - 0.96));
+  line += 1.0 - smoothstep(px, px + aa, abs(d - 0.80));
+  line += (1.0 - smoothstep(px, px + aa, abs(d - 0.74))) * 0.6;
+  // руни між кільцями: тонкі риски різної висоти, кільце повільно обертається
+  float ang = atan(q.y, q.x) / 6.2832 + 0.5 + t * 0.012;
+  float n = 40.0;
+  float cell = floor(ang * n);
+  float f = fract(ang * n);
+  float h = hash(vec2(cell, seed));
+  float wpx = (0.12 / n) * 6.2832 * 0.88;     // товщина риски в одиницях кола
+  float bar = 1.0 - smoothstep(wpx * 0.5, wpx * 0.5 + aa, abs(f - 0.5) * 6.2832 * 0.88 / n);
+  float top = 0.83 + 0.10 * h;
+  float rune = bar * step(0.83, d) * step(d, top) * step(0.18, h);
+  // поперечна рисочка на половині рун
+  float tick = step(0.7, h) * (1.0 - smoothstep(px, px + aa, abs(d - 0.845))) * step(abs(f - 0.5), 0.22);
+  // гексаграма, що обертається у протилежний бік
+  float rot = -t * 0.05;
+  float star = 1.0 - smoothstep(px, px + aa, min(tri(q, 0.72, rot), tri(q, 0.72, rot + 1.0472)));
+  float glow = (1.0 - smoothstep(0.0, 0.95, d)) * 0.16;
+  vec3 gold = vec3(1.0, 0.83, 0.42);
+  float a = clamp(line * 0.95 + (rune + tick) * 0.9 + star * 0.75, 0.0, 1.0) * pulse + glow * pulse;
+  a = clamp(a, 0.0, 1.0) * step(d, 1.0) * ghost;
   return half4(gold * a, a);
 }`;
 
@@ -167,7 +206,7 @@ export const FX = {
   dark:   { name: "Магічна темрява", sksl: DARK,   layer: "ATTACHMENT", cond: "blinded",   color: "#3b1d4a" },
   ice:    { name: "Крига",           sksl: ICE,    layer: "DRAWING",    cond: "",          color: "#bae6fd" },
   water:  { name: "Вода",            sksl: WATER,  layer: "DRAWING",    cond: "",          color: "#0e7490" },
-  magic:  { name: "Магічне коло",    sksl: MAGIC,  layer: "DRAWING",    cond: "",          color: "#facc15" },
+  magic:  { name: "Магічне коло",    sksl: MAGIC,  layer: "DRAWING",    cond: "",          color: "#facc15", free: true },
 };
 
 // Стани з «Бою» (ключі ті самі), які зона може накладати на тих, хто в ній стоїть
