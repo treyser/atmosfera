@@ -16,6 +16,7 @@ export default defineConfig({
         journal: resolve(__dirname, "journal.html"),
         envelope: resolve(__dirname, "envelope.html"),
         riddle: resolve(__dirname, "riddle.html"),
+        zone: resolve(__dirname, "zone.html"),
       },
     },
   },

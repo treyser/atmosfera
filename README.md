@@ -122,6 +122,17 @@
   імпорт» переносить їх на інший комп'ютер.
 
 
+## Ефекти зон
+
+1. Намалюйте фігуру (коло, прямокутник, багатокутник чи довільну лінію) інструментом малювання.
+2. ПКМ на ній → «Зона» → оберіть ефект: туман, вогонь, отруйна хмара, магічна темрява, крига, вода чи магічне коло.
+   Контур фігури зникає, лишається анімований ефект у її межах. «Прибрати» повертає звичайну фігуру.
+3. «Стан для тих, хто в зоні»: коли йде бій у «Бою», учасник, що стоїть у зоні, отримує цей стан
+   (без таймера), а щойно вийде — стан знімається. Майстрові приходить підказка про вхід у зону.
+4. «Сховати від гравців» — зона-пастка: майстер бачить її блідою, гравці не бачать зовсім, стан не діє.
+
+Туман, отрута й темрява малюються поверх токенів, решта — під ними.
+
 ## Музика (Hoot) і мелодія Маркуса
 
 **Музика.** «Атмосфера» керує розширенням Hoot. У пульті майстра:
@@ -141,7 +152,6 @@
 
 ### Автори музики й звуків
 
-- «Chest of Adventure» — Eldritch Grim, CC0 ([сторінка](https://opengameart.org/content/chest-of-adventure))
 - «A Sailor's Chant» — Thimras, CC0
 - «Sirens in Darkness» — cynicmusic, CC0 ([сторінка](https://opengameart.org/content/sirens-in-darkness))
 - «Mysterious Ambience» — cynicmusic, CC0 ([сторінка](https://opengameart.org/content/mysterious-ambience-song21))
@@ -150,9 +160,7 @@
 - «Rising Moon» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/fantasy-rising-moon))
 - «The Old Tower Inn» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/medieval-the-old-tower-inn))
 - «The Bard's Tale» — RandomMind, CC0 ([сторінка](https://opengameart.org/content/medieval-the-bards-tale))
-- «Danger» — Tausdei, CC-BY 3.0 ([сторінка](https://opengameart.org/node/144784))
-- «Evil Awaits» — bosslevelaudio, CC0 ([сторінка](https://opengameart.org/content/evil-awaits))
-- «Revenge» — TAD, CC-BY 4.0 ([сторінка](https://opengameart.org/content/revenge))
+- «Chest of Adventure» — Eldritch Grim, CC0 ([сторінка](https://opengameart.org/content/chest-of-adventure))
 - «Omens» — Eliot Corley (el-corleo), CC-BY 3.0 ([сторінка](https://opengameart.org/content/omens))
 - «Final Confrontation» — tcarisland, CC-BY 4.0 ([сторінка](https://opengameart.org/node/165847))
 - «Long Winter» — Indieteur, CC0 ([сторінка](https://opengameart.org/content/long-winter))
