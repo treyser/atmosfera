@@ -90,6 +90,9 @@ export const SFX = [
     url: "https://bigsoundbank.com/UPLOAD/mp3/2195.mp3", page: "https://bigsoundbank.com/man-breathing-s2195.html" },
   { k: "dice",    file: "sfx-dice.mp3",    off: 0,   dur: 1.1, gain: 0.7, name: "Four dice on wooden table",
     url: "https://bigsoundbank.com/UPLOAD/mp3/0582.mp3", page: "https://bigsoundbank.com/four-dice-on-wooden-table-s0582.html" },
+  // для «Бою»: серцебиття героя при смерті (грає розширення «Бій», бере файл звідси)
+  { k: "heart",   file: "sfx-heart.mp3",   off: 0,   dur: 46,  gain: 1.0, name: "Slow beating heart",
+    url: "https://bigsoundbank.com/UPLOAD/mp3/1929.mp3", page: "https://bigsoundbank.com/heart-beat-4-s1929.html" },
 ];
 
 // Настрій сцени → музика й фонові звуки
