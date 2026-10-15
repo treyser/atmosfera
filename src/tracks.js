@@ -3,19 +3,19 @@
 // Ліцензії: CC0 — без умов; CC-BY — треба згадати автора (список — у README).
 
 // Міняється щоразу, коли змінюється список треків: пульт підкаже додати нові в Hoot
-export const TRACKS_VERSION = "2026-10-15b";
+export const TRACKS_VERSION = "2026-10-15c";
 
 export const MUSIC_VOL = 0.6;
 export const BG_VOL = 0.35;
 
 export const PL = {
-  sea: "Атмосфера · Море",
+  sea: "Атмосфера · Море (пісня)",
   mystery: "Атмосфера · Таємниця",
   storm: "Атмосфера · Шторм",
   rain: "Атмосфера · Дощ",
   night: "Атмосфера · Ніч",
   tavern: "Атмосфера · Таверна",
-  battle: "Атмосфера · Битва",
+  battle: "Атмосфера · Бій (пригода)",
   boss: "Атмосфера · Бос (темний)",
   cold: "Атмосфера · Холод",
   tension: "Атмосфера · Напруга",
@@ -27,8 +27,6 @@ export const PL = {
 };
 
 export const TRACKS = [
-  { pl: "sea", file: "sea-1.mp3", name: "Chest of Adventure", author: "Eldritch Grim", license: "CC0",
-    url: "https://opengameart.org/sites/default/files/chest_of_adventure.mp3", page: "https://opengameart.org/content/chest-of-adventure" },
   { pl: "sea", file: "sea-2.ogg", name: "A Sailor's Chant", author: "Thimras", license: "CC0",
     url: "https://opengameart.org/sites/default/files/oga_jam_menu_music_loopable_0.ogg", page: null },
   { pl: "mystery", file: "mystery-1.mp3", name: "Sirens in Darkness", author: "cynicmusic", license: "CC0",
@@ -45,13 +43,9 @@ export const TRACKS = [
     url: "https://opengameart.org/sites/default/files/The_Old_Tower_Inn.mp3", page: "https://opengameart.org/content/medieval-the-old-tower-inn" },
   { pl: "tavern", file: "tavern-2.mp3", name: "The Bard's Tale", author: "RandomMind", license: "CC0",
     url: "https://opengameart.org/sites/default/files/The_Bards_Tale.mp3", page: "https://opengameart.org/content/medieval-the-bards-tale" },
-  // Бій: темна напружена музика, без героїчних фанфар
-  { pl: "battle", file: "battle-dark-1.ogg", name: "Danger", author: "Tausdei", license: "CC-BY 3.0",
-    url: "https://opengameart.org/sites/default/files/danger_0.ogg", page: "https://opengameart.org/node/144784" },
-  { pl: "battle", file: "battle-dark-2.mp3", name: "Evil Awaits", author: "bosslevelaudio", license: "CC0",
-    url: "https://opengameart.org/sites/default/files/evil_awaits.mp3", page: "https://opengameart.org/content/evil-awaits" },
-  { pl: "battle", file: "battle-dark-3.mp3", name: "Revenge", author: "TAD", license: "CC-BY 4.0",
-    url: "https://opengameart.org/sites/default/files/Revenge_0.mp3", page: "https://opengameart.org/content/revenge" },
+  // Бій: епічна пригодницька тема (Нікіті вона пасує до бою найбільше)
+  { pl: "battle", file: "battle-1.mp3", name: "Chest of Adventure", author: "Eldritch Grim", license: "CC0",
+    url: "https://opengameart.org/sites/default/files/chest_of_adventure.mp3", page: "https://opengameart.org/content/chest-of-adventure" },
   { pl: "boss", file: "boss-dark-1.mp3", name: "Omens", author: "Eliot Corley (el-corleo)", license: "CC-BY 3.0",
     url: "https://opengameart.org/sites/default/files/Omens.mp3", page: "https://opengameart.org/content/omens" },
   { pl: "boss", file: "boss-dark-2.mp3", name: "Final Confrontation", author: "tcarisland", license: "CC-BY 4.0",
