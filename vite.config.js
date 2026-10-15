@@ -17,6 +17,8 @@ export default defineConfig({
         envelope: resolve(__dirname, "envelope.html"),
         riddle: resolve(__dirname, "riddle.html"),
         zone: resolve(__dirname, "zone.html"),
+        npc: resolve(__dirname, "npc.html"),
+        "npc-menu": resolve(__dirname, "npc-menu.html"),
       },
     },
   },
