@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Арсенал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="bar">
+    <div class="ttl">
+      <div class="book">Арсенал</div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <nav class="chips" id="groups"></nav>
+    <select id="rar" title="Рідкість"><option value="all">Будь-яка рідкість</option><option value="common">Звичайна</option><option value="uncommon">Незвичайна</option><option value="rare">Рідкісна</option></select>
+    <input id="q" type="search" placeholder="Пошук…" autocomplete="off">
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <main class="body">
+    <section class="grid" id="grid"></section>
+    <aside class="card" id="card">
+      <div class="art"><img id="img" alt=""><span class="lock" id="lock" hidden>?</span></div>
+      <div class="meta" id="meta"></div>
+      <h1 id="name"></h1>
+      <div class="stats" id="stats"></div>
+      <div class="props" id="props"></div>
+      <p class="desc" id="desc"></p>
+      <div class="mech" id="mech-box"><b>Особливість</b><p id="mech"></p></div>
+      <blockquote id="quote"></blockquote>
+      <div class="gm" id="gm" hidden>
+        <div class="row">
+          <button type="button" class="go" id="show">Показати гравцям</button>
+          <select id="who"><option value="">Видати…</option></select>
+        </div>
+        <label class="tgl" id="open-row"><input type="checkbox" id="open"> Гравці бачать цю картку в арсеналі</label>
+        <div class="dim" id="gm-hint"></div>
+      </div>
+    </aside>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/arsenal.js"></script>
+</body>
+</html>

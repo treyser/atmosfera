@@ -27,6 +27,7 @@ export default defineConfig({
         board: resolve(__dirname, "board.html"),
         goals: resolve(__dirname, "goals.html"),
         rumors: resolve(__dirname, "rumors.html"),
+        arsenal: resolve(__dirname, "arsenal.html"),
         "rumor-tell": resolve(__dirname, "rumor-tell.html"),
         trap: resolve(__dirname, "trap.html"),
         "trap-hit": resolve(__dirname, "trap-hit.html"),
