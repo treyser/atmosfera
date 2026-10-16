@@ -152,3 +152,7 @@ h2{font-family:var(--serif); font-size:21px; margin:0 0 6px; color:#fbf3dc}
 .aikey summary{cursor:pointer; color:var(--gold); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
 .aikey input{margin:6px 0 4px}
 .aikey label{margin-top:6px}
+.aifree{margin-top:6px}
+.aifree ol{margin:6px 0 4px; padding-left:18px}
+.aifree textarea{width:100%; font-size:11.5px; line-height:1.35; opacity:.85; resize:vertical}
+.aifree .airow{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0}

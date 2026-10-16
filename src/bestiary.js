@@ -293,6 +293,7 @@ let lastToken = null;   // { data, mime } — картинка токена дл
 let made = "";          // згенерований портрет (dataURL), ще не збережений
 
 function initAI() {
+  initFree();
   $("ai-key").value = ls(KEY);
   $("ai-model").value = ls(MODEL);
   const keyState = () => { $("ai-keystate").textContent = ls(KEY) ? "· збережено" : "· потрібен для генерації"; $("ai-keybox").open = !ls(KEY); };
@@ -370,7 +371,7 @@ async function generate() {
   if (!c || !lastToken) return;
   $("ai-gen").disabled = true; $("ai-again").disabled = true;
   status("Gemini малює портрет… (10–30 секунд)");
-  const prompt = `This image is a top-down tabletop battle-map token of a fantasy creature. Using it as the reference for the creature's design, colors, markings, gear and silhouette, paint a dramatic bestiary portrait of the SAME creature: front three-quarter view, head and upper body filling the frame, eye-level, expressive, menacing. Style: painterly dark-fantasy illustration like a D&D Monster Manual plate, rich lighting, moody dark background that fits its habitat. Square image. No text, no letters, no border, no token ring, no frame. Creature: "${c.name}" (${c.type || "creature"}).`;
+  const prompt = promptFor(c);
   try {
     const model = ls(MODEL) || "gemini-2.5-flash-image";
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
@@ -389,14 +390,60 @@ async function generate() {
     made = await shrink(`data:${d.mime_type || d.mimeType || "image/png"};base64,${d.data}`);
     showPic(made);
     $("ai-row").hidden = false;
+    $("ai-again").hidden = false;
     status("Подобається? «Зберегти» — або «Ще раз»");
   } catch (err) {
     console.error(err);
-    status(`Не вийшло: ${String(err.message || err).slice(0, 160)}`);
+    const msg = String(err.message || err);
+    if (/quota|billing|RESOURCE_EXHAUSTED|429/i.test(msg)) {
+      $("ai-freebox").open = true;
+      status("Google малює картинки через ключ лише з увімкненою оплатою. Безкоштовно — через застосунок Gemini, нижче 👇");
+    } else status(`Не вийшло: ${msg.slice(0, 160)}`);
   } finally {
     $("ai-gen").disabled = false; $("ai-again").disabled = false;
   }
 }
+
+function promptFor(c) {
+  return `This image is a top-down tabletop battle-map token of a fantasy creature. Using it as the reference for the creature's design, colors, markings, gear and silhouette, paint a dramatic bestiary portrait of the SAME creature: front three-quarter view, head and upper body filling the frame, eye-level, expressive, menacing. Style: painterly dark-fantasy illustration like a D&D Monster Manual plate, rich lighting, moody dark background that fits its habitat. Square image. No text, no letters, no border, no token ring, no frame. Creature: "${c?.name || "creature"}" (${c?.type || "creature"}).`;
+}
+function refreshPrompt() {
+  const c = creature(sel);
+  if ($("ai-prompt")) $("ai-prompt").value = promptFor(c);
+}
+
+// готовий портрет (з Gemini, з файлу чи з буфера) → стиснути й показати
+async function putPortrait(blob) {
+  try {
+    status("Стискаю портрет…");
+    const src = URL.createObjectURL(blob);
+    made = await shrink(src);
+    URL.revokeObjectURL(src);
+    showPic(made);
+    $("ai-row").hidden = false;
+    $("ai-again").hidden = true;
+    status("Подобається? Натисни «Зберегти»");
+  } catch (err) { status(`Не вийшло: ${err.message || err}`); }
+}
+
+function initFree() {
+  $("ai-freebox").addEventListener("toggle", refreshPrompt);
+  $("ai-copy").onclick = async () => {
+    refreshPrompt();
+    const t = $("ai-prompt");
+    try { await navigator.clipboard.writeText(t.value); toast("Підказку скопійовано"); }
+    catch { t.focus(); t.select(); try { document.execCommand("copy"); toast("Підказку скопійовано"); } catch { toast("Виділено — натисни Ctrl+C"); } }
+  };
+  $("ai-put").onclick = () => $("ai-put-input").click();
+  $("ai-put-input").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) putPortrait(f); };
+  document.addEventListener("paste", (e) => {
+    const f = [...(e.clipboardData?.items ?? [])].find((i) => i.type.startsWith("image/"))?.getAsFile();
+    if (!f || !isEditorOpen()) return;
+    e.preventDefault();
+    putPortrait(f);
+  });
+}
+const isEditorOpen = () => { const b = $("ai-freebox"); return Boolean(b && b.offsetParent !== null); };
 
 // стиснути до маленького webp, щоб сторінка влізла в одне повідомлення гравцям (16 кБ)
 function shrink(url) {
@@ -473,6 +520,7 @@ function closeEditor() {
 }
 function fillEditor(c) {
   showPic(c.img || "");
+  $("ai-prompt").value = promptFor(c);
   made = ""; $("ai-row").hidden = true; status("");
   for (const f of FIELDS) $("e-" + f).value = c[f] ?? "";
   $("e-traits").value = (c.traits ?? []).join("\n");
