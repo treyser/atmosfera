@@ -98,6 +98,27 @@
           <label>XP<input id="e-xp" type="number"></label>
           <label class="w2">Швидкість<input id="e-speed" maxlength="40"></label>
         </div>
+        <div class="aipic">
+          <div class="aiprev" id="ai-prev"><span id="ai-ph">Портрета ще немає</span><img id="ai-img" alt="" hidden></div>
+          <div class="aiside">
+            <b>Портрет</b>
+            <button type="button" class="go" id="ai-gen" title="Виділи токен ворога на мапі — Gemini намалює портрет за ним">✨ Портрет із токена</button>
+            <button type="button" class="ghost" id="ai-file" title="Або обери картинку токена з комп'ютера">Токен із файлу…</button>
+            <input type="file" id="ai-input" accept="image/*" hidden>
+            <div class="airow" id="ai-row" hidden>
+              <button type="button" class="go" id="ai-save">Зберегти</button>
+              <button type="button" class="ghost" id="ai-again">Ще раз</button>
+            </div>
+            <div class="dim" id="ai-status"></div>
+            <button type="button" class="ghost" id="ai-clear">Прибрати портрет</button>
+          </div>
+        </div>
+        <details class="aikey" id="ai-keybox">
+          <summary>Ключ Gemini API <span class="dim" id="ai-keystate"></span></summary>
+          <input id="ai-key" type="password" placeholder="AIza…" autocomplete="off">
+          <div class="dim">Безкоштовний ключ — на aistudio.google.com → «Get API key». Зберігається лише в цьому браузері.</div>
+          <label>Модель<input id="ai-model" placeholder="gemini-2.5-flash-image"></label>
+        </details>
         <label>Картинка (посилання)
           <span class="imgrow"><input id="e-img" placeholder="https://…"><button type="button" class="ghost" id="e-img-sel" title="Виділи на мапі токен — і натисни">З виділеного на мапі</button></span></label>
         <label>Перше враження <span class="dim">— гравці бачать одразу, щойно зустріли</span><textarea id="e-seen" rows="2" maxlength="400" placeholder="Що герої помічають з першого погляду"></textarea></label>
