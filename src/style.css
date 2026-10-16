@@ -258,3 +258,6 @@ body.npcm input[type=text]{margin-bottom:6px}
 .fatelog span{color:var(--dim)}
 .shop-open{border-color:rgba(214,170,110,.45); color:#f0d2a0; background:linear-gradient(135deg, #2b2016, #1f1c24)}
 .shop-open:hover{background:linear-gradient(135deg, #3a2a1b, #29242f)}
+
+.best-open{border-color:rgba(169,155,224,.4); color:#d8cff5; background:linear-gradient(135deg, #1f1c2e, #1a2029)}
+.best-open:hover{background:linear-gradient(135deg, #2a2640, #222a36)}

@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -15,6 +15,7 @@ import { startZones } from "./zones.js";
 import { playSecret, soundOf, dirOf, preload } from "./sfx.js";
 import { shops, saveShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, takeGear, SHEET_PUSH, owner } from "./shop-data.js";
 import { local } from "./log.js";
+import { mergeCache, packPages, FOCUS } from "./best-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -69,6 +70,7 @@ OBR.onReady(async () => {
   OBR.broadcast.onMessage(NPC, (event) => showNpc(event.data));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
   startShop().catch((err) => console.error("Крамниця:", err));
+  startBestiary().catch((err) => console.error("Бестіарій:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -510,6 +512,38 @@ async function startShop() {
     const m0 = await OBR.room.getMetadata();
     if (m0[SHOP]?.open) shown = m0[SHOP].rev;   // уже відкрита — не вискакувати при вході, є кнопка в панелі
   }
+}
+
+// Бестіарій: майстер роздає сторінки, гравці зберігають їх у себе
+async function startBestiary() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const SAY = ["", "нова сторінка", "вивчено звички й слабкості", "переможено — відкрито бойові записи"];
+
+  // майстер: гравець просить усе, що знає партія
+  OBR.broadcast.onMessage(BEST_REQ, async () => {
+    if (!(await isGM())) return;
+    for (const msg of packPages(room)) await OBR.broadcast.sendMessage(BEST_DATA, msg, { destination: "REMOTE" }).catch(() => {});
+  });
+
+  // гравець: нові сторінки — у браузер і коротке сповіщення
+  OBR.broadcast.onMessage(BEST_DATA, async (event) => {
+    if (await isGM()) return;
+    const fresh = mergeCache(room, event.data);
+    if (event.data?.full) return;   // повний список приходить при вході — без сповіщень
+    for (const f of fresh.slice(0, 3)) OBR.notification.show(`Бестіарій: «${f.name}» — ${SAY[f.lvl] ?? ""}`).catch(() => {});
+  });
+
+  // майстер показує сторінку — відкрити бестіарій на ній
+  OBR.broadcast.onMessage(BEST_SHOW, async (event) => {
+    if (await isGM()) return;
+    try { localStorage.setItem(FOCUS, JSON.stringify({ id: event.data?.id, at: Date.now() })); } catch {}
+    await OBR.modal.close(BEST).catch(() => {});
+    OBR.modal.open({ id: BEST, url: url("bestiary.html"), width: 1180, height: 780 }).catch(() => {});
+  });
+
+  // гравець щойно зайшов — попросити свіжі сторінки
+  if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(BEST_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 4000);
 }
 
 // Кидок долі: кубик і настрій посеред екрана

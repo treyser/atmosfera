@@ -44,6 +44,10 @@ export const SHOP_BUY = `${ID}/shop-buy`;   // канал: гравець куп
 export const SHOP_SOLD = `${ID}/shop-sold`; // канал: майстер підтвердив покупку (або ні)
 export const SHOP_OFFER = `${ID}/shop-offer`; // канал: гравець пропонує щось продати
 export const SHOP_DEAL = `${ID}/shop-deal`; // канал: майстер купив (або відмовив)
+export const BEST = `${ID}/bestiary`;     // вікно бестіарію
+export const BEST_REQ = `${ID}/best-req`;  // канал: гравець просить свої сторінки
+export const BEST_DATA = `${ID}/best-data`; // канал: сторінки (майстер → гравці): { full?, known, pages }
+export const BEST_SHOW = `${ID}/best-show`; // канал: майстер відкриває гравцям сторінку істоти
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 
