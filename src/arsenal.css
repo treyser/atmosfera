@@ -39,6 +39,8 @@ button{cursor:pointer}
 .wcard .sub{font-size:11.5px; color:var(--dim)}
 .wcard.r-uncommon .nm, .wcard.r-rare .nm{color:color-mix(in srgb, var(--rc) 55%, var(--fg))}
 .wcard.r-rare .pic{box-shadow:inset 0 0 0 1px var(--rc)}
+.wcard.r-legendary .pic{box-shadow:inset 0 0 0 1px var(--rc), 0 0 14px rgba(255,157,58,.35)}
+.wcard.r-legendary .nm, .wcard.r-rare .nm{color:color-mix(in srgb, var(--rc) 55%, var(--fg))}
 .wcard.locked img, .card.locked img{filter:brightness(.35) blur(6px) saturate(.4)}
 .q, .lock{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--serif); font-size:54px; font-weight:700; color:var(--rc); text-shadow:0 0 20px #000}
 .wcard.hid::after{content:"🔒"; position:absolute; top:12px; right:12px; font-size:13px; filter:drop-shadow(0 0 3px #000)}
