@@ -269,3 +269,5 @@ body.npcm input[type=text]{margin-bottom:6px}
 .chest-open:hover{background:linear-gradient(135deg, #3b2817, #27252b)}
 .board-open{border-color:rgba(200,32,43,.45); color:#f2c6b8; background:linear-gradient(135deg, #2e1912, #1f1a17)}
 .board-open:hover{background:linear-gradient(135deg, #3e2117, #2a221e)}
+.goal-open{border-color:rgba(201,74,62,.45); color:#f0c0b4; background:linear-gradient(135deg, #2c1414, #1d1a19)}
+.goal-open:hover{background:linear-gradient(135deg, #3c1a1a, #282321)}

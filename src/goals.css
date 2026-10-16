@@ -1,0 +1,77 @@
+:root{color-scheme:dark; --gold:#e8c27a; --gold2:#f3d595; --fg:#ece6d8; --dim:#a39a8c; --serif:"Cormorant Garamond", Georgia, serif; --hand:"Caveat", cursive}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0}
+body{color:var(--fg); font-family:Inter,system-ui,sans-serif; font-size:14px; overflow:hidden; display:grid; grid-template-rows:auto 1fr;
+  background:radial-gradient(90% 70% at 50% 0%, #2a1714 0%, #15110f 55%, #0b0a09 100%)}
+button,input,textarea{font:inherit; color:inherit}
+button{cursor:pointer}
+[hidden]{display:none !important}
+.none{color:var(--dim); font-family:var(--serif); font-style:italic; font-size:19px; text-align:center; padding:50px 10px}
+.none.small{font-size:16px; padding:20px 6px}
+.go{padding:8px 16px; border-radius:8px; border:1px solid rgba(232,194,122,.6); font-weight:700; color:#1b1408; background:linear-gradient(180deg,var(--gold2),#d7a957)}
+.ghost{padding:7px 12px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.05); font-size:12.5px}
+.go.sm,.ghost.sm{padding:5px 10px; font-size:12px}
+.danger{color:#ff8a7a}
+.close{width:32px; height:32px; border-radius:50%; border:1px solid rgba(232,194,122,.3); background:transparent; color:var(--dim)}
+.bar{display:flex; align-items:baseline; gap:14px; padding:14px 18px; border-bottom:1px solid rgba(232,194,122,.2); background:rgba(0,0,0,.3)}
+.book{font-family:var(--serif); font-weight:700; font-size:28px; color:var(--gold2)}
+.sub{flex:1; font-size:12px; letter-spacing:.08em; color:var(--dim)}
+input,textarea{width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.3)}
+input:focus,textarea:focus{outline:none; border-color:var(--gold)}
+textarea{resize:vertical; font-family:var(--serif); font-size:17px; line-height:1.35}
+
+/* майстер */
+.gm{display:grid; grid-template-columns:240px 1fr; min-height:0}
+.heroes{padding:14px; border-right:1px solid rgba(232,194,122,.15); overflow:auto; display:flex; flex-direction:column; gap:6px}
+.hero{text-align:left; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03)}
+.hero b{display:block; font-family:var(--serif); font-size:19px}
+.hero span{font-size:12px; color:var(--dim)}
+.hero.on{border-color:var(--gold); background:rgba(232,194,122,.08)}
+.hero.ping{box-shadow:0 0 0 1px #e8a24a, 0 0 14px rgba(232,162,74,.35)}
+.work{overflow:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px}
+#hero-goals{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px}
+.new{padding:14px; border-radius:12px; border:1px dashed rgba(232,194,122,.35); display:flex; flex-direction:column; gap:8px; max-width:720px}
+.nhead{display:flex; justify-content:space-between; align-items:center}
+.nhead b{font-family:var(--serif); font-size:20px}
+.nrow{display:flex; gap:8px; justify-content:flex-end}
+
+/* ціль — пергамент */
+.goal{position:relative; padding:18px 20px 14px; border-radius:4px; color:#2f2316;
+  background:radial-gradient(circle at 85% 90%, rgba(120,70,20,.16), transparent 30%), linear-gradient(170deg, #f0e2c0, #dcc596);
+  box-shadow:0 10px 24px rgba(0,0,0,.45); animation:unfold .5s ease-out both}
+@keyframes unfold{from{opacity:0; transform:translateY(10px) scaleY(.92)} to{opacity:1; transform:none}}
+.goal.draft{opacity:.75; border:2px dashed rgba(90,60,20,.5)}
+.gt{font-family:var(--serif); font-weight:700; font-size:25px; line-height:1.1; color:#4a1d0c}
+.gx{font-family:var(--hand); font-size:25px; line-height:1.15; margin-top:8px; color:#2b2350; white-space:pre-wrap}
+.rw{margin-top:10px; padding:8px 10px; border-radius:6px; background:rgba(28,122,58,.12); border:1px solid rgba(28,122,58,.35)}
+.rw span{font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#1c6a34; font-weight:700}
+.rw p{margin:2px 0 0; font-family:var(--serif); font-size:17px}
+.rw.small p{font-size:15px}
+.gmn{margin-top:8px; font-size:13px; color:#7a2a1a}
+.gf{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; flex-wrap:wrap}
+.btns{display:flex; gap:5px; flex-wrap:wrap}
+.goal .ghost{color:#3a2a14; border-color:rgba(60,40,20,.3); background:rgba(255,255,255,.25)}
+.goal .ghost.danger{color:#a3121a}
+.badge{font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:999px; background:rgba(60,40,20,.12); color:#5a3f1c}
+.st-done .badge{background:#1c7a3a; color:#fff}
+.st-failed .badge{background:#a3121a; color:#fff}
+.st-claimed .badge{background:#d08a2a; color:#fff}
+.st-done::after,.st-failed::after{position:absolute; right:14px; top:12px; font-family:Oswald, Impact, sans-serif; font-size:22px; padding:2px 8px; border:3px double currentColor; border-radius:5px; transform:rotate(10deg); opacity:.75}
+.st-done::after{content:"ВИКОНАНО"; color:#1c7a3a}
+.st-failed::after{content:"ПРОВАЛЕНО"; color:#a3121a}
+
+/* гравець */
+.pl{overflow:auto; padding:22px}
+.cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:18px; max-width:1100px; margin:0 auto}
+.sealed .env{position:relative; height:230px; border-radius:6px; overflow:hidden; cursor:default;
+  background:linear-gradient(170deg, #e6d3a8, #cdb27a); box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.flap{position:absolute; left:0; right:0; top:0; height:120px; background:linear-gradient(170deg,#efdfb8,#d6bd87); clip-path:polygon(0 0, 100% 0, 50% 100%); filter:drop-shadow(0 3px 3px rgba(0,0,0,.25)); transform-origin:top; transition:transform .6s}
+.seal{position:absolute; left:50%; top:96px; width:78px; height:78px; margin-left:-39px; border-radius:50%; display:grid; place-items:center; cursor:pointer;
+  font-size:30px; color:rgba(255,210,190,.55); background:radial-gradient(circle at 40% 35%, #d9504a, #9c1b18 60%, #6d0e0c);
+  box-shadow:3px 5px 8px rgba(0,0,0,.45), inset 0 0 0 7px rgba(0,0,0,.14); transition:transform .2s}
+.seal:hover{transform:scale(1.08) rotate(-8deg)}
+.hint{position:absolute; left:0; right:0; bottom:18px; text-align:center; font-family:var(--serif); font-style:italic; font-size:17px; color:#5a3f1c}
+.breaking .seal{animation:crack .7s forwards}
+.breaking .flap{transform:rotateX(180deg)}
+@keyframes crack{30%{transform:scale(1.15) rotate(-12deg)} 100%{transform:scale(.4) translateY(60px) rotate(40deg); opacity:0}}
+.toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); padding:9px 16px; border-radius:10px; background:rgba(20,14,9,.96); border:1px solid var(--gold); color:var(--gold2); font-size:13px}

@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -21,6 +21,7 @@ import { packState, seenState, saveSeen, news, RFOCUS } from "./runes-data.js";
 import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } from "./stars-data.js";
 import { chestOf, putChest, newChest, publicView, coinCp, fromCp } from "./chest-data.js";
 import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards, saveSeenBoards } from "./board-data.js";
+import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -98,6 +99,7 @@ OBR.onReady(async () => {
   startStars().catch((err) => console.error("Зоряне небо:", err));
   startChests().catch((err) => console.error("Скрині:", err));
   startBoards().catch((err) => console.error("Дошка:", err));
+  startGoals().catch((err) => console.error("Таємні цілі:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -770,6 +772,39 @@ async function startBoards() {
       await OBR.modal.close(BOARD).catch(() => {});
       OBR.modal.open({ id: BOARD, url: url(`board.html?k=${encodeURIComponent(event.data?.k ?? "")}`), fullScreen: true }).catch(() => {});
     });
+  }
+}
+
+// Таємні цілі: майстер зберігає; кожен гравець отримує лише свої (за власником листа персонажа)
+async function startGoals() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const send = (to, fresh) => OBR.broadcast.sendMessage(GOAL_DATA, { to, goals: forPlayer(allGoals()[to]), fresh }, { destination: "REMOTE" }).catch(() => {});
+  OBR.broadcast.onMessage(GOAL_REQ, async (e) => { if (await isGM() && e.data?.to) send(e.data.to); });
+  OBR.broadcast.onMessage(GOAL_CLAIM, async (e) => {
+    if (!(await isGM())) return;
+    const d = e.data ?? {};
+    const all = allGoals();
+    const g = all[d.to]?.find((x) => x.id === d.gid);
+    if (!g || g.status !== "active") return;
+    g.status = "claimed";
+    saveGoals(all);
+    send(d.to);
+    OBR.notification.show(`${d.who || g.hero}: каже, що виконав таємну ціль «${g.title}» — «Таємні цілі», щоб вирішити`).catch(() => {});
+  });
+  if (!(await isGM())) {
+    OBR.broadcast.onMessage(GOAL_DATA, async (e) => {
+      const d = e.data ?? {};
+      if (!d.to || d.to !== goalOwner()) return;
+      const prev = myGoals(room);
+      saveMyGoals(room, d.goals ?? []);
+      if (d.fresh) { await OBR.modal.close(GOAL).catch(() => {}); OBR.modal.open({ id: GOAL, url: url("goals.html"), width: 1000, height: 700 }).catch(() => {}); return; }
+      for (const g of d.goals ?? []) {
+        const was = prev.find((x) => x.id === g.id);
+        if (was && was.status !== g.status && (g.status === "done" || g.status === "failed")) OBR.notification.show(`Таємна ціль «${g.title}»: ${g.status === "done" ? "виконано!" : "провалено"}`).catch(() => {});
+      }
+    });
+    setTimeout(() => { const me = goalOwner(); if (me) OBR.broadcast.sendMessage(GOAL_REQ, { to: me }, { destination: "REMOTE" }).catch(() => {}); }, 5500);
   }
 }
 

@@ -77,6 +77,10 @@ export const BOARD_REQ = `${ID}/board-req`;   // канал: гравець пр
 export const BOARD_FULL = `${ID}/board-full`; // канал: дошки шматками (майстер → гравці)
 export const BOARD_CUR = `${ID}/board-cur`;   // канал: де чий курсор
 export const BOARD_SHOW = `${ID}/board-show`; // канал: майстер відкриває гравцям дошку { k }
+export const GOAL = `${ID}/goals`;           // вікно таємних цілей
+export const GOAL_DATA = `${ID}/goal-data`;  // канал: цілі одного героя (майстер → власник) { to, goals, fresh? }
+export const GOAL_REQ = `${ID}/goal-req`;    // канал: гравець просить свої цілі { to }
+export const GOAL_CLAIM = `${ID}/goal-claim`; // канал: гравець каже, що виконав { to, gid, who }
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 
