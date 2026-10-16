@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Зоряне небо</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="stars">
+  <main class="skybox" id="skybox">
+    <canvas id="sky"></canvas>
+    <header class="top">
+      <div>
+        <div class="book">Зоряне небо</div>
+        <div class="sub" id="sub"></div>
+      </div>
+      <div class="facing" id="facing"></div>
+    </header>
+    <div class="pan">
+      <button type="button" id="left" title="Повернутися ліворуч (←)">◀</button>
+      <button type="button" id="right" title="Повернутися праворуч (→)">▶</button>
+    </div>
+    <div class="help" id="help">Клікни зорю, потім іншу — проведеш лінію. Клік по лінії — стерти. Тягни небо, щоб озирнутися.</div>
+    <div class="flash" id="flash" hidden><div class="fname" id="f-name"></div><div class="fdir" id="f-dir"></div></div>
+  </main>
+
+  <aside class="panel">
+    <div class="phead">
+      <nav class="tabs" id="tabs">
+        <button type="button" data-t="night" class="on">Ця ніч</button>
+        <button type="button" data-t="atlas">Зоряний атлас</button>
+      </nav>
+      <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+    </div>
+
+    <section id="p-night">
+      <div id="tonight"></div>
+
+      <!-- майстер: налаштування ночі -->
+      <div class="gmbox" id="gm" hidden>
+        <div class="gmhead"><b>Ніч майстра</b><label class="chk"><input type="checkbox" id="ghost" checked> бачу сузір'я</label></div>
+        <div class="gmbtns">
+          <button type="button" class="go" id="open">Відкрити небо гравцям</button>
+          <button type="button" class="ghost" id="clear" title="Стерти всі лінії цієї ночі">Стерти лінії</button>
+          <button type="button" class="ghost" id="newnight" title="Інше небо: нові фонові зорі, лінії й знахідки ночі — з нуля">Нова ніч</button>
+        </div>
+        <div class="dim" id="here-note"></div>
+        <div class="clist" id="clist"></div>
+      </div>
+    </section>
+
+    <section id="p-atlas" hidden>
+      <div id="known"></div>
+    </section>
+  </aside>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/stars.js"></script>
+</body>
+</html>
