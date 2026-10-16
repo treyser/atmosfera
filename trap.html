@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Пастка</title></head>
+<body class="trapm">
+  <div class="thead"><b>Пастка</b><span id="status"></span></div>
+  <div class="tgrid" id="kinds"></div>
+  <div id="form" hidden>
+    <label class="tl">Назва<input id="t-name" maxlength="40"></label>
+    <div class="trow">
+      <label class="tl">Рятунок<select id="t-save"></select></label>
+      <label class="tl sm">СК<input id="t-dc" type="number" min="5" max="30"></label>
+      <label class="tl grow">Шкода<input id="t-dmg" maxlength="50" placeholder="2к10 колючої"></label>
+    </div>
+    <div class="trow">
+      <label class="tl grow">Стан при провалі<select id="t-cond"></select></label>
+      <label class="tl grow">Лишає по собі<select id="t-after"></select></label>
+    </div>
+    <div class="trow">
+      <label class="tl sm">Помітити, СК<input id="t-spot" type="number" min="5" max="30"></label>
+      <label class="tl grow">Що бачить уважний<input id="t-clue" maxlength="160"></label>
+    </div>
+    <div class="trow checks">
+      <label class="tc"><input type="checkbox" id="t-half"> половина шкоди при успіху</label>
+      <label class="tc"><input type="checkbox" id="t-once"> одноразова</label>
+    </div>
+    <div class="tbtns">
+      <button type="button" id="check" class="tgo">👁 Попросити Уважність</button>
+      <button type="button" id="arm"></button>
+      <button type="button" id="off" class="toff">Прибрати</button>
+    </div>
+  </div>
+  <script type="module" src="/src/trap-menu.js"></script>
+</body>
+</html>

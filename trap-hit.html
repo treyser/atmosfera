@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Пастка!</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,500&display=swap" rel="stylesheet"></head>
+<body class="trapw">
+  <div class="card hit" id="card">
+    <button type="button" class="x" id="x" title="Закрити">✕</button>
+    <div class="klac">КЛАЦ!</div>
+    <div class="ticon" id="icon"></div>
+    <div class="tname" id="name"></div>
+    <div class="who" id="who"></div>
+    <div class="save" id="save"></div>
+    <div class="dmg" id="dmg"></div>
+    <div class="btns" id="pbtns">
+      <button type="button" class="ok" id="ok">Пройшов</button>
+      <button type="button" class="fail" id="fail">Провалив</button>
+    </div>
+    <div class="result" id="result"></div>
+    <div class="gmd" id="gmd" hidden>
+      <input id="n" type="number" min="0" placeholder="шкода">
+      <button type="button" class="tgo" id="hit">Завдати шкоди</button>
+      <button type="button" id="nohit">Без шкоди</button>
+    </div>
+  </div>
+  <script type="module" src="/src/trap-hit.js"></script>
+</body>
+</html>
