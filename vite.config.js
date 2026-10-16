@@ -21,6 +21,7 @@ export default defineConfig({
         fate: resolve(__dirname, "fate.html"),
         shop: resolve(__dirname, "shop.html"),
         bestiary: resolve(__dirname, "bestiary.html"),
+        runes: resolve(__dirname, "runes.html"),
         "npc-menu": resolve(__dirname, "npc-menu.html"),
       },
     },

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Руни й написи</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="runes">
+  <header class="bar">
+    <div class="ttl">
+      <div class="book">Руни й написи</div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button type="button" data-t="lib" class="on">Руни Ґрундура</button>
+      <button type="button" data-t="insc">Написи <b id="insc-n" hidden></b></button>
+      <button type="button" data-t="abc">Абетка</button>
+    </nav>
+    <label class="owner" id="owner-box" hidden title="Чий це рунний шлях — з листів персонажів">Рунний коваль
+      <select id="owner"></select></label>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <!-- РУНИ ҐРУНДУРА -->
+  <main class="view" id="v-lib">
+    <section class="lib" id="lib"></section>
+    <aside class="side" id="rune-side">
+      <div class="blank" id="rune-blank"><div class="seal">ᚷ</div><p id="rune-blank-text">Обери руну.</p></div>
+      <div id="rune-page" hidden>
+        <div class="bigsig" id="r-sig"></div>
+        <div class="num" id="r-num"></div>
+        <h1 id="r-name"></h1>
+        <div class="kind" id="r-carrier"></div>
+        <ol class="track" id="r-track"></ol>
+        <div class="gmctl" id="r-gm" hidden>
+          <div class="lvls" id="r-lvls"></div>
+          <div class="gmrow"><button type="button" class="go" id="r-show">Показати гравцям</button></div>
+        </div>
+        <div class="tiers" id="r-tiers"></div>
+        <div class="facts" id="r-facts"></div>
+        <p class="dim" id="r-note"></p>
+      </div>
+      <div id="craft-page" hidden>
+        <div class="bigsig small" id="k-sig"></div>
+        <div class="num">Реміснича руна</div>
+        <h1 id="k-name"></h1>
+        <p class="prose" id="k-desc"></p>
+        <div class="gmctl" id="k-gm" hidden>
+          <div class="lvls two" id="k-lvls"></div>
+          <div class="gmrow"><button type="button" class="go" id="k-show">Показати гравцям</button></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- НАПИСИ -->
+  <main class="view" id="v-insc" hidden>
+    <section class="ilist">
+      <div class="ihead"><b>Написи</b><button type="button" class="ghost" id="i-add" hidden>＋ Напис</button></div>
+      <div id="ilist"></div>
+    </section>
+    <section class="reader" id="reader">
+      <div class="blank" id="i-blank"><div class="seal">ᛉ</div><p id="i-blank-text">Обери напис ліворуч.</p></div>
+      <div id="i-page" hidden>
+        <div class="num" id="i-where"></div>
+        <h1 id="i-title"></h1>
+        <div class="stone" id="stone"></div>
+        <div class="readout" id="readout"></div>
+        <div class="hint" id="i-hint"></div>
+        <div class="gmctl" id="i-gm" hidden>
+          <div class="gmrow">
+            <button type="button" class="go" id="i-show">Показати гравцям</button>
+            <button type="button" class="ghost" id="i-hide">Сховати від гравців</button>
+            <button type="button" class="ghost" id="i-all">Розгадати весь напис</button>
+            <button type="button" class="ghost" id="i-edit">Редагувати</button>
+          </div>
+          <button type="button" class="go wide" id="i-rune" hidden></button>
+          <div class="dim">Клік по руні — відкрити цю літеру партії в усіх написах. Ще клік — сховати.</div>
+        </div>
+      </div>
+      <div class="editor" id="i-editor" hidden>
+        <div class="ehead"><b>Напис</b><button type="button" class="ghost" id="e-done">Готово</button></div>
+        <label>Назва<input id="e-title" maxlength="80" placeholder="Напис над воротами"></label>
+        <label>Де знайдено<input id="e-where" maxlength="120" placeholder="Вирізано на камені біля входу"></label>
+        <label>Текст <span class="dim">— звичайними літерами, гравці побачать руни</span><textarea id="e-text" rows="4" maxlength="400"></textarea></label>
+        <label>Креслення руни <span class="dim">— коли напис прочитано, можна одразу відкрити руну</span><select id="e-rune"></select></label>
+        <div class="erow end"><button type="button" class="ghost danger" id="e-del">Видалити напис</button></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- АБЕТКА -->
+  <main class="view" id="v-abc" hidden>
+    <section class="abcwrap">
+      <p class="lead" id="abc-lead"></p>
+      <div class="abc" id="abc"></div>
+      <div class="dim" id="abc-hint"></div>
+    </section>
+  </main>
+
+  <!-- олівець гравця: здогадка для руни -->
+  <div class="guess" id="guess" hidden>
+    <div class="gg" id="g-glyph"></div>
+    <div class="dim">Твоя здогадка (бачиш лише ти)</div>
+    <div class="gkeys" id="g-keys"></div>
+    <button type="button" class="ghost" id="g-clear">Стерти</button>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/runes.js"></script>
+</body>
+</html>
