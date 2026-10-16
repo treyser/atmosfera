@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дошка розслідувань</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=PT+Mono&family=Oswald:wght@600&display=swap" rel="stylesheet">
+</head>
+<body class="board">
+  <header class="top">
+    <div class="brand"><b>Дошка розслідувань</b><span id="who"></span></div>
+    <nav class="cases" id="cases"></nav>
+    <button type="button" class="tab add" id="case-add" hidden title="Нова справа">＋</button>
+    <div class="sp"></div>
+    <div class="tools">
+      <button type="button" class="tool" id="t-note" title="Приліпити записку">📝<span>Записка</span></button>
+      <button type="button" class="tool" id="t-q" title="Картка з питанням">❓<span>Питання</span></button>
+      <div class="spools" id="spools" title="Колір нитки"></div>
+      <button type="button" class="tool icon" id="t-torch" title="Ліхтарик">🔦</button>
+      <button type="button" class="tool icon" id="t-fit" title="Показати всю дошку">⤢</button>
+      <button type="button" class="tool gmonly" id="t-drawer" title="Шухляда з уликами">🗄<span>Шухляда</span><b id="drawer-n" hidden></b></button>
+      <button type="button" class="tool gmonly" id="t-show" title="Відкрити дошку на екранах гравців">👁<span>Гравцям</span></button>
+    </div>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <main class="desk" id="desk">
+    <div class="viewport" id="vp">
+      <div class="frame" id="frame">
+        <div class="cork" id="cork">
+          <div class="items" id="items"></div>
+          <svg class="yarn" id="yarn" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="ysh" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="2.2"/></filter>
+            </defs>
+            <g id="yarn-sh"></g>
+            <g id="yarn-g"></g>
+            <path id="yarn-tmp" class="tmp" d=""/>
+          </svg>
+          <div class="tags" id="tags"></div>
+          <div class="cursors" id="cursors"></div>
+          <div class="closed" id="closed" hidden>СПРАВУ ЗАКРИТО</div>
+        </div>
+      </div>
+    </div>
+    <div class="lamp" id="lamp"></div>
+    <div class="torch" id="torch" hidden></div>
+    <div class="empty" id="empty" hidden></div>
+
+    <!-- меню нитки -->
+    <div class="ymenu" id="ymenu" hidden>
+      <div class="yrow" id="ym-colors"></div>
+      <input id="ym-label" maxlength="40" placeholder="Підпис на нитці…">
+      <button type="button" class="ydel" id="ym-del">Обрізати нитку</button>
+    </div>
+
+    <!-- шухляда майстра -->
+    <aside class="drawer" id="drawer" hidden>
+      <div class="dhead"><b>Шухляда</b><span class="dim">Улики, яких гравці ще не бачать</span></div>
+      <div class="dlist" id="dlist"></div>
+      <div class="dnew">
+        <div class="dtabs" id="dtabs"></div>
+        <div class="dform" id="dform"></div>
+        <label class="dchk"><input type="checkbox" id="d-now"> одразу на дошку</label>
+        <button type="button" class="go" id="d-add">Покласти в шухляду</button>
+      </div>
+      <div class="dcase">
+        <input id="case-name" maxlength="50" placeholder="Назва справи">
+        <div class="drow">
+          <button type="button" class="ghost" id="case-close">Справу закрито</button>
+          <button type="button" class="ghost danger" id="case-del">Видалити справу</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/board.js"></script>
+</body>
+</html>
