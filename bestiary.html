@@ -113,6 +113,19 @@
             <button type="button" class="ghost" id="ai-clear">Прибрати портрет</button>
           </div>
         </div>
+        <details class="aikey aifree" id="ai-freebox">
+          <summary>Безкоштовно через застосунок Gemini</summary>
+          <ol class="dim">
+            <li>Відкрий gemini.google.com, прикріпи картинку токена й встав підказку:</li>
+          </ol>
+          <textarea id="ai-prompt" rows="4" readonly></textarea>
+          <div class="airow">
+            <button type="button" class="ghost" id="ai-copy">📋 Копіювати підказку</button>
+            <button type="button" class="go" id="ai-put">Вставити готовий портрет…</button>
+          </div>
+          <input type="file" id="ai-put-input" accept="image/*" hidden>
+          <ol class="dim" start="2"><li>Готову картинку скопіюй у Gemini (правою кнопкою → «Копіювати зображення») і натисни тут <b>Ctrl+V</b> — або збережи файл і натисни «Вставити готовий портрет…».</li></ol>
+        </details>
         <details class="aikey" id="ai-keybox">
           <summary>Ключ Gemini API <span class="dim" id="ai-keystate"></span></summary>
           <input id="ai-key" type="password" placeholder="AIza…" autocomplete="off">
