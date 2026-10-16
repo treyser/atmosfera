@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -20,6 +20,7 @@ import { mergeCache, packPages, FOCUS } from "./best-data.js";
 import { packState, seenState, saveSeen, news, RFOCUS } from "./runes-data.js";
 import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } from "./stars-data.js";
 import { chestOf, putChest, newChest, publicView, coinCp, fromCp } from "./chest-data.js";
+import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards, saveSeenBoards } from "./board-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -96,6 +97,7 @@ OBR.onReady(async () => {
   startRunes().catch((err) => console.error("Руни:", err));
   startStars().catch((err) => console.error("Зоряне небо:", err));
   startChests().catch((err) => console.error("Скрині:", err));
+  startBoards().catch((err) => console.error("Дошка:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -729,6 +731,47 @@ async function startChests() {
   }
 }
 const moneyOf = (cp) => money(cp);
+
+// Дошка розслідувань: майстер зберігає справи й роздає їх; гравці лише відкривають вікно
+async function startBoards() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  OBR.broadcast.onMessage(BOARD_REQ, async () => {
+    if (!(await isGM())) return;
+    const send = (d) => OBR.broadcast.sendMessage(BOARD_FULL, d, { destination: "REMOTE" }).catch(() => {});
+    await send({ reset: true });
+    for (const part of chunks(publicList(boards()))) await send(part);
+    await send({ done: true });
+  });
+  // зміни від гравців: майстер зберігає (гравцям дозволено записки, нитки й пересування)
+  const PLAYER_OPS = new Set(["move", "link", "lupd", "unlink", "add", "upd", "del"]);
+  OBR.broadcast.onMessage(BOARD_OP, async (event) => {
+    const op = event.data;
+    if (!op) return;
+    if (!(await isGM())) {
+      const list = seenBoards(room);
+      if (applyBoard(list, op)) saveSeenBoards(room, list);
+      return;
+    }
+    if (!PLAYER_OPS.has(op.op)) return;
+    const b = boards();
+    const c = b.list.find((x) => x.id === op.k);
+    if (!c || c.closed) return;
+    const target = c.items.find((i) => i.id === op.id || i.id === op.item?.id);
+    const mine = (i) => i && (i.kind === "note" || i.kind === "question");
+    if (op.op === "add" && (!mine(op.item) || (target && !mine(target)))) return;
+    if (op.op === "del" && !mine(target)) return;
+    if (op.op === "upd" && (!mine(target) || Object.keys(op.patch ?? {}).some((k) => !["text", "color"].includes(k)))) return;
+    if (op.op === "lupd" && op.patch?.color === "gold") return;
+    if (applyBoard(b.list, op)) saveBoards(b);
+  });
+  if (!(await isGM())) {
+    OBR.broadcast.onMessage(BOARD_SHOW, async (event) => {
+      await OBR.modal.close(BOARD).catch(() => {});
+      OBR.modal.open({ id: BOARD, url: url(`board.html?k=${encodeURIComponent(event.data?.k ?? "")}`), fullScreen: true }).catch(() => {});
+    });
+  }
+}
 
 // Кидок долі: кубик і настрій посеред екрана
 async function showFate(data) {

@@ -71,6 +71,12 @@ export const TRAP_SAVE = `${ID}/trap-save`;   // канал: результат 
 export const TRAP_DMG = `${ID}/trap-dmg`;     // канал: майстер завдав шкоди { fid, token, n }
 export const TRAP_CHECK = `${ID}/trap-check`; // канал: майстер просить Уважність { tid, dc, clue }
 export const TRAP_SEEN = `${ID}/trap-seen`;   // канал: гравець помітив (чи ні) { tid, who, total, ok }
+export const BOARD = `${ID}/board`;           // вікно дошки розслідувань
+export const BOARD_OP = `${ID}/board-op`;     // канал: зміна на дошці (усі → усі)
+export const BOARD_REQ = `${ID}/board-req`;   // канал: гравець просить дошки
+export const BOARD_FULL = `${ID}/board-full`; // канал: дошки шматками (майстер → гравці)
+export const BOARD_CUR = `${ID}/board-cur`;   // канал: де чий курсор
+export const BOARD_SHOW = `${ID}/board-show`; // канал: майстер відкриває гравцям дошку { k }
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 
