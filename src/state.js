@@ -65,6 +65,12 @@ export const CHEST_TAKE = `${ID}/chest-take`; // канал: гравець бе
 export const CHEST_SPLIT = `${ID}/chest-split`; // канал: поділити монети { id }
 export const CHEST_GOT = `${ID}/chest-got`;   // канал: майстер віддав гравцю { to, item?, cp? }
 export const CHEST_SHOW = `${ID}/chest-show`; // канал: відкрити вікно скрині всім { id }
+export const TRAP = `${ID}/trap`;             // пастка — у метаданих фігури
+export const TRAP_FIRE = `${ID}/trap-fire`;   // канал: пастка спрацювала { fid, tid, token, … }
+export const TRAP_SAVE = `${ID}/trap-save`;   // канал: результат рятівного кидка { fid, ok, who }
+export const TRAP_DMG = `${ID}/trap-dmg`;     // канал: майстер завдав шкоди { fid, token, n }
+export const TRAP_CHECK = `${ID}/trap-check`; // канал: майстер просить Уважність { tid, dc, clue }
+export const TRAP_SEEN = `${ID}/trap-seen`;   // канал: гравець помітив (чи ні) { tid, who, total, ok }
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

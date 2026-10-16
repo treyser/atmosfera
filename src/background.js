@@ -12,6 +12,7 @@ import { routeStats } from "./route.js";
 import { daysBetween } from "./atlas-points.js";
 import { setTarget, targetForMood } from "./hoot.js";
 import { startZones } from "./zones.js";
+import { startTraps } from "./traps.js";
 import { playSecret, soundOf, dirOf, preload } from "./sfx.js";
 import { shops, saveShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, takeGear, SHEET_PUSH, owner } from "./shop-data.js";
 import { local } from "./log.js";
@@ -57,6 +58,24 @@ OBR.onReady(async () => {
     });
   } catch (err) { console.error("Зони: меню не зареєструвалось", err); }
   startZones().catch((err) => console.error("Зони:", err));
+
+  // Пастки: ПКМ на намальованій фігурі → «Пастка» (лише майстер)
+  try {
+    OBR.contextMenu.create({
+      id: `${ID}/trap-menu`,
+      icons: [{
+        icon: url("trap.svg"),
+        label: "Пастка",
+        filter: { roles: ["GM"], max: 1, some: [
+          { key: "type", value: "SHAPE", coordinator: "||" },
+          { key: "type", value: "CURVE", coordinator: "||" },
+          { key: "type", value: "PATH" },
+        ] },
+      }],
+      embed: { url: url("trap.html"), height: 470 },
+    });
+  } catch (err) { console.error("Пастки: меню не зареєструвалось", err); }
+  startTraps(url).catch((err) => console.error("Пастки:", err));
 
   // Картка персонажа: ПКМ на токені → «Представити» (лише майстер)
   try {
