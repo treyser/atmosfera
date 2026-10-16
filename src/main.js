@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -46,6 +46,7 @@ OBR.onReady(async () => {
     $("crew-shop").onclick = openShop;
     $("crew-best").onclick = openBest;
     $("crew-runes").onclick = openRunes;
+    $("crew-stars").onclick = openStars;
     const bestSub = () => {
       const n = Object.keys(cache(OBR.room.id).pages ?? {}).length;
       $("crew-best-sub").textContent = n ? `Записано істот: ${n}` : "Істоти, яких зустріли герої";
@@ -166,6 +167,7 @@ function build() {
   $("gm-shop").onclick = openShop;
   $("gm-best").onclick = openBest;
   $("gm-runes").onclick = openRunes;
+  $("gm-stars").onclick = openStars;
   const shopSub = (m) => {
     const s = m[SHOP] ?? {};
     $("gm-shop-sub").textContent = s.open ? `Відчинена для гравців: «${s.name}»` : "Вітрини торговців, ціни, пропозиції гравців";
@@ -338,6 +340,10 @@ function fatePanel() {
 
 function openShop() {
   return OBR.modal.open({ id: SHOP, url: url("shop.html"), width: 1180, height: 760 });
+}
+
+function openStars() {
+  return OBR.modal.open({ id: STAR, url: url("stars.html"), width: 1280, height: 800 });
 }
 
 function openRunes() {

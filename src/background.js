@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -17,6 +17,7 @@ import { shops, saveShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, t
 import { local } from "./log.js";
 import { mergeCache, packPages, FOCUS } from "./best-data.js";
 import { packState, seenState, saveSeen, news, RFOCUS } from "./runes-data.js";
+import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } from "./stars-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -73,6 +74,7 @@ OBR.onReady(async () => {
   startShop().catch((err) => console.error("Крамниця:", err));
   startBestiary().catch((err) => console.error("Бестіарій:", err));
   startRunes().catch((err) => console.error("Руни:", err));
+  startStars().catch((err) => console.error("Зоряне небо:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -573,6 +575,47 @@ async function startRunes() {
     OBR.modal.open({ id: RUNE, url: url("runes.html"), width: 1180, height: 780 }).catch(() => {});
   });
   if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(RUNE_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 4500);
+}
+
+// Зоряне небо: майстер перевіряє лінії й роздає небо; гравцям воно відкривається само
+async function startStars() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const send = (st) => OBR.broadcast.sendMessage(STAR_STATE, st, { destination: "REMOTE" }).catch(() => {});
+  OBR.broadcast.onMessage(STAR_REQ, async () => { if (await isGM()) send(skyState(room)); });
+  OBR.broadcast.onMessage(STAR_LINE, async (event) => {
+    if (!(await isGM())) return;
+    const st = skyState(room);
+    if (!st.night.open) return;
+    const fresh = applyLine(st, event.data);
+    saveSky(room, st);
+    send(st);
+    for (const id of fresh) {
+      const c = constOf(id), v = st.night.vis.find((x) => x.id === id);
+      const where = `${dirName(v?.az ?? c.az).full}${v?.lead ? `, до №${v.lead}` : ""}`;
+      OBR.notification.show(`Гравці знайшли сузір'я «${c.name}» — веде на ${where}`).catch(() => {});
+      appendLog({ k: "g", t: `Зоряне небо: знайдено сузір'я «${c.name}» — веде на ${where}.`, w: "Майстер" }).catch(() => {});
+    }
+  });
+  // гравці: зберегти небо; майстер відкрив — вікно відкривається само, закрив — закривається
+  if (!(await isGM())) {
+    let open = skySeen(room).night?.open ?? false;
+    OBR.broadcast.onMessage(STAR_STATE, (event) => {
+      const st = event.data;
+      if (!st?.night) return;
+      const prev = skySeen(room);
+      saveSkySeen(room, st);
+      for (const id of st.found ?? []) {
+        if ((prev.found ?? []).includes(id)) continue;
+        const c = constOf(id), v = st.night.vis.find((x) => x.id === id);
+        if (c) OBR.notification.show(`Знайдено сузір'я «${c.name}» — веде на ${dirName(v?.az ?? c.az).full}${v?.lead ? `, до №${v.lead}` : ""}`).catch(() => {});
+      }
+      if (st.night.open && !open) OBR.modal.open({ id: STAR, url: url("stars.html"), width: 1280, height: 800 }).catch(() => {});
+      if (!st.night.open && open) OBR.modal.close(STAR).catch(() => {});
+      open = st.night.open;
+    });
+    setTimeout(() => OBR.broadcast.sendMessage(STAR_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 5000);
+  }
 }
 
 // Кидок долі: кубик і настрій посеред екрана

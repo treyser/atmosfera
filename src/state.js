@@ -52,6 +52,10 @@ export const RUNE = `${ID}/runes`;          // вікно рун і написі
 export const RUNE_REQ = `${ID}/rune-req`;    // канал: гравець просить стан рун
 export const RUNE_DATA = `${ID}/rune-data`;  // канал: стан рун, абетки й показаних написів (майстер → гравці)
 export const RUNE_SHOW = `${ID}/rune-show`;  // канал: відкрити гравцям руну чи напис
+export const STAR = `${ID}/stars`;          // вікно зоряного неба
+export const STAR_REQ = `${ID}/star-req`;    // канал: гравець просить небо
+export const STAR_LINE = `${ID}/star-line`;  // канал: гравець провів чи стер лінію { add | del }
+export const STAR_STATE = `${ID}/star-state`; // канал: небо ночі, лінії, знайдені сузір'я (майстер → гравці)
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

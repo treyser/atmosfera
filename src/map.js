@@ -5,6 +5,7 @@ import { MAP, VISITED, HERE, ROUTE, VOYAGE } from "./state.js";
 import { drawRoute } from "./route.js";
 import { POINTS, REGIONS } from "./atlas-points.js";
 import { getVotes, onVotes, setVote, pips } from "./votes.js";
+import { drawLeads, skySeen, SKY_SEEN } from "./stars-data.js";
 
 const $ = (id) => document.getElementById(id);
 let chosen = null;
@@ -25,6 +26,7 @@ OBR.onReady(async () => {
   OBR.room.onMetadataChange((m) => { take(m); draw(); });
   votes = await getVotes();
   onVotes(async () => { votes = await getVotes(); draw(); });
+  window.addEventListener("storage", (e) => { if (e.key === SKY_SEEN(OBR.room.id)) draw(); });
   draw();
 });
 
@@ -74,6 +76,7 @@ function draw() {
   }
   // Подію гравцям не показуємо — лише курс
   drawRoute($("frame"), route, voyage ? { from: voyage.from, to: voyage.to, event: voyage.played } : null);
+  drawLeads($("frame"), skySeen(OBR.room.id));
   $("seen").innerHTML = `<b>${seen.size}</b> / ${POINTS.length}<span>відвідано</span>`;
 
   // Список пропозицій

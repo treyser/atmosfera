@@ -5,6 +5,7 @@ import { ATLAS, VISITED, PRESETS, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, TUNE, HE
 import { FRAGMENTS } from "./melody.js";
 import { EVENTS, EVENT_KINDS, eventsFor, daysBetween, chanceFor } from "./events.js";
 import { drawRoute, routeStats } from "./route.js";
+import { drawLeads, skyState } from "./stars-data.js";
 import { getVotes, onVotes, pips } from "./votes.js";
 import { PLACES, KINDS, REGIONS, ARCHETYPES, BESTIARY } from "./atlas-data.js";
 import { sceneMaps, match, pick } from "./director.js";
@@ -272,6 +273,7 @@ function draw() {
 
   // Маршрут на мапі й підсумок під ним
   drawRoute($("frame"), route, voyage);
+  drawLeads($("frame"), skyState(OBR.room.id));
   const st = routeStats(route, daysBetween);
   $("rinfo").textContent = route.length
     ? `${route.join(" → ")} · переходів: ${st.legs}, ≈ ${st.days} дн. у морі`
