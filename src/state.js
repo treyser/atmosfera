@@ -81,6 +81,11 @@ export const GOAL = `${ID}/goals`;           // вікно таємних ціл
 export const GOAL_DATA = `${ID}/goal-data`;  // канал: цілі одного героя (майстер → власник) { to, goals, fresh? }
 export const GOAL_REQ = `${ID}/goal-req`;    // канал: гравець просить свої цілі { to }
 export const GOAL_CLAIM = `${ID}/goal-claim`; // канал: гравець каже, що виконав { to, gid, who }
+export const RUMOR = `${ID}/rumors`;          // вікно книги чуток
+export const RUMOR_DATA = `${ID}/rumor-data`; // канал: почуті чутки (майстер → гравці)
+export const RUMOR_REQ = `${ID}/rumor-req`;   // канал: гравець просить чутки
+export const RUMOR_TELL = `${ID}/rumor-tell`; // канал: майстер розповідає чутку всім { r }
+export const RUMOR_VOTE = `${ID}/rumor-vote`; // канал: гравець вірить чи ні { id, who, v }
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

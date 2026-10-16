@@ -18,6 +18,7 @@ export const KINDS = {
   rune:    { name: "Напис",       icon: "ᚱ" },
   beast:   { name: "Істота",      icon: "🐉" },
   item:    { name: "Річ",         icon: "🗝" },
+  rumor:   { name: "Чутка",       icon: "🍺" },
 };
 export const NOTE_COLORS = ["#f7e27a", "#f6a6b2", "#9fd8a8", "#9cc7f2", "#f5b97a"];
 export const YARN = {

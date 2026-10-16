@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -22,6 +22,8 @@ import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } 
 import { chestOf, putChest, newChest, publicView, coinCp, fromCp } from "./chest-data.js";
 import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards, saveSeenBoards } from "./board-data.js";
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
+import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
+import { pack as packData } from "./trap-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -100,6 +102,7 @@ OBR.onReady(async () => {
   startChests().catch((err) => console.error("Скрині:", err));
   startBoards().catch((err) => console.error("Дошка:", err));
   startGoals().catch((err) => console.error("Таємні цілі:", err));
+  startRumors().catch((err) => console.error("Чутки:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -760,7 +763,7 @@ async function startBoards() {
     const c = b.list.find((x) => x.id === op.k);
     if (!c || c.closed) return;
     const target = c.items.find((i) => i.id === op.id || i.id === op.item?.id);
-    const mine = (i) => i && (i.kind === "note" || i.kind === "question");
+    const mine = (i) => i && (i.kind === "note" || i.kind === "question" || i.kind === "rumor");
     if (op.op === "add" && (!mine(op.item) || (target && !mine(target)))) return;
     if (op.op === "del" && !mine(target)) return;
     if (op.op === "upd" && (!mine(target) || Object.keys(op.patch ?? {}).some((k) => !["text", "color"].includes(k)))) return;
@@ -805,6 +808,41 @@ async function startGoals() {
       }
     });
     setTimeout(() => { const me = goalOwner(); if (me) OBR.broadcast.sendMessage(GOAL_REQ, { to: me }, { destination: "REMOTE" }).catch(() => {}); }, 5500);
+  }
+}
+
+// Чутки: майстер зберігає; розказана чутка вискакує в усіх із тихим шепотом
+async function startRumors() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const send = () => OBR.broadcast.sendMessage(RUMOR_DATA, rumorsForPlayers(rumors()), { destination: "REMOTE" }).catch(() => {});
+  OBR.broadcast.onMessage(RUMOR_REQ, async () => { if (await isGM()) send(); });
+  OBR.broadcast.onMessage(RUMOR_VOTE, async (e) => {
+    if (!(await isGM())) return;
+    const d = e.data ?? {};
+    const list = rumors();
+    const r = list.find((x) => x.id === d.id);
+    if (!r || !d.who) return;
+    r.votes = { ...(r.votes ?? {}), [d.who]: d.v };
+    saveRumors(list);
+    send();
+  });
+  if (!(await isGM())) {
+    const WIN = `${ID}/rumor-win`;
+    OBR.broadcast.onMessage(RUMOR_DATA, (e) => { if (Array.isArray(e.data)) saveHeard(room, e.data); });
+    OBR.broadcast.onMessage(RUMOR_TELL, async (e) => {
+      const r = e.data?.r;
+      if (!r) return;
+      playSecret("whisper", "front", 0.7).catch(() => {});
+      const w = await OBR.viewport.getWidth();
+      await OBR.popover.close(WIN).catch(() => {});
+      OBR.popover.open({
+        id: WIN, url: url(`rumor-tell.html?d=${encodeURIComponent(packData(r))}`), width: Math.min(520, w - 40), height: 290,
+        anchorReference: "POSITION", anchorPosition: { top: 80, left: w / 2 },
+        anchorOrigin: { horizontal: "CENTER", vertical: "TOP" }, transformOrigin: { horizontal: "CENTER", vertical: "TOP" },
+        hidePaper: true, marginThreshold: 0,
+      }).catch(() => {});
+    });
   }
 }
 

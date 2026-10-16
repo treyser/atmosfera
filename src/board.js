@@ -392,6 +392,9 @@ function renderItem(it) {
       body = `<div class="bcard" style="--bc:${col}"><div class="bi">${it.img ? `<img src="${esc(it.img)}" alt="" draggable="false">` : `<span>${esc((it.name || "?")[0])}</span>`}</div><div class="bn">${esc(it.name)}</div><div class="bt">${esc(it.type || "")}</div></div>`;
       break;
     }
+    case "rumor":
+      body = `<div class="rumor"><div class="rk">кажуть, що…</div><div class="rx">${nl(it.text)}</div><div class="rw">— ${esc(it.who || "хтось у таверні")}${it.where ? `, ${esc(it.where)}` : ""}</div></div>`;
+      break;
     case "item":
       body = `<div class="itag"><div class="ii">${it.img ? `<img src="${esc(it.img)}" alt="" draggable="false">` : esc(CATS[it.cat] ?? "🗝")}</div><div class="in">${esc(it.name)}</div><div class="id">${esc(it.desc || "")}</div><i class="string"></i></div>`;
       break;
@@ -406,7 +409,7 @@ function renderItem(it) {
 }
 
 const canEdit = (it) => (it.kind === "note" || it.kind === "question") && (gm || it.byId === me.id);
-const canDel = (it) => gm || ((it.kind === "note" || it.kind === "question") && it.byId === me.id);
+const canDel = (it) => gm || ((it.kind === "note" || it.kind === "question" || it.kind === "rumor") && it.byId === me.id);
 
 function hoverButtons(it) {
   const b = [];

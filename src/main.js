@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, CHEST, BOARD, GOAL, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, CHEST, BOARD, GOAL, RUMOR, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -48,6 +48,7 @@ OBR.onReady(async () => {
     $("crew-runes").onclick = openRunes;
     $("crew-board").onclick = openBoard;
     $("crew-goals").onclick = openGoals;
+    $("crew-rumors").onclick = openRumors;
     $("crew-stars").onclick = openStars;
     const bestSub = () => {
       const n = Object.keys(cache(OBR.room.id).pages ?? {}).length;
@@ -172,6 +173,7 @@ function build() {
   $("gm-stars").onclick = openStars;
   $("gm-board").onclick = openBoard;
   $("gm-goals").onclick = openGoals;
+  $("gm-rumors").onclick = openRumors;
   $("gm-chest").onclick = () => OBR.modal.open({ id: CHEST, url: url("chest.html"), width: 1000, height: 760 });
   const shopSub = (m) => {
     const s = m[SHOP] ?? {};
@@ -345,6 +347,10 @@ function fatePanel() {
 
 function openShop() {
   return OBR.modal.open({ id: SHOP, url: url("shop.html"), width: 1180, height: 760 });
+}
+
+function openRumors() {
+  return OBR.modal.open({ id: RUMOR, url: url("rumors.html"), width: 1180, height: 780 });
 }
 
 function openGoals() {
