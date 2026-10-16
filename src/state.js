@@ -56,6 +56,15 @@ export const STAR = `${ID}/stars`;          // вікно зоряного не�
 export const STAR_REQ = `${ID}/star-req`;    // канал: гравець просить небо
 export const STAR_LINE = `${ID}/star-line`;  // канал: гравець провів чи стер лінію { add | del }
 export const STAR_STATE = `${ID}/star-state`; // канал: небо ночі, лінії, знайдені сузір'я (майстер → гравці)
+export const CHEST = `${ID}/chest`;           // вікно скрині; на токені — { id }
+export const CHEST_REQ = `${ID}/chest-req`;   // канал: гравець просить скриню { id }
+export const CHEST_DATA = `${ID}/chest-data`; // канал: що видно в скрині (майстер → гравці)
+export const CHEST_TRY = `${ID}/chest-try`;   // канал: гравець пробує відкрити { id, how, who, to }
+export const CHEST_FAIL = `${ID}/chest-fail`; // канал: не вдалося { id, who }
+export const CHEST_TAKE = `${ID}/chest-take`; // канал: гравець бере річ { id, iid, who, to }
+export const CHEST_SPLIT = `${ID}/chest-split`; // канал: поділити монети { id }
+export const CHEST_GOT = `${ID}/chest-got`;   // канал: майстер віддав гравцю { to, item?, cp? }
+export const CHEST_SHOW = `${ID}/chest-show`; // канал: відкрити вікно скрині всім { id }
 export const HUSH = `${ID}/hush`;     // канал: таємний звук лише для тих, хто пройшов перевірку Сприйняття
 export const MUSIC = `${ID}/music`;   // музика через Hoot: { auto, playing } — у метаданих кімнати
 

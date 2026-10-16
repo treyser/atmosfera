@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, CHEST, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -168,6 +168,7 @@ function build() {
   $("gm-best").onclick = openBest;
   $("gm-runes").onclick = openRunes;
   $("gm-stars").onclick = openStars;
+  $("gm-chest").onclick = () => OBR.modal.open({ id: CHEST, url: url("chest.html"), width: 1000, height: 760 });
   const shopSub = (m) => {
     const s = m[SHOP] ?? {};
     $("gm-shop-sub").textContent = s.open ? `Відчинена для гравців: «${s.name}»` : "Вітрини торговців, ціни, пропозиції гравців";

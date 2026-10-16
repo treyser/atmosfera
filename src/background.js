@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -18,6 +18,7 @@ import { local } from "./log.js";
 import { mergeCache, packPages, FOCUS } from "./best-data.js";
 import { packState, seenState, saveSeen, news, RFOCUS } from "./runes-data.js";
 import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } from "./stars-data.js";
+import { chestOf, putChest, newChest, publicView, coinCp, fromCp } from "./chest-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -75,6 +76,7 @@ OBR.onReady(async () => {
   startBestiary().catch((err) => console.error("Бестіарій:", err));
   startRunes().catch((err) => console.error("Руни:", err));
   startStars().catch((err) => console.error("Зоряне небо:", err));
+  startChests().catch((err) => console.error("Скрині:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -617,6 +619,97 @@ async function startStars() {
     setTimeout(() => OBR.broadcast.sendMessage(STAR_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 5000);
   }
 }
+
+// Скрині: правий клік по токену; майстер (його фоновий скрипт) веде облік, хто що взяв
+async function startChests() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const openWin = (id) => OBR.modal.open({ id: CHEST, url: url(`chest.html?c=${encodeURIComponent(id)}`), width: 1000, height: 760 }).catch(() => {});
+  try {
+    OBR.contextMenu.create({
+      id: `${ID}/chest-open`,
+      icons: [{ icon: url("chest.svg"), label: "Скриня", filter: { max: 1, every: [{ key: ["metadata", CHEST], value: undefined, operator: "!=" }] } }],
+      onClick: (ctx) => { const id = ctx.items[0]?.metadata?.[CHEST]?.id; if (id) openWin(id); },
+    });
+    OBR.contextMenu.create({
+      id: `${ID}/chest-make`,
+      icons: [{ icon: url("chest.svg"), label: "Зробити скринею", filter: { roles: ["GM"], max: 1, every: [{ key: "type", value: "IMAGE" }, { key: ["metadata", CHEST], value: undefined }] } }],
+      onClick: async (ctx) => {
+        const it = ctx.items[0];
+        if (!it) return;
+        const c = putChest(newChest(it.name || "Скриня"));
+        await OBR.scene.items.updateItems([it.id], (items) => { for (const x of items) x.metadata[CHEST] = { id: c.id }; });
+        openWin(c.id);
+      },
+    });
+  } catch (err) { console.error("Скрині: меню не зареєструвалось", err); }
+
+  const send = (c) => OBR.broadcast.sendMessage(CHEST_DATA, publicView(c), { destination: "REMOTE" }).catch(() => {});
+  OBR.broadcast.onMessage(CHEST_REQ, async (event) => {
+    if (!(await isGM())) return;
+    const c = chestOf(event.data?.id);
+    if (c) send(c);
+  });
+  OBR.broadcast.onMessage(CHEST_TRY, async (event) => {
+    if (!(await isGM())) return;
+    const d = event.data ?? {};
+    const c = chestOf(d.id);
+    if (!c || c.state === "open") return c && send(c);
+    if (!c.lock?.on) {
+      c.state = "open"; c.tries = [];
+      putChest(c); send(c);
+      appendLog({ k: "g", t: `${d.who || "Хтось"} відкрив скриню «${c.name}».`, w: "Майстер" }).catch(() => {});
+      return;
+    }
+    c.tries = [...(c.tries ?? []).filter((t) => t.who !== d.who), { who: d.who || "Хтось", how: d.how, at: Date.now() }];
+    putChest(c);
+    const how = { pick: "відмикає відмичками", break: "ламає замок", key: "каже, що має ключ" }[d.how] ?? "пробує відкрити";
+    OBR.notification.show(`${d.who}: ${how} скрині «${c.name}» (СК ${c.lock.dc}) — відкрий «Скрині», щоб підтвердити`).catch(() => {});
+  });
+  OBR.broadcast.onMessage(CHEST_TAKE, async (event) => {
+    if (!(await isGM())) return;
+    const d = event.data ?? {};
+    const c = chestOf(d.id);
+    const it = c?.items.find((x) => x.id === d.iid);
+    if (!c || c.state !== "open" || !it || it.by) return c && send(c);
+    it.by = d.who || "Хтось";
+    putChest(c);
+    send(c);
+    OBR.broadcast.sendMessage(CHEST_GOT, { to: d.to, item: { name: it.name, desc: it.desc, mech: it.mech } }, { destination: "REMOTE" }).catch(() => {});
+    appendLog({ k: "g", t: `${it.by} бере зі скрині «${c.name}»: ${it.name}.`, w: "Майстер" }).catch(() => {});
+  });
+  OBR.broadcast.onMessage(CHEST_SPLIT, async (event) => {
+    if (!(await isGM())) return;
+    const c = chestOf(event.data?.id);
+    if (!c || c.state !== "open" || c.split) return;
+    const total = coinCp(c.coins);
+    const crew = (await OBR.party.getPlayers()).filter((p) => p.role !== "GM");
+    if (!total || !crew.length) return;
+    const share = Math.floor(total / crew.length);
+    for (const p of crew) OBR.broadcast.sendMessage(CHEST_GOT, { to: p.id, cp: share, from: c.name }, { destination: "REMOTE" }).catch(() => {});
+    c.coins = fromCp(total - share * crew.length);
+    c.split = true;
+    putChest(c);
+    send(c);
+    appendLog({ k: "g", t: `Монети зі скрині «${c.name}» поділено порівну між ${crew.length}: кожному по ${moneyOf(share)}.`, w: "Майстер" }).catch(() => {});
+  });
+
+  // гравець: узяте — у лист персонажа; майстер показує скриню — вікно відкривається
+  if (!(await isGM())) {
+    const myId = await OBR.player.getId();
+    OBR.broadcast.onMessage(CHEST_GOT, (event) => {
+      const d = event.data ?? {};
+      if (d.to !== myId) return;
+      const next = changeSheet(room, (data, { earn }) => { if (d.item) addGear(data, d.item); if (d.cp) earn(d.cp); });
+      const id = owner();
+      if (next && id) OBR.broadcast.sendMessage(SHEET_PUSH, { id, data: next.data, at: next.at }, { destination: "REMOTE" }).catch(() => {});
+      const what = d.item ? `«${d.item.name}»` : `${moneyOf(d.cp)} зі скрині «${d.from}»`;
+      OBR.notification.show(next ? `Отримано ${what} — уже в листі персонажа` : `Отримано ${what}, але листа персонажа тут немає — допиши сам`).catch(() => {});
+    });
+    OBR.broadcast.onMessage(CHEST_SHOW, (event) => { if (event.data?.id) openWin(event.data.id); });
+  }
+}
+const moneyOf = (cp) => money(cp);
 
 // Кидок долі: кубик і настрій посеред екрана
 async function showFate(data) {
