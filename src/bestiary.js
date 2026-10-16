@@ -284,7 +284,143 @@ function fillTraits(ul, arr) {
 
 const FIELDS = ["name", "type", "biome", "rank", "ac", "hp", "xp", "speed", "img", "seen", "lore", "weak"];
 
+// ---------- портрет із токена через Gemini ----------
+
+const KEY = "atmosfera.gemini-key", MODEL = "atmosfera.gemini-model";
+const ls = (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+let lastToken = null;   // { data, mime } — картинка токена для «Ще раз»
+let made = "";          // згенерований портрет (dataURL), ще не збережений
+
+function initAI() {
+  $("ai-key").value = ls(KEY);
+  $("ai-model").value = ls(MODEL);
+  const keyState = () => { $("ai-keystate").textContent = ls(KEY) ? "· збережено" : "· потрібен для генерації"; $("ai-keybox").open = !ls(KEY); };
+  keyState();
+  $("ai-key").onchange = () => { lsSet(KEY, $("ai-key").value.trim()); keyState(); };
+  $("ai-model").onchange = () => lsSet(MODEL, $("ai-model").value.trim());
+  $("ai-gen").onclick = async () => {
+    try {
+      const ids = (await OBR.player.getSelection()) ?? [];
+      const [it] = ids.length ? await OBR.scene.items.getItems(ids) : [];
+      if (!it?.image?.url) return status("Виділи на мапі токен ворога з картинкою");
+      status("Беру картинку токена…");
+      lastToken = await fromUrl(it.image.url);
+      generate();
+    } catch (err) {
+      console.error(err);
+      status("Не вдалося взяти картинку токена напряму — натисни «Токен із файлу…» і обери її з комп'ютера");
+    }
+  };
+  $("ai-file").onclick = () => $("ai-input").click();
+  $("ai-input").onchange = async (e) => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    lastToken = await fromBlob(f);
+    generate();
+  };
+  $("ai-again").onclick = () => lastToken && generate();
+  $("ai-save").onclick = () => {
+    if (!made) return;
+    $("e-img").value = made;
+    edited();
+    made = "";
+    $("ai-row").hidden = true;
+    status("Портрет збережено — гравці побачать його, щойно знатимуть істоту");
+  };
+  $("ai-clear").onclick = () => { $("e-img").value = ""; edited(); showPic(""); status(""); };
+}
+const status = (t) => { $("ai-status").textContent = t; };
+function showPic(url) {
+  $("ai-img").hidden = !url;
+  if (url) $("ai-img").src = url; else $("ai-img").removeAttribute("src");
+  $("ai-ph").hidden = Boolean(url);
+}
+
+async function fromUrl(url) {
+  const r = await fetch(url, { mode: "cors" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return fromBlob(await r.blob());
+}
+// токен → квадратний PNG до 768 пікселів, base64
+function fromBlob(blob) {
+  return new Promise((ok, fail) => {
+    const src = URL.createObjectURL(blob);
+    const im = new Image();
+    im.onload = () => {
+      URL.revokeObjectURL(src);
+      const n = Math.min(768, Math.max(im.width, im.height));
+      const c = document.createElement("canvas");
+      c.width = c.height = n;
+      const g = c.getContext("2d");
+      const s = n / Math.max(im.width, im.height);
+      g.drawImage(im, (n - im.width * s) / 2, (n - im.height * s) / 2, im.width * s, im.height * s);
+      ok({ data: c.toDataURL("image/png").split(",")[1], mime: "image/png" });
+    };
+    im.onerror = () => { URL.revokeObjectURL(src); fail(new Error("не картинка")); };
+    im.src = src;
+  });
+}
+
+async function generate() {
+  const key = ls(KEY);
+  if (!key) { $("ai-keybox").open = true; return status("Спершу встав ключ Gemini API нижче"); }
+  const c = creature(sel);
+  if (!c || !lastToken) return;
+  $("ai-gen").disabled = true; $("ai-again").disabled = true;
+  status("Gemini малює портрет… (10–30 секунд)");
+  const prompt = `This image is a top-down tabletop battle-map token of a fantasy creature. Using it as the reference for the creature's design, colors, markings, gear and silhouette, paint a dramatic bestiary portrait of the SAME creature: front three-quarter view, head and upper body filling the frame, eye-level, expressive, menacing. Style: painterly dark-fantasy illustration like a D&D Monster Manual plate, rich lighting, moody dark background that fits its habitat. Square image. No text, no letters, no border, no token ring, no frame. Creature: "${c.name}" (${c.type || "creature"}).`;
+  try {
+    const model = ls(MODEL) || "gemini-2.5-flash-image";
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ inline_data: { mime_type: lastToken.mime, data: lastToken.data } }, { text: prompt }] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j?.error?.message || `HTTP ${r.status}`);
+    const part = j?.candidates?.[0]?.content?.parts?.find((p) => p.inline_data || p.inlineData);
+    const d = part?.inline_data ?? part?.inlineData;
+    if (!d?.data) throw new Error(j?.candidates?.[0]?.finishReason ? `Gemini не дав картинку (${j.candidates[0].finishReason})` : "Gemini не дав картинку — спробуй «Ще раз»");
+    made = await shrink(`data:${d.mime_type || d.mimeType || "image/png"};base64,${d.data}`);
+    showPic(made);
+    $("ai-row").hidden = false;
+    status("Подобається? «Зберегти» — або «Ще раз»");
+  } catch (err) {
+    console.error(err);
+    status(`Не вийшло: ${String(err.message || err).slice(0, 160)}`);
+  } finally {
+    $("ai-gen").disabled = false; $("ai-again").disabled = false;
+  }
+}
+
+// стиснути до маленького webp, щоб сторінка влізла в одне повідомлення гравцям (16 кБ)
+function shrink(url) {
+  return new Promise((ok, fail) => {
+    const im = new Image();
+    im.onload = () => {
+      for (const [n, q] of [[320, 0.72], [288, 0.62], [256, 0.58], [224, 0.52], [192, 0.5], [160, 0.45]]) {
+        const c = document.createElement("canvas");
+        c.width = c.height = n;
+        const g = c.getContext("2d");
+        const s = Math.max(n / im.width, n / im.height);
+        g.drawImage(im, (n - im.width * s) / 2, (n - im.height * s) / 2, im.width * s, im.height * s);
+        const out = c.toDataURL("image/webp", q);
+        if (out.length <= 12500) return ok(out);
+      }
+      fail(new Error("портрет завеликий"));
+    };
+    im.onerror = () => fail(new Error("не вдалося прочитати портрет"));
+    im.src = url;
+  });
+}
+
 function initEditor() {
+  initAI();
   for (const [k, b] of Object.entries(BIOMES)) $("e-biome").appendChild(new Option(b.name, k));
   for (let r = 1; r <= 5; r++) $("e-rank").appendChild(new Option(`${ROMAN[r]} — ${RANKS[r]}`, r));
   for (const f of FIELDS) $("e-" + f).addEventListener("input", edited);
@@ -336,6 +472,8 @@ function closeEditor() {
   drawPage();
 }
 function fillEditor(c) {
+  showPic(c.img || "");
+  made = ""; $("ai-row").hidden = true; status("");
   for (const f of FIELDS) $("e-" + f).value = c[f] ?? "";
   $("e-traits").value = (c.traits ?? []).join("\n");
 }
