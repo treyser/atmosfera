@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бестіарій</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="best">
+  <header class="bar">
+    <div class="ttl">
+      <div class="book">Бестіарій</div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <nav class="biomes" id="biomes"></nav>
+    <input id="q" type="search" placeholder="Пошук…" autocomplete="off">
+    <select id="show" title="Які сторінки показати" hidden>
+      <option value="all">Усі істоти</option>
+      <option value="known">Відомі гравцям</option>
+      <option value="unknown">Ще невідомі</option>
+    </select>
+    <button type="button" class="ghost" id="add" hidden title="Додати свою істоту">＋ Істота</button>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <main class="body">
+    <section class="grid" id="grid"></section>
+
+    <aside class="page" id="page">
+      <div class="blank" id="blank">
+        <div class="seal">☙</div>
+        <p id="blank-text">Обери істоту ліворуч.</p>
+      </div>
+
+      <div id="sheet" hidden>
+        <div class="pic" id="pic"><span class="glyph" id="glyph"></span><img id="img" alt="" hidden></div>
+        <div class="num" id="num"></div>
+        <h1 id="name"></h1>
+        <div class="kind" id="kind"></div>
+        <div class="rank" id="rank"></div>
+
+        <ol class="track" id="track"></ol>
+
+        <!-- майстер: рівень знання партії -->
+        <div class="gmctl" id="gmctl" hidden>
+          <div class="lvls" id="lvls"></div>
+          <div class="gmrow">
+            <button type="button" class="go" id="reveal" title="Відкрити цю сторінку на екранах гравців">Показати гравцям</button>
+            <button type="button" class="ghost" id="edit-btn">Редагувати сторінку</button>
+          </div>
+          <div class="dim" id="gm-hint"></div>
+        </div>
+
+        <section class="sec" data-l="1" id="s-seen">
+          <h2>Перше враження</h2>
+          <p class="prose" id="seen"></p>
+        </section>
+
+        <section class="sec" data-l="2" id="s-lore">
+          <h2>Що відомо</h2>
+          <div class="lock">🔒 Відкриється, коли герої вивчать цю істоту</div>
+          <div class="open">
+            <p class="prose" id="lore"></p>
+            <div class="facts"><span>Швидкість</span><b id="speed"></b></div>
+            <ul class="traits" id="abil"></ul>
+            <div class="weak" id="weak-box"><span>Слабкості</span><p id="weak"></p></div>
+          </div>
+        </section>
+
+        <section class="sec" data-l="3" id="s-fight">
+          <h2>Бойові записи</h2>
+          <div class="lock">🔒 Відкриються після перемоги над нею</div>
+          <div class="open">
+            <div class="stats">
+              <div><span>КД</span><b id="ac"></b></div>
+              <div><span>ХП</span><b id="hp"></b></div>
+              <div><span>XP</span><b id="xp"></b></div>
+            </div>
+            <ul class="traits atk" id="atk"></ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- майстер: редактор сторінки -->
+      <div class="editor" id="editor" hidden>
+        <div class="ehead"><b>Сторінка істоти</b><button type="button" class="ghost" id="edit-done">Готово</button></div>
+        <label>Ім'я<input id="e-name" maxlength="60"></label>
+        <div class="erow">
+          <label>Тип<input id="e-type" maxlength="30"></label>
+          <label>Середовище<select id="e-biome"></select></label>
+          <label>Ранг<select id="e-rank"></select></label>
+        </div>
+        <div class="erow">
+          <label>КД<input id="e-ac" type="number"></label>
+          <label>ХП<input id="e-hp" type="number"></label>
+          <label>XP<input id="e-xp" type="number"></label>
+          <label class="w2">Швидкість<input id="e-speed" maxlength="40"></label>
+        </div>
+        <label>Картинка (посилання)
+          <span class="imgrow"><input id="e-img" placeholder="https://…"><button type="button" class="ghost" id="e-img-sel" title="Виділи на мапі токен — і натисни">З виділеного на мапі</button></span></label>
+        <label>Перше враження <span class="dim">— гравці бачать одразу, щойно зустріли</span><textarea id="e-seen" rows="2" maxlength="400" placeholder="Що герої помічають з першого погляду"></textarea></label>
+        <label>Що відомо <span class="dim">— після «Вивчили»</span><textarea id="e-lore" rows="3" maxlength="700" placeholder="Звички, де живе, легенди, що про неї розповідають"></textarea></label>
+        <label>Слабкості <span class="dim">— після «Вивчили»</span><textarea id="e-weak" rows="2" maxlength="300" placeholder="Боїться вогню, вразлива до срібла…"></textarea></label>
+        <label>Вміння й атаки <span class="dim">— по одному в рядку; атаки («Укус: +5, …») гравці побачать лише після перемоги</span><textarea id="e-traits" rows="6" maxlength="2000"></textarea></label>
+        <div class="erow end">
+          <button type="button" class="ghost danger" id="e-del">Видалити істоту</button>
+          <button type="button" class="ghost" id="e-reset" title="Повернути дані з карток бестіарію">Як у картці</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/bestiary.js"></script>
+</body>
+</html>
