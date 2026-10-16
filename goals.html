@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Таємні цілі</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="goals">
+  <header class="bar">
+    <div class="book">Таємні цілі</div>
+    <div class="sub" id="sub"></div>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <!-- майстер -->
+  <main class="gm" id="gm" hidden>
+    <aside class="heroes" id="heroes"></aside>
+    <section class="work">
+      <div id="hero-goals"></div>
+      <div class="new" id="new">
+        <div class="nhead"><b>Нова ціль для <span id="for"></span></b><button type="button" class="ghost sm" id="idea">🎲 Ідея</button></div>
+        <input id="n-title" maxlength="60" placeholder="Назва — наприклад, «Чужий лист»">
+        <textarea id="n-text" rows="3" maxlength="500" placeholder="Що герой має зробити — так, як прочитає гравець"></textarea>
+        <input id="n-reward" maxlength="120" placeholder="Нагорода (гравець побачить її, коли ціль виконано)">
+        <input id="n-gm" maxlength="200" placeholder="Нотатка для себе — гравець не побачить">
+        <div class="nrow">
+          <button type="button" class="ghost" id="n-draft">Зберегти чернетку</button>
+          <button type="button" class="go" id="n-send">Запечатати й надіслати</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- гравець -->
+  <main class="pl" id="pl" hidden>
+    <div class="cards" id="cards"></div>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/goals.js"></script>
+</body>
+</html>

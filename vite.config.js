@@ -25,6 +25,7 @@ export default defineConfig({
         stars: resolve(__dirname, "stars.html"),
         chest: resolve(__dirname, "chest.html"),
         board: resolve(__dirname, "board.html"),
+        goals: resolve(__dirname, "goals.html"),
         trap: resolve(__dirname, "trap.html"),
         "trap-hit": resolve(__dirname, "trap-hit.html"),
         "trap-check": resolve(__dirname, "trap-check.html"),
