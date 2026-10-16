@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Скриня</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body class="chest">
+  <!-- майстер -->
+  <header class="gmbar" id="gmbar" hidden>
+    <div class="book">Скрині</div>
+    <select id="pick" title="Яка скриня"></select>
+    <button type="button" class="ghost" id="add" title="Нова скриня">＋</button>
+    <button type="button" class="ghost danger" id="del" title="Видалити скриню">🗑</button>
+    <select id="tpl" title="Наповнити випадковим вмістом">
+      <option value="">Наповнити…</option>
+    </select>
+    <span class="sp"></span>
+    <button type="button" class="ghost" id="place" title="Поставити токен скрині в центр мапи">Поставити на мапу</button>
+    <button type="button" class="ghost" id="bind" title="Зробити виділений токен цією скринею">До виділеного токена</button>
+    <button type="button" class="go" id="show">Показати гравцям</button>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <main class="gmview" id="gmview" hidden>
+    <section class="left">
+      <div class="stage small" id="g-stage"></div>
+      <label class="lbl">Назва<input id="e-name" maxlength="60"></label>
+      <div class="states" id="states"></div>
+      <div class="lockbox">
+        <label class="chk"><input type="checkbox" id="e-lock"> Замкнена</label>
+        <div class="lockset" id="lockset">
+          <label class="lbl">СК<input id="e-dc" type="number" min="5" max="30"></label>
+          <label class="chk small"><input type="checkbox" id="e-showdc"> показати СК гравцям</label>
+          <label class="lbl wide">Замок <input id="e-note" maxlength="80" placeholder="Важкий залізний замок, ключ у капітана"></label>
+        </div>
+      </div>
+      <div class="tries" id="tries"></div>
+    </section>
+    <section class="right">
+      <div class="coins-e">
+        <b>Монети</b>
+        <label>зм<input id="e-gp" type="number" min="0"></label>
+        <label>см<input id="e-sp" type="number" min="0"></label>
+        <label>мм<input id="e-cp" type="number" min="0"></label>
+        <span class="dim" id="split-note"></span>
+      </div>
+      <div class="ehead"><b>Речі</b><span class="dim">Гравці беруть самі — хто перший. Узяте лягає в лист персонажа.</span></div>
+      <div class="erows" id="erows"></div>
+      <div class="adders">
+        <div class="adder">
+          <select id="cat-pick"><option value="">З каталогу крамниць і знахідок…</option></select>
+          <button type="button" class="ghost" id="cat-add">Додати</button>
+        </div>
+        <div class="adder custom">
+          <input id="n-name" placeholder="Своя річ: назва" maxlength="60">
+          <input id="n-price" type="number" min="0" placeholder="ціна, зм">
+          <button type="button" class="ghost" id="n-add">Додати</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- гравці (і перегляд) -->
+  <main class="pview" id="pview" hidden>
+    <button type="button" class="close pclose" id="pclose" title="Закрити (Esc)">✕</button>
+    <div class="ptitle" id="p-name"></div>
+    <div class="stage" id="p-stage"></div>
+    <div class="locked" id="p-locked" hidden>
+      <div class="lnote" id="p-lnote"></div>
+      <div class="lbtns">
+        <button type="button" class="ghost" data-how="pick">🗝 Відімкнути відмичками</button>
+        <button type="button" class="ghost" data-how="break">🔨 Зламати замок</button>
+        <button type="button" class="ghost" data-how="key">🔑 У мене є ключ</button>
+      </div>
+      <div class="dim" id="p-wait"></div>
+    </div>
+    <div class="closedbox" id="p-closed" hidden>
+      <button type="button" class="go big" id="p-open">Відкрити скриню</button>
+      <div class="dim" id="p-wait2"></div>
+    </div>
+    <div class="opened" id="p-open-box" hidden>
+      <div class="coinrow" id="p-coins"></div>
+      <div class="grid" id="p-items"></div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/chest.js"></script>
+</body>
+</html>

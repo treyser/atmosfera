@@ -23,6 +23,7 @@ export default defineConfig({
         bestiary: resolve(__dirname, "bestiary.html"),
         runes: resolve(__dirname, "runes.html"),
         stars: resolve(__dirname, "stars.html"),
+        chest: resolve(__dirname, "chest.html"),
         "npc-menu": resolve(__dirname, "npc-menu.html"),
       },
     },
