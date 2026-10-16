@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Чутки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Oswald:wght@600&display=swap" rel="stylesheet">
+</head>
+<body class="rumors">
+  <header class="bar">
+    <div class="book">Чутки й плітки</div>
+    <nav class="filt" id="filt">
+      <button type="button" data-f="all" class="on">Усі почуті</button>
+      <button type="button" data-f="open">Нерозгадані</button>
+      <button type="button" data-f="solved">Розгадані</button>
+      <button type="button" data-f="hidden" class="gmonly">Не розказані <b id="hid-n"></b></button>
+    </nav>
+    <span class="sp"></span>
+    <button type="button" class="ghost gmonly" id="random" title="Розповісти випадкову ще не розказану чутку">🎲 Випадкова</button>
+    <button type="button" class="ghost gmonly" id="add">＋ Чутка</button>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+  <main class="wall" id="wall"></main>
+  <div class="pinmenu" id="pinmenu" hidden>
+    <div class="pmh">На яку дошку?</div>
+    <div id="pm-cases"></div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/rumors.js"></script>
+</body>
+</html>
