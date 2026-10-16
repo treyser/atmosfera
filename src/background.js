@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -24,6 +24,7 @@ import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
+import { weapon, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -103,6 +104,7 @@ OBR.onReady(async () => {
   startBoards().catch((err) => console.error("Дошка:", err));
   startGoals().catch((err) => console.error("Таємні цілі:", err));
   startRumors().catch((err) => console.error("Чутки:", err));
+  startArsenal().catch((err) => console.error("Арсенал:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -895,4 +897,41 @@ async function hud(on) {
 // Мапа світу для гравців — велике вікно поверх сцени
 async function openMap() {
   await OBR.modal.open({ id: MAP, url: url("map.html"), width: 1280, height: 860 });
+}
+
+// Арсенал: майстер відкриває особливу зброю, показує картки й видає зброю в лист персонажа
+async function startArsenal() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const openModal = () => OBR.modal.open({ id: ARSENAL, url: url("arsenal.html"), width: 1180, height: 780 }).catch(() => {});
+
+  OBR.broadcast.onMessage(ARSENAL_REQ, async () => {
+    if (!(await isGM())) return;
+    OBR.broadcast.sendMessage(ARSENAL_DATA, { ids: opened(room) }, { destination: "REMOTE" }).catch(() => {});
+  });
+  OBR.broadcast.onMessage(ARSENAL_DATA, async (event) => {
+    if (await isGM() || !Array.isArray(event.data?.ids)) return;
+    saveArsenalSeen(room, event.data.ids);
+  });
+  OBR.broadcast.onMessage(ARSENAL_SHOW, async (event) => {
+    if (await isGM() || !weapon(event.data?.id)) return;
+    const ids = new Set(arsenalSeen(room)); ids.add(event.data.id); saveArsenalSeen(room, [...ids]);
+    try { localStorage.setItem(AFOCUS, JSON.stringify({ id: event.data.id, at: Date.now() })); } catch {}
+    await OBR.modal.close(ARSENAL).catch(() => {});
+    openModal();
+  });
+  // гравець: майстер видав зброю саме йому — у лист персонажа
+  OBR.broadcast.onMessage(ARSENAL_GIVE, async (event) => {
+    const w = weapon(event.data?.id);
+    if (!w || event.data.to !== (await OBR.player.getId())) return;
+    const next = changeSheet(room, (data) => { data.gear = data.gear ?? []; addGear(data, gearOf(w)); });
+    const id = owner();
+    if (next && id) OBR.broadcast.sendMessage(SHEET_PUSH, { id, data: next.data, at: next.at }, { destination: "REMOTE" }).catch(() => {});
+    const ids = new Set(arsenalSeen(room)); ids.add(w.id); saveArsenalSeen(room, [...ids]);
+    try { localStorage.setItem(AFOCUS, JSON.stringify({ id: w.id, at: Date.now() })); } catch {}
+    OBR.notification.show(next ? `Ти отримуєш «${w.name}» — уже в листі персонажа` : `Ти отримуєш «${w.name}» (відкрий лист персонажа, щоб записати)`, "SUCCESS").catch(() => {});
+    await OBR.modal.close(ARSENAL).catch(() => {});
+    openModal();
+  });
+  if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(ARSENAL_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 4500);
 }

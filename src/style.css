@@ -272,4 +272,6 @@ body.npcm input[type=text]{margin-bottom:6px}
 .goal-open{border-color:rgba(201,74,62,.45); color:#f0c0b4; background:linear-gradient(135deg, #2c1414, #1d1a19)}
 .goal-open:hover{background:linear-gradient(135deg, #3c1a1a, #282321)}
 .rumor-open{border-color:rgba(214,170,110,.4); color:#ecd3a8; background:linear-gradient(135deg, #2a2014, #1d1b18)}
+.arsenal-open{border-color:rgba(170,180,195,.4); color:#dfe3ea; background:linear-gradient(135deg, #1f242c, #17191d)}
+.arsenal-open:hover{background:linear-gradient(135deg, #2b313b, #1f2228)}
 .rumor-open:hover{background:linear-gradient(135deg, #3a2c1a, #28241f)}
