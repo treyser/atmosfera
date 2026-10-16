@@ -261,3 +261,5 @@ body.npcm input[type=text]{margin-bottom:6px}
 
 .best-open{border-color:rgba(169,155,224,.4); color:#d8cff5; background:linear-gradient(135deg, #1f1c2e, #1a2029)}
 .best-open:hover{background:linear-gradient(135deg, #2a2640, #222a36)}
+.rune-open{border-color:rgba(255,154,74,.4); color:#f6c9a0; background:linear-gradient(135deg, #2a1d14, #1b1d22)}
+.rune-open:hover{background:linear-gradient(135deg, #3a2618, #24262c)}
