@@ -1,7 +1,38 @@
 {
  "v": 1,
- "stamp": 1,
+ "stamp": 1792239589255,
  "items": [
+  {
+   "id": "wmvcd38xi54",
+   "group": "martial",
+   "rarity": "rare",
+   "name": "Меч крові",
+   "dmg": "1к8+1 рубаюча",
+   "props": "Зброя +1; універсальна (1к10)",
+   "weight": 1.5,
+   "price": 3400,
+   "desc": "Клинок із багряної сталі, жолоб якого завжди лишається вологим. Зброя ніби глухо б'ється в руці, пульсуючи в такт серцю володаря.",
+   "mech": "Коли ви опускаєте живу істоту цим мечем до 0 хітів, ви відновлюєте 2к6 хітів. Раз на довгий відпочинок бонусною дією ви можете віддати мечу 5 власних хітів, щоб на 1 хвилину додати до кожної успішної атаки 1к6 некротичної шкоди.",
+   "quote": "«Він не терпить порожніх піхов — дай йому напитися, або він вип'є тебе».",
+   "img": "arsenal/wmvcd38xi54-mvcd5gci3b.webp",
+   "art": "A menacing longsword forged of deep crimson damascus steel with glowing red veins along the fuller, wrapped in black sharkskin grip, resting against a dark wooden ship deck.",
+   "rev": 1792239546114
+  },
+  {
+   "id": "wmvccsdn4ub",
+   "group": "martial",
+   "rarity": "common",
+   "name": "Нова зброя",
+   "dmg": "1к8 рубаюча",
+   "props": "",
+   "weight": 1,
+   "price": 10,
+   "desc": "",
+   "mech": "",
+   "quote": "",
+   "img": "",
+   "rev": 1792238936080
+  },
   {
    "id": "dagger",
    "group": "simple",
