@@ -697,6 +697,7 @@ function showIdea() {
   }
   box.hidden = false;
   $("idea-acts").hidden = false;
+  setTimeout(() => $("idea-acts").scrollIntoView({ behavior: "smooth", block: "end" }), 60);
   $("idea-fill").hidden = !current() || Boolean(current()?._shop);
 }
 function applyIdea(asNew) {
@@ -718,5 +719,6 @@ function applyIdea(asNew) {
   }
   $("idea").hidden = true;
   draw();
-  toast(asNew ? "Картку створено — додай картинку й опублікуй" : "Картку заповнено");
+  setTimeout(() => $("form").scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  toast(asNew ? "Картку створено — додай картинку й натисни «Опублікувати»" : "Картку заповнено");
 }

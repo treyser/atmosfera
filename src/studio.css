@@ -83,7 +83,7 @@ textarea{resize:vertical; line-height:1.45}
 .gem{display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:10px; border:1px solid var(--line); background:rgba(232,194,122,.04)}
 .gem b{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold)}
 .gem textarea{font-size:11.5px; opacity:.85}
-.fields{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px 12px}
+.fields{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px 12px}
 .fld{display:flex; flex-direction:column; gap:4px}
 .fld > span{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim)}
 .w2{grid-column:span 2}
@@ -102,6 +102,44 @@ textarea{resize:vertical; line-height:1.45}
   .pic{position:static}
   .tabs{overflow:auto}
 }
+/* телефон: усе в одну колонку, сторінка прокручується, нічого не вилазить за екран */
+@media (max-width: 760px){
+  html,body{height:auto; min-height:100%}
+  body{display:block; overflow-x:hidden; overflow-y:auto}
+  .top{position:sticky; top:0; z-index:5; flex-wrap:wrap; gap:6px 8px; padding:8px 10px; background:rgba(11,16,22,.96)}
+  .brand{margin-right:auto}
+  .brand b{font-size:22px}
+  .brand span{display:none}
+  .tabs{order:5; width:100%; overflow-x:auto; scrollbar-width:none}
+  .tabs button{padding:6px 10px; white-space:nowrap; font-size:13px}
+  .top > .grow{display:none}
+  .pill{order:6; max-width:100%; width:100%; white-space:normal; font-size:11.5px}
+  #discard{padding:6px 9px; font-size:12px}
+  #publish{padding:7px 12px}
+  .icon{width:32px; height:32px}
+  .work{display:block}
+  .side{max-height:none; border-right:0; border-bottom:1px solid var(--line)}
+  .list{max-height:46vh}
+  .edit{overflow:visible; padding:14px 10px 90px}
+  .empty{height:auto; padding:30px 0}
+  .form{display:flex; flex-direction:column; gap:14px}
+  .pic{max-width:420px; width:100%; margin:0 auto}
+  .fields{grid-template-columns:repeat(2, minmax(0, 1fr))}
+  .w2,.w3{grid-column:1 / -1}
+  .foot{flex-wrap:wrap}
+  .login{padding:12px}
+  .lbox{padding:18px 16px}
+  .lrow{flex-direction:column}
+  .lbox a{word-break:break-word}
+  .modal{padding:0; place-items:stretch}
+  .mbox{width:100%; max-height:100dvh; height:100dvh; border-radius:0; padding:14px 14px 0}
+  .ihints label{min-width:0; flex:1 1 140px}
+  .iresult{grid-template-columns:1fr; gap:2px}
+  .iresult dd{margin-bottom:6px}
+  .toast{bottom:12px; width:calc(100% - 24px)}
+}
+/* кнопки під результатом завжди на виду */
+#idea-acts{position:sticky; bottom:0; padding:10px 0 12px; background:linear-gradient(transparent, var(--panel) 30%); z-index:2}
 
 .add.idea{border-color:rgba(150,170,255,.5); background:rgba(120,140,255,.08); color:#c9d3ff}
 .add.idea:hover{background:rgba(120,140,255,.16)}

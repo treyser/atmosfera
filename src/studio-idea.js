@@ -3,7 +3,7 @@
 
 export const GKEY = "atmosfera.gemini-key";
 export const GMODEL = "atmosfera.gemini-text-model";
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.8-flash";
 
 const WORLD = `Ти — помічник майстра D&D 5e в українській кампанії «Прокляття Неболіусу»: морські мандри, кораблі й порти, прокляття, руни й зорі, нежить, вогняні демони, ліси й гори.
 Пишеш українською — живо, образно й коротко, у тому ж стилі й форматі, що й приклади. Числа балансуєш за правилами D&D 5e.
@@ -73,7 +73,7 @@ export function examples(kind, list, hints) {
 export async function generate(kind, idea, hints, list, avoid = "") {
   const key = (localStorage.getItem(GKEY) || "").replace(/\s+/g, "");
   if (!key) throw Object.assign(new Error("Потрібен ключ Gemini API"), { code: "nokey" });
-  const model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
+  let model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
   const spec = SPECS[kind];
   const want = Object.entries(hints).filter(([, v]) => v).map(([k, v]) => `${k} = ${v}`).join(", ");
   const user = `Ідея майстра: ${idea}
@@ -81,7 +81,7 @@ ${want ? `Обов'язково: ${want}.` : ""}
 ${avoid ? `Попередній варіант був «${avoid}» — зроби інший, не повторюйся.` : ""}
 Ось кілька карток із цієї ж книги — тримайся їхнього стилю, довжини й формату:
 ${JSON.stringify(examples(kind, list, hints), null, 1)}`;
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+  const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
@@ -90,10 +90,19 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}`;
       generationConfig: { responseMimeType: "application/json", responseSchema: spec.schema, temperature: 1 },
     }),
   });
-  const j = await r.json().catch(() => ({}));
+  let r = await call();
+  let j = await r.json().catch(() => ({}));
+  // Google зняв модель і сам підказує нову — переходимо на неї й запам'ятовуємо
+  const next = /no longer available|not found/i.test(j?.error?.message || "") && (j.error.message.match(/models\/([\w.-]+)\s+for/) || [])[1];
+  if (!r.ok && next && next !== model) {
+    model = next;
+    r = await call();
+    j = await r.json().catch(() => ({}));
+    if (r.ok) localStorage.setItem(GMODEL, model);
+  }
   if (!r.ok) {
     const msg = j?.error?.message || `HTTP ${r.status}`;
-    throw Object.assign(new Error(/quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-2.5-flash-lite). Відповідь Google: ${msg}` : msg), { code: r.status });
+    throw Object.assign(new Error(/quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-3.8-flash). Відповідь Google: ${msg}` : msg), { code: r.status });
   }
   const text = (j?.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("");
   try { return JSON.parse(text); }
