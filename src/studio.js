@@ -2,6 +2,7 @@
 // Читає й пише public/data/*.json і картинки прямо в репозиторій GitHub — одним комітом на «Опублікувати».
 // Owlbear підтягує нове сам, щойно GitHub Pages перезбере сайт (~2 хвилини).
 import "./studio.css";
+import { SPECS, GKEY, GMODEL, generate } from "./studio-idea.js";
 
 const REPO = "treyser/atmosfera";
 const BRANCH = "main";
@@ -44,8 +45,9 @@ const KINDS = {
       { k: "desc", label: "Опис — як виглядає", type: "area", w: 3 },
       { k: "mech", label: "Особливість — механіка (для незвичайної й вище)", type: "area", w: 3 },
       { k: "quote", label: "Цитата (без лапок)", type: "area", w: 3, rows: 2 },
+      { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
-    prompt: (x) => ITEM_STYLE(`a single weapon — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
+    prompt: (x) => ITEM_STYLE(x.art ? `a single weapon — ${x.art}` : `a single weapon — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
   },
   bestiary: {
     title: "Бестіарій", file: "data/bestiary.json", dir: "best", size: 384, removable: true,
@@ -70,8 +72,9 @@ const KINDS = {
       { k: "seen", label: "Перше враження — гравці бачать, щойно зустріли", type: "area", w: 3 },
       { k: "lore", label: "Що відомо — після «Вивчили»", type: "area", w: 3 },
       { k: "weak", label: "Слабкості", type: "area", w: 3, rows: 2 },
+      { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
-    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy creature — «${x.name}» (${x.type || "creature"})${x.seen ? ": " + x.seen : ""}. The creature fills the circle, seen from above at a slight angle, dramatic lighting, painterly dark-fantasy style, highly detailed, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy creature — ${x.art ? x.art : `«${x.name}» (${x.type || "creature"})${x.seen ? ": " + x.seen : ""}`}. The creature fills the circle, seen from above at a slight angle, dramatic lighting, painterly dark-fantasy style, highly detailed, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
   },
   shops: {
     title: "Крамниці", file: "data/shops.json", dir: "shop", size: 512, removable: true,
@@ -88,6 +91,7 @@ const KINDS = {
       { k: "desc", label: "Опис", type: "area", w: 3 },
       { k: "mech", label: "Механіка", type: "area", w: 3 },
       { k: "quote", label: "Що каже продавець (без лапок)", type: "area", w: 3, rows: 2 },
+      { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     shopFields: [
       { k: "name", label: "Назва крамниці", w: 2 },
@@ -99,7 +103,7 @@ const KINDS = {
     ],
     prompt: (x) => (x._shop
       ? `Generate an image: portrait of a fantasy shopkeeper — ${x.owner || "a merchant"}, owner of the shop «${x.name}». ${x.about || ""} Chest-up portrait behind a cluttered counter, warm candlelight, painterly dark-fantasy style, highly detailed, square 1:1. No text.`
-      : ITEM_STYLE(`a single item — «${x.name}»${x.desc ? ": " + x.desc : ""}`)),
+      : ITEM_STYLE(x.art ? `a single item — ${x.art}` : `a single item — «${x.name}»${x.desc ? ": " + x.desc : ""}`)),
   },
   loot: {
     title: "Лут для скринь", file: "data/loot.json", dir: "loot", size: 512,
@@ -115,8 +119,9 @@ const KINDS = {
       { k: "pools", label: "У яких скринях трапляється", type: "checks", opts: POOLS, w: 2 },
       { k: "desc", label: "Опис", type: "area", w: 3 },
       { k: "mech", label: "Механіка (не обов'язково)", type: "area", w: 3, rows: 2 },
+      { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
-    prompt: (x) => ITEM_STYLE(`a single found treasure item — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
+    prompt: (x) => ITEM_STYLE(x.art ? `a single found treasure item — ${x.art}` : `a single found treasure item — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
   },
 };
 
@@ -199,6 +204,7 @@ async function init() {
   $("shop-pick").onchange = () => { shopId = $("shop-pick").value; sel = "@shop"; draw(); };
   $("shop-add").onclick = addShop;
   initPic();
+  initIdea();
   window.addEventListener("beforeunload", (e) => { if (Object.values(st.dirty).some(Boolean)) { e.preventDefault(); e.returnValue = ""; } });
   if (!token) return showLogin(false);
   await start();
@@ -212,8 +218,11 @@ function showLogin(canClose) {
 }
 
 async function connect() {
-  const t = $("token").value.trim();
+  const t = $("token").value.replace(/\s+/g, "");
   if (!t) return;
+  if (/^AIza/.test(t)) { $("login-msg").textContent = "Це ключ Gemini (AIza…). Тут потрібен ключ GitHub — він починається з github_pat_."; return; }
+  if (!/^(github_pat_|ghp_)/.test(t)) { $("login-msg").textContent = "Схоже, скопійовано не ключ: ключ GitHub починається з github_pat_ (або ghp_)."; return; }
+  if (t.startsWith("github_pat_") && t.length < 80) { $("login-msg").textContent = `Ключ закороткий (${t.length} символів, має бути ~93) — мабуть, скопійовано не повністю. Скопіюй ще раз кнопкою копіювання поруч із ключем на GitHub.`; return; }
   $("login-msg").textContent = "Перевіряю…";
   token = t;
   try {
@@ -224,7 +233,11 @@ async function connect() {
     await start();
   } catch (e) {
     token = ls(TOKEN);
-    $("login-msg").textContent = `Не вийшло: ${e.status === 401 ? "ключ недійсний" : e.message}`;
+    $("login-msg").textContent = e.status === 401
+      ? `GitHub не прийняв ключ (${t.length} символів). Перевір, що копіюєш саме щойно створений ключ кнопкою копіювання, і що в нього не минув термін. Якщо не допомагає — створи новий.`
+      : e.status === 404 || e.status === 403
+        ? "Ключ дійсний, але не має доступу до atmosfera: при створенні вибери Only select repositories → atmosfera і Contents → Read and write."
+        : `Не вийшло: ${e.message}`;
   }
 }
 
@@ -358,7 +371,7 @@ function drawForm() {
       x[f.k] = read();
       touch(x);
       if (f.k === "name" || f.k === "price" || f.k === "qty" || f.k === "dmg" || f.k === "rarity" || f.k === "cat" || f.k === "rank" || f.k === "type" || f.k === "owner") drawListSoon();
-      if (["name", "desc", "type", "seen", "owner", "about"].includes(f.k)) $("prompt").value = K.prompt(x);
+      if (["name", "desc", "type", "seen", "owner", "about", "art"].includes(f.k)) $("prompt").value = K.prompt(x);
     });
     wrap.appendChild(inp);
     box.appendChild(wrap);
@@ -604,4 +617,106 @@ function toast(text, ms = 3200) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (t.hidden = true), ms);
   if (/Уже на сайті/.test(text)) { $("dirty").classList.remove("wait"); drawDirty(); }
+}
+
+// ---------- ✨ З ідеї ----------
+let idea = null;   // останній результат
+function initIdea() {
+  $("idea-open").onclick = openIdea;
+  $("idea-close").onclick = () => ($("idea").hidden = true);
+  $("idea").addEventListener("click", (e) => { if (e.target === $("idea")) $("idea").hidden = true; });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("idea").hidden) $("idea").hidden = true; });
+  $("idea-key").onchange = () => { lsSet(GKEY, $("idea-key").value.trim() || null); keyState(); };
+  $("idea-model").onchange = () => lsSet(GMODEL, $("idea-model").value.trim() || null);
+  $("idea-go").onclick = () => runIdea("");
+  $("idea-again").onclick = () => runIdea(idea?.name ?? "");
+  $("idea-text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runIdea(""); });
+  $("idea-new").onclick = () => applyIdea(true);
+  $("idea-fill").onclick = () => applyIdea(false);
+}
+function keyState() {
+  const has = Boolean(ls(GKEY));
+  $("idea-keystate").textContent = has ? "· збережено" : "· потрібен";
+  if (!has) $("idea-keybox").open = true;
+}
+function openIdea() {
+  const spec = SPECS[kind];
+  if (kind === "shops" && !curShop()) return toast("Спершу створи крамницю");
+  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар" }[kind]} з ідеї`;
+  $("idea-text").placeholder = spec.placeholder;
+  const box = $("idea-hints");
+  box.innerHTML = "";
+  for (const [k, h] of Object.entries(spec.hints)) {
+    const l = document.createElement("label");
+    l.innerHTML = `<span>${esc(h.label)}</span>`;
+    const sel = document.createElement("select");
+    sel.dataset.k = k;
+    for (const [v, t] of h.opts) sel.appendChild(new Option(t, v));
+    l.appendChild(sel);
+    box.appendChild(l);
+  }
+  $("idea-key").value = ls(GKEY);
+  $("idea-model").value = ls(GMODEL);
+  keyState();
+  $("idea-result").hidden = true; $("idea-acts").hidden = true; $("idea-status").textContent = "";
+  $("idea-fill").hidden = !current() || Boolean(current()?._shop);
+  $("idea").hidden = false;
+  setTimeout(() => $("idea-text").focus(), 30);
+}
+async function runIdea(avoid) {
+  const text = $("idea-text").value.trim();
+  if (!text) { $("idea-text").focus(); return; }
+  const hints = Object.fromEntries([...$("idea-hints").querySelectorAll("select")].map((s) => [s.dataset.k, s.value]));
+  $("idea-go").disabled = true; $("idea-again").disabled = true;
+  $("idea-status").innerHTML = `<i class="spin"></i>Gemini думає… (10–30 с)`;
+  try {
+    const list = itemsOf().filter((x) => !x._shop);
+    idea = await generate(kind, text, hints, list.length ? list : itemsOf("arsenal"), avoid);
+    showIdea();
+    $("idea-status").textContent = "";
+  } catch (e) {
+    $("idea-status").textContent = e.message;
+    if (e.code === "nokey" || /ключ/i.test(e.message)) { $("idea-keybox").open = true; $("idea-key").focus(); }
+  } finally {
+    $("idea-go").disabled = false; $("idea-again").disabled = false;
+  }
+}
+function label(k, v) {
+  const f = [...(KINDS[kind].fields ?? [])].find((x) => x.k === k);
+  if (Array.isArray(v)) return f?.opts ? v.map((x) => f.opts[x] ?? x).join(", ") : v.join("\n");
+  if (f?.opts) return f.opts[v] ?? v;
+  return v;
+}
+function showIdea() {
+  const box = $("idea-result");
+  box.innerHTML = "";
+  for (const [k, t] of SPECS[kind].show) {
+    const v = idea[k];
+    if (v === "" || v == null || (Array.isArray(v) && !v.length)) continue;
+    box.insertAdjacentHTML("beforeend", `<dt>${esc(t)}</dt><dd class="${k === "name" ? "big" : ""}">${esc(label(k, v))}</dd>`);
+  }
+  box.hidden = false;
+  $("idea-acts").hidden = false;
+  $("idea-fill").hidden = !current() || Boolean(current()?._shop);
+}
+function applyIdea(asNew) {
+  if (!idea) return;
+  const K = KINDS[kind];
+  const data = { ...idea };
+  if (kind === "bestiary") data.rank = Math.min(5, Math.max(1, Number(data.rank) || 1));
+  if (asNew) {
+    const x = { ...K.blank(st.data[kind]), ...data };
+    itemsOf().unshift(x);
+    sel = x.id;
+    filter = "all"; $("q").value = "";
+    touch(x);
+  } else {
+    const x = current();
+    if (!x || x._shop) return;
+    Object.assign(x, data);
+    touch(x);
+  }
+  $("idea").hidden = true;
+  draw();
+  toast(asNew ? "Картку створено — додай картинку й опублікуй" : "Картку заповнено");
 }
