@@ -14,9 +14,9 @@ import { setTarget, targetForMood } from "./hoot.js";
 import { startZones } from "./zones.js";
 import { startTraps } from "./traps.js";
 import { playSecret, soundOf, dirOf, preload } from "./sfx.js";
-import { shops, saveShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, takeGear, SHEET_PUSH, owner } from "./shop-data.js";
+import { shops, saveShops, syncShops, OFFERS, SEEN, priceCp, money, changeSheet, addGear, takeGear, SHEET_PUSH, owner } from "./shop-data.js";
 import { local } from "./log.js";
-import { mergeCache, packPages, FOCUS } from "./best-data.js";
+import { mergeCache, packPages, FOCUS, syncBestiary } from "./best-data.js";
 import { packState, seenState, saveSeen, news, RFOCUS } from "./runes-data.js";
 import { skyState, saveSky, skySeen, saveSkySeen, applyLine, constOf, dirName } from "./stars-data.js";
 import { chestOf, putChest, newChest, publicView, coinCp, fromCp } from "./chest-data.js";
@@ -24,7 +24,7 @@ import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
-import { weapon, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
+import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
 
 const BASE = import.meta.env.BASE_URL;
 const url = (p) => new URL(BASE + p, window.location.origin).href;
@@ -552,6 +552,7 @@ async function startShop() {
 async function startBestiary() {
   const room = OBR.room.id;
   const isGM = async () => (await OBR.player.getRole()) === "GM";
+  if (await isGM()) { syncBestiary().catch(() => {}); syncShops().catch(() => {}); }
   const SAY = ["", "нова сторінка", "вивчено звички й слабкості", "переможено — відкрито бойові записи"];
 
   // майстер: гравець просить усе, що знає партія
@@ -902,6 +903,7 @@ async function openMap() {
 // Арсенал: майстер відкриває особливу зброю, показує картки й видає зброю в лист персонажа
 async function startArsenal() {
   const room = OBR.room.id;
+  loadArsenal().catch(() => {});
   const isGM = async () => (await OBR.player.getRole()) === "GM";
   const openModal = () => OBR.modal.open({ id: ARSENAL, url: url("arsenal.html"), width: 1180, height: 780 }).catch(() => {});
 

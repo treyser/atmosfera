@@ -1,6 +1,7 @@
 // Арсенал: довідник зброї з картками. Звичайну зброю бачать усі, незвичайну й рідкісну —
 // лише ту, яку майстер показав або видав. Дані — тут, у коді; що відкрито — у браузері майстра.
 import { local, saveLocal } from "./log.js";
+import { art, cachedContent, loadContent } from "./content.js";
 
 export const GROUPS = {
   simple: { name: "Проста", icon: "🗡" },
@@ -249,9 +250,17 @@ const W = [
     "+3 до атаки й шкоди; не потребує стріл. Раз на день: стріла-колискова — усі в радіусі 6 м від точки влучання проходять Мудрість СК 17 або засинають на 1 хвилину.", "Спи, моряче. Море не чекає."],
 ];
 
-export const ARSENAL = W.map(([id, group, rarity, name, dmg, props, weight, price, desc, mech, quote]) => ({
+const BUILTIN = W.map(([id, group, rarity, name, dmg, props, weight, price, desc, mech, quote]) => ({
   id, group, rarity, name, dmg, props, weight, price, desc, mech, quote, img: `${ART}${id}.webp`,
 }));
+// Справжній список — із Майстерні (public/data/arsenal.json); вбудований — запасний
+const fromJson = (j) => (Array.isArray(j?.items) && j.items.length ? j.items.map((x) => ({ ...x, img: art(x.img) })) : null);
+export let ARSENAL = fromJson(cachedContent("arsenal")) ?? BUILTIN;
+export async function loadArsenal() {
+  const list = fromJson(await loadContent("arsenal"));
+  if (list) ARSENAL = list;
+  return ARSENAL;
+}
 export const weapon = (id) => ARSENAL.find((w) => w.id === id) ?? null;
 export const isSecret = (w) => w.rarity !== "common";
 

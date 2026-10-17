@@ -2,6 +2,7 @@
 // 60 карток — з «Бестіарію пригод» майстра. Майстер може дописувати сторінки й додавати нових істот;
 // усе це живе в його браузері. Гравцям сторінки приходять повідомленнями — лише те, що вони вже знають.
 import { local, saveLocal, uid } from "./log.js";
+import { art, loadContent, mergeBase } from "./content.js";
 
 export const BIOMES = {
   water:    { name: "Водяні та болотні", short: "Вода", icon: "🌊", color: "#4fb3d9" },
@@ -185,6 +186,15 @@ export function bestiary() {
   return SEED;
 }
 export const saveBestiary = (list) => saveLocal(BOOK, list);
+// майстер: підтягнути книгу з Майстерні (нові істоти, правки, видалені)
+export async function syncBestiary() {
+  const j = await loadContent("bestiary");
+  if (!Array.isArray(j?.items)) return false;
+  const list = bestiary();
+  const changed = mergeBase(list, j.items, j.removed ?? [], (c) => ({ ...c, img: art(c.img) }));
+  if (changed) saveBestiary(list);
+  return changed;
+}
 export const known = (room) => local(knownKey(room), {});
 export const saveKnown = (room, map) => saveLocal(knownKey(room), map);
 export function newCreature(list) {

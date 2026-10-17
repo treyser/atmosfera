@@ -4,17 +4,19 @@ import OBR from "@owlbear-rodeo/sdk";
 import "./arsenal.css";
 import { ARSENAL, ARSENAL_DATA, ARSENAL_REQ, ARSENAL_SHOW, ARSENAL_GIVE } from "./state.js";
 import { appendLog } from "./log.js";
-import { ARSENAL as LIST, GROUPS, RARITY, weapon, isSecret, opened, saveOpened, seen, saveSeen, SEEN, FOCUS, gp } from "./arsenal-data.js";
+import { ARSENAL as LIST, loadArsenal, GROUPS, RARITY, weapon, isSecret, opened, saveOpened, seen, saveSeen, SEEN, FOCUS, gp } from "./arsenal-data.js";
 
 const $ = (id) => document.getElementById(id);
 let gm = false;
 let room = "";
 let open = new Set();       // відкрита гравцям незвичайна й рідкісна зброя
-let sel = LIST[0].id;
+let sel = LIST[0]?.id;
 let group = "all";
 let rar = "all";
 
 OBR.onReady(async () => {
+  await loadArsenal();
+  if (!LIST.some((w) => w.id === sel)) sel = LIST[0]?.id;
   gm = (await OBR.player.getRole()) === "GM";
   room = OBR.room.id;
   document.body.classList.toggle("is-gm", gm);

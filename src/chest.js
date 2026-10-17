@@ -1,5 +1,7 @@
 // Скриня: майстер наповнює й замикає, гравці відмикають (справжні кубики — майстер підтверджує),
 // беруть речі (хто перший) і ділять монети порівну. Узяте само лягає в лист персонажа.
+import { loadLoot } from "./chest-data.js";
+import { syncShops } from "./shop-data.js";
 import OBR, { buildImage } from "@owlbear-rodeo/sdk";
 import "./chest.css";
 import { CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_FAIL, CHEST_TAKE, CHEST_SPLIT, CHEST_SHOW } from "./state.js";
@@ -22,6 +24,7 @@ let lastState = "";
 let tried = false;
 
 OBR.onReady(async () => {
+  await Promise.all([loadLoot().catch(() => {}), syncShops().catch(() => {})]);
   gm = (await OBR.player.getRole()) === "GM";
   room = OBR.room.id;
   me = { id: await OBR.player.getId(), name: (readSheet(room)?.data?.name || "").trim() || (await OBR.player.getName()) };

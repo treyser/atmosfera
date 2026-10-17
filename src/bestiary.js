@@ -6,7 +6,7 @@ import "./bestiary.css";
 import { BEST, BEST_REQ, BEST_DATA, BEST_SHOW } from "./state.js";
 import { appendLog } from "./log.js";
 import {
-  BIOMES, RANKS, ROMAN, LEVELS, SEED, BOOK, FOCUS, bestiary, saveBestiary, known, saveKnown, newCreature,
+  BIOMES, RANKS, ROMAN, LEVELS, SEED, BOOK, FOCUS, bestiary, saveBestiary, syncBestiary, known, saveKnown, newCreature,
   cache, CACHE, page, isAttack, mergeCache, packPages,
 } from "./best-data.js";
 
@@ -71,6 +71,7 @@ function focusNow() {
 function initGM() {
   list = bestiary();
   know = known(room);
+  syncBestiary().then((changed) => { if (changed && !editing) { list = bestiary(); drawBiomes(); drawGrid(); drawPage(); } }).catch(() => {});
   $("add").onclick = () => {
     const c = newCreature(list);
     list.push(c);
@@ -535,6 +536,7 @@ function edited() {
     c[f] = ["rank", "ac", "hp", "xp"].includes(f) ? Number(v) || 0 : v.trim() === "" ? "" : v;
   }
   c.name = c.name || "Без імені";
+  c._at = Date.now();
   c.traits = $("e-traits").value.split("\n").map((t) => t.trim()).filter(Boolean);
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { saveBestiary(list); drawGrid(); }, 350);

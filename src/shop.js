@@ -6,7 +6,7 @@ import "./shop.css";
 import { SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL } from "./state.js";
 import { local, saveLocal, uid, bytes, LIMIT } from "./log.js";
 import {
-  SHOPS, OFFERS, SEEN, CATS, RARITY, shops, saveShops, newShop, newItem,
+  SHOPS, OFFERS, SEEN, CATS, RARITY, shops, saveShops, syncShops, newShop, newItem,
   priceCp, money, purse, readSheet, sheetKey,
 } from "./shop-data.js";
 
@@ -213,6 +213,7 @@ function toast(text) {
 // ---------- Майстер ----------
 
 function initGM() {
+  syncShops().then((changed) => { if (changed && mode !== "edit") { shop = shops().find((s) => s.id === shop?.id) ?? shops()[0]; drawGM(); } }).catch(() => {});
   const list = shops();
   shop = list.find((s) => s.id === meta.id) ?? list[0];
   for (const b of $("mtabs").children) b.onclick = () => { mode = b.dataset.m; drawGM(); };
@@ -287,6 +288,7 @@ function drawGM() {
 // Зберегти зміни крамниці; якщо вона відкрита — гравці одразу бачать нове
 let pushTimer = null;
 function commit() {
+  shop._at = Date.now();
   saveShops(shops().map((s) => (s.id === shop.id ? shop : s)));
   if (meta.open && meta.id === shop.id) {
     clearTimeout(pushTimer);

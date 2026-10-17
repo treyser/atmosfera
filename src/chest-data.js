@@ -2,13 +2,14 @@
 // Речі гравці беруть самі (хто перший), монети діляться порівну між гравцями в кімнаті.
 import { local, saveLocal, uid } from "./log.js";
 import { shops } from "./shop-data.js";
+import { art, cachedContent, loadContent } from "./content.js";
 
 export const CHESTS = "atmosfera.chests";
 
 export const CATS = { coin: "🪙", gear: "🧭", consum: "🧪", weapon: "⚔️", magic: "✨", curio: "🐚", food: "🍞", gem: "💎", paper: "📜" };
 
 // Власні знахідки — те, чого немає в крамницях
-export const LOOT = [
+const BUILTIN_LOOT = [
   { name: "Срібний компас без стрілки", cat: "curio", price: 15, pools: ["sea", "captain"], desc: "Корпус гарний, а всередині порожньо. Хтось вийняв стрілку навмисно." },
   { name: "Пляшка рому «Чорний Причал»", cat: "food", price: 2, pools: ["sea", "rogue"], desc: "Міцний, як канат, і такий самий на смак." },
   { name: "Клапоть морської мапи", cat: "paper", price: 10, pools: ["sea", "captain"], desc: "Частина узбережжя з позначкою «тут не ставати на якір»." },
@@ -38,6 +39,15 @@ export const TEMPLATES = [
   { id: "captain", name: "Капітанська скриня", coins: { gp: "6к10", sp: "2к10" }, items: [3, 4], pool: "captain", shop: 1 },
   { id: "undead", name: "Скарб нежиті", coins: { gp: "4к20" }, items: [2, 3], pool: "undead", shop: 1 },
 ];
+
+// Справжній список знахідок — із Майстерні (public/data/loot.json); вбудований — запасний
+const lootOf = (j) => (Array.isArray(j?.items) && j.items.length ? j.items.map((x) => ({ ...x, pools: x.pools ?? [], img: art(x.img) })) : null);
+export let LOOT = lootOf(cachedContent("loot")) ?? BUILTIN_LOOT;
+export async function loadLoot() {
+  const l = lootOf(await loadContent("loot"));
+  if (l) LOOT = l;
+  return LOOT;
+}
 
 export function roll(expr) {
   const m = String(expr ?? "").match(/^(\d+)\s*[кd]\s*(\d+)$/i);

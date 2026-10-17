@@ -1,6 +1,7 @@
 // Крамниці: дані, гаманець із листа персонажа, ціни.
 // Крамниці майстра живуть у його браузері (atmosfera.shops); гравцям відкрита крамниця приходить повідомленням.
 import { local, saveLocal, uid } from "./log.js";
+import { art, loadContent, mergeBase } from "./content.js";
 
 export const SHOPS = "atmosfera.shops";          // у майстра: усі крамниці
 export const OFFERS = "atmosfera.shop-offers";   // у майстра: що гравці пропонують продати
@@ -88,6 +89,36 @@ export function shops() {
   return list;
 }
 export const saveShops = (list) => saveLocal(SHOPS, list);
+
+// майстер: підтягнути крамниці з Майстерні (нові крамниці й товари, правки, видалені)
+export async function syncShops() {
+  const j = await loadContent("shops");
+  if (!Array.isArray(j?.shops)) return false;
+  const list = shops();
+  const fixItem = (it) => ({ ...it, img: art(it.img) });
+  let changed = false;
+  for (const b of j.shops) {
+    const { items = [], removed = [], ...fields } = b;
+    fields.img = art(fields.img); fields.bg = art(fields.bg);
+    const i = list.findIndex((x) => x.id === b.id);
+    if (i < 0) {
+      list.push({ ...fields, items: items.map((it) => ({ ...fixItem(it), _rev: it.rev ?? 0 })), _rev: b.rev ?? 0, _base: true });
+      changed = true;
+      continue;
+    }
+    const one = [list[i]];
+    if (mergeBase(one, [{ ...fields, items: list[i].items }])) changed = true;
+    list[i] = one[0];
+    list[i].items = list[i].items ?? [];
+    if (mergeBase(list[i].items, items, removed, fixItem)) changed = true;
+  }
+  for (const id of j.removed ?? []) {
+    const k = list.findIndex((x) => x.id === id);
+    if (k >= 0 && list.length > 1 && !((list[k]._at ?? 0) > (list[k]._rev ?? 0))) { list.splice(k, 1); changed = true; }
+  }
+  if (changed) saveShops(list);
+  return changed;
+}
 export const findShop = (id) => shops().find((s) => s.id === id) ?? null;
 export function newShop() {
   return { id: uid(), name: "Нова крамниця", owner: "", about: "", greet: "", img: "", bg: "", buy: 0.5, items: [] };

@@ -1,5 +1,7 @@
 // Дошка розслідувань: корок, шпильки, нитки. Майстер викладає улики, уся партія розкладає їх,
 // тягне нитки й лишає записки — усе наживо. Кожна дія — операція (board-data.js), яку застосовують усі.
+import { loadLoot } from "./chest-data.js";
+import { syncShops } from "./shop-data.js";
 import OBR from "@owlbear-rodeo/sdk";
 import "./board.css";
 import { BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_CUR, BOARD_SHOW } from "./state.js";
@@ -27,6 +29,7 @@ const els = new Map();    // id улики → елемент
 let fresh = new Set();    // щойно викладені — з анімацією
 
 OBR.onReady(async () => {
+  await Promise.all([loadLoot().catch(() => {}), syncShops().catch(() => {})]);
   gm = (await OBR.player.getRole()) === "GM";
   room = OBR.room.id;
   me = {
