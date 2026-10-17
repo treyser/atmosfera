@@ -1,6 +1,6 @@
 {
  "v": 1,
- "stamp": 1792239589255,
+ "stamp": 1792239651974,
  "items": [
   {
    "id": "wmvcd38xi54",
@@ -17,21 +17,6 @@
    "img": "arsenal/wmvcd38xi54-mvcd5gci3b.webp",
    "art": "A menacing longsword forged of deep crimson damascus steel with glowing red veins along the fuller, wrapped in black sharkskin grip, resting against a dark wooden ship deck.",
    "rev": 1792239546114
-  },
-  {
-   "id": "wmvccsdn4ub",
-   "group": "martial",
-   "rarity": "common",
-   "name": "Нова зброя",
-   "dmg": "1к8 рубаюча",
-   "props": "",
-   "weight": 1,
-   "price": 10,
-   "desc": "",
-   "mech": "",
-   "quote": "",
-   "img": "",
-   "rev": 1792238936080
   },
   {
    "id": "dagger",
