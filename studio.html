@@ -50,7 +50,7 @@
         <input id="q" type="search" placeholder="Пошук…" autocomplete="off">
         <select id="filter"></select>
       </div>
-      <button type="button" class="add" id="add">＋ Додати</button>
+      <div class="addrow"><button type="button" class="add" id="add">＋ Додати</button><button type="button" class="add idea" id="idea-open" title="Опиши ідею — Gemini придумає картку">✨ З ідеї</button></div>
       <div class="list" id="list"></div>
       <div class="count dim" id="count"></div>
     </aside>
@@ -89,6 +89,31 @@
       </div>
     </section>
   </main>
+
+  <div class="modal" id="idea" hidden>
+    <div class="mbox">
+      <div class="mhead"><b id="idea-title">✨ Картка з ідеї</b><button type="button" class="icon" id="idea-close" title="Закрити">✕</button></div>
+      <label class="fld"><span>Опиши, що має бути — своїми словами</span>
+        <textarea id="idea-text" rows="4" placeholder=""></textarea></label>
+      <div class="ihints" id="idea-hints"></div>
+      <div class="irow">
+        <button type="button" class="go" id="idea-go">Придумати</button>
+        <span class="dim" id="idea-status"></span>
+      </div>
+      <div class="iresult" id="idea-result" hidden></div>
+      <div class="irow" id="idea-acts" hidden>
+        <button type="button" class="go" id="idea-new">Створити картку</button>
+        <button type="button" class="ghost" id="idea-fill">Заповнити поточну</button>
+        <button type="button" class="ghost" id="idea-again">Інший варіант</button>
+      </div>
+      <details class="ikey" id="idea-keybox">
+        <summary>Ключ Gemini API <span class="dim" id="idea-keystate"></span></summary>
+        <p class="dim">Безкоштовний: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → Create API key. Текстова модель працює без оплати. Ключ зберігається лише в цьому браузері.</p>
+        <input id="idea-key" type="password" placeholder="AIza…" autocomplete="off">
+        <label class="fld"><span>Модель</span><input id="idea-model" placeholder="gemini-2.5-flash"></label>
+      </details>
+    </div>
+  </div>
 
   <div class="toast" id="toast" hidden></div>
   <script type="module" src="/src/studio.js"></script>
