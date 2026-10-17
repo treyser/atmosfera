@@ -71,7 +71,7 @@ export function examples(kind, list, hints) {
 }
 
 export async function generate(kind, idea, hints, list, avoid = "") {
-  const key = localStorage.getItem(GKEY) || "";
+  const key = (localStorage.getItem(GKEY) || "").replace(/\s+/g, "");
   if (!key) throw Object.assign(new Error("Потрібен ключ Gemini API"), { code: "nokey" });
   const model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
   const spec = SPECS[kind];
@@ -81,9 +81,9 @@ ${want ? `Обов'язково: ${want}.` : ""}
 ${avoid ? `Попередній варіант був «${avoid}» — зроби інший, не повторюйся.` : ""}
 Ось кілька карток із цієї ж книги — тримайся їхнього стилю, довжини й формату:
 ${JSON.stringify(examples(kind, list, hints), null, 1)}`;
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: `${WORLD}\n\n${spec.rules}` }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
@@ -93,7 +93,7 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}`;
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
     const msg = j?.error?.message || `HTTP ${r.status}`;
-    throw Object.assign(new Error(/quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid/i.test(msg) ? "Ключ Gemini недійсний" : msg), { code: r.status });
+    throw Object.assign(new Error(/quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-2.5-flash-lite). Відповідь Google: ${msg}` : msg), { code: r.status });
   }
   const text = (j?.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("");
   try { return JSON.parse(text); }

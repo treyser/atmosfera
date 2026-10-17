@@ -626,7 +626,7 @@ function initIdea() {
   $("idea-close").onclick = () => ($("idea").hidden = true);
   $("idea").addEventListener("click", (e) => { if (e.target === $("idea")) $("idea").hidden = true; });
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("idea").hidden) $("idea").hidden = true; });
-  $("idea-key").onchange = () => { lsSet(GKEY, $("idea-key").value.trim() || null); keyState(); };
+  $("idea-key").onchange = () => { lsSet(GKEY, $("idea-key").value.replace(/\s+/g, "") || null); keyState(); };
   $("idea-model").onchange = () => lsSet(GMODEL, $("idea-model").value.trim() || null);
   $("idea-go").onclick = () => runIdea("");
   $("idea-again").onclick = () => runIdea(idea?.name ?? "");
