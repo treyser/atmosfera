@@ -1,6 +1,6 @@
 {
  "v": 1,
- "stamp": 1,
+ "stamp": 1792418211460,
  "items": [
   {
    "id": "s-express-cargo",
@@ -61,8 +61,8 @@
      "ref": "n-ira"
     }
    ],
-   "img": "",
-   "rev": 1
+   "img": "scene/s-express-cargo-mvfbimiwrd.webp",
+   "rev": 1792418199944
   }
  ],
  "removed": []

@@ -1,6 +1,6 @@
 {
  "v": 1,
- "stamp": 1,
+ "stamp": 1792418211460,
  "items": [
   {
    "id": "n-olven",
@@ -15,8 +15,8 @@
    "secret": "Сам не знає, що в бочках, і дуже цього боїться.",
    "quote": "Солонина, синку. Звичайнісінька солонина.",
    "art": "plump red-cheeked middle-aged human monk in a grey hooded cloak, wooden seal pendant on a cord, nervous friendly smile, lantern light",
-   "img": "",
-   "rev": 1
+   "img": "npc/n-olven-mvfbh2llar.webp",
+   "rev": 1792418127465
   },
   {
    "id": "n-ira",
@@ -31,8 +31,8 @@
    "secret": "Таємно доповідає не Ордену, а церкві.",
    "quote": "Ще крок — і будеш їхати в бочці.",
    "art": "lean short-haired half-elf woman warrior with a scar through one eyebrow, grey cloak over chainmail, cold watchful stare, hand on sword hilt, cold blue light",
-   "img": "",
-   "rev": 1
+   "img": "npc/n-ira-mvfbhy11tx.webp",
+   "rev": 1792418168197
   }
  ],
  "removed": []
