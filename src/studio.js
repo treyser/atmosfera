@@ -123,6 +123,29 @@ const KINDS = {
     ],
     prompt: (x) => ITEM_STYLE(x.art ? `a single found treasure item — ${x.art}` : `a single found treasure item — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
   },
+  court: {
+    title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true,
+    items: (d) => d.items,
+    filter: { all: "Усі дами" },
+    match: () => true,
+    card: (x) => ({ title: x.name, sub: [x.house, x.talent].filter(Boolean).join(" · "), color: "#d98aa8", round: true }),
+    blank: () => ({ id: "c" + stamp36(), name: "Нова дама", house: "Оксамитовий Ліхтар", race: "Людина", age: "", talent: "", price: 30, desc: "", about: "", likes: "", quote: "", secret: "", img: "" }),
+    fields: [
+      { k: "name", label: "Ім'я", w: 2 },
+      { k: "house", label: "Заклад" },
+      { k: "race", label: "Раса" },
+      { k: "age", label: "Вік", ph: "молода, літня, близько тридцяти…" },
+      { k: "price", label: "Ціна вечора, зм (0 — за домовленістю)", type: "number" },
+      { k: "talent", label: "Талант — чим славиться", w: 3, ph: "Спів і лютня, карти, чутки…" },
+      { k: "desc", label: "Вигляд — перше враження", type: "area", w: 3 },
+      { k: "about", label: "Характер і манери", type: "area", w: 3 },
+      { k: "likes", label: "Що їй до вподоби (подарунки, теми)", type: "area", w: 3, rows: 2 },
+      { k: "quote", label: "Її фраза (без лапок)", type: "area", w: 3, rows: 2 },
+      { k: "secret", label: "Таємниця — бачить лише майстер (гачок для сюжету)", type: "area", w: 3 },
+      { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
+    ],
+    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Chest-up portrait filling the circle, warm candlelight, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+  },
 };
 
 // ---------- стан ----------
@@ -162,7 +185,8 @@ async function gh(path, opt = {}) {
 const b64utf8 = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, "")), (c) => c.charCodeAt(0)));
 
 async function fetchKind(k) {
-  const meta = await gh(`/contents/public/${KINDS[k].file}?ref=${BRANCH}`);
+  const meta = await gh(`/contents/public/${KINDS[k].file}?ref=${BRANCH}`).catch((e) => { if (e.status === 404) return null; throw e; });
+  if (!meta) return { data: { v: 1, stamp: 0, items: [], removed: [] }, sha: null };
   let text;
   if (meta.content) text = b64utf8(meta.content);
   else text = new TextDecoder().decode(new Uint8Array(await (await fetch(meta.download_url + "?t=" + Date.now())).arrayBuffer()));
@@ -642,7 +666,7 @@ function keyState() {
 function openIdea() {
   const spec = SPECS[kind];
   if (kind === "shops" && !curShop()) return toast("Спершу створи крамницю");
-  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар" }[kind]} з ідеї`;
+  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар", court: "Дама" }[kind]} з ідеї`;
   $("idea-text").placeholder = spec.placeholder;
   const box = $("idea-hints");
   box.innerHTML = "";

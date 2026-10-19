@@ -86,6 +86,11 @@ export const ARSENAL_REQ = `${ID}/arsenal-req`;  // канал: гравець �
 export const ARSENAL_DATA = `${ID}/arsenal-data`; // канал: відкрита незвичайна зброя (майстер → гравці) { ids }
 export const ARSENAL_SHOW = `${ID}/arsenal-show`; // канал: майстер показує картку всім { id }
 export const ARSENAL_GIVE = `${ID}/arsenal-give`; // канал: майстер видає зброю гравцеві { id, to }
+export const COURT = `${ID}/court`;            // вікно «Оксамитової книги» (куртизанки)
+export const COURT_REQ = `${ID}/court-req`;    // канал: гравець просить, що відкрито й відгуки
+export const COURT_DATA = `${ID}/court-data`;  // канал: відкриті картки й відгуки (майстер → гравці) { ids, rates }
+export const COURT_SHOW = `${ID}/court-show`;  // канал: майстер знайомить усіх із карткою { id }
+export const COURT_RATE = `${ID}/court-rate`;  // канал: гравець ставить оцінку { id, s, t, n } (s=0 — прибрати)
 export const RUMOR = `${ID}/rumors`;          // вікно книги чуток
 export const RUMOR_DATA = `${ID}/rumor-data`; // канал: почуті чутки (майстер → гравці)
 export const RUMOR_REQ = `${ID}/rumor-req`;   // канал: гравець просить чутки

@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, COURT, COURT_REQ, COURT_DATA, COURT_SHOW, COURT_RATE, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -24,6 +24,7 @@ import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
+import { lady, loadCourt, opened as courtOpened, saveSeen as saveCourtSeen, seen as courtSeen, rates as courtRates, saveRates as saveCourtRates, applyRate, pack as packCourt, FOCUS as CFOCUS } from "./court-data.js";
 import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
 
 const BASE = import.meta.env.BASE_URL;
@@ -105,6 +106,7 @@ OBR.onReady(async () => {
   startGoals().catch((err) => console.error("Таємні цілі:", err));
   startRumors().catch((err) => console.error("Чутки:", err));
   startArsenal().catch((err) => console.error("Арсенал:", err));
+  startCourt().catch((err) => console.error("Оксамитова книга:", err));
 
   OBR.scene.onReadyChange((ready) => { if (ready) refresh(); else hud(false); });
   OBR.scene.onMetadataChange((m) => { mood = normalize(m[STATE]); grade = Boolean(m[GRADE_ON]); sync(); hud(hudOf(m[HUD]).on); });
@@ -936,4 +938,36 @@ async function startArsenal() {
     openModal();
   });
   if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(ARSENAL_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 4500);
+}
+
+// Оксамитова книга: майстер тримає, кого відкрито, і всі відгуки; гравці надсилають оцінки
+async function startCourt() {
+  const room = OBR.room.id;
+  loadCourt().catch(() => {});
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  const openModal = () => OBR.modal.open({ id: COURT, url: url("court.html"), width: 1180, height: 800 }).catch(() => {});
+  const send = () => OBR.broadcast.sendMessage(COURT_DATA, packCourt(courtOpened(room), courtRates(room)), { destination: "REMOTE" }).catch(() => {});
+
+  OBR.broadcast.onMessage(COURT_REQ, async () => { if (await isGM()) send(); });
+  // майстер: оцінка від гравця — записати й розіслати всім
+  OBR.broadcast.onMessage(COURT_RATE, async (event) => {
+    if (!(await isGM()) || !event.data?.id) return;
+    saveCourtRates(room, applyRate(courtRates(room), event.data.from, event.data));
+    send();
+  });
+  OBR.broadcast.onMessage(COURT_DATA, async (event) => {
+    if (await isGM()) return;
+    if (Array.isArray(event.data?.ids)) saveCourtSeen(room, event.data.ids);
+    if (event.data?.rates) saveCourtRates(room, event.data.rates);
+  });
+  OBR.broadcast.onMessage(COURT_SHOW, async (event) => {
+    if (await isGM()) return;
+    await loadCourt().catch(() => {});
+    if (!lady(event.data?.id)) return;
+    const ids = new Set(courtSeen(room)); ids.add(event.data.id); saveCourtSeen(room, [...ids]);
+    try { localStorage.setItem(CFOCUS, JSON.stringify({ id: event.data.id, at: Date.now() })); } catch {}
+    await OBR.modal.close(COURT).catch(() => {});
+    openModal();
+  });
+  if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(COURT_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 5000);
 }
