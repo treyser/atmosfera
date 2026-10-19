@@ -134,7 +134,16 @@ async function watch(traps) {
     lastPos.set(tok.id, { x: p.x, y: p.y });
     if (!primed || !moved) continue;
     const before = inside.get(tok.id) ?? new Set();
-    for (const tid of here) if (!before.has(tid)) fire.push([armed.find((t) => t.id === tid), tok]);
+    // пастки на всьому шляху токена, а не лише там, де він зупинився: Owlbear пересуває токен
+    // з точки в точку, тож перевіряємо відрізок «звідки → куди» з кроком у кілька пікселів
+    const crossed = new Set(here);
+    const dist = Math.hypot(p.x - was.x, p.y - was.y);
+    const steps = Math.min(4000, Math.ceil(dist / 6));
+    for (let k = 1; k < steps; k++) {
+      const q = { x: was.x + ((p.x - was.x) * k) / steps, y: was.y + ((p.y - was.y) * k) / steps };
+      for (const t of armed) { const b = boxes.get(t.id); if (b && !crossed.has(t.id) && contains(b, q, isCircle(t))) crossed.add(t.id); }
+    }
+    for (const tid of crossed) if (!before.has(tid)) fire.push([armed.find((t) => t.id === tid), tok]);
   }
   inside = next;
   primed = true;
