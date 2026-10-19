@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сцени</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="bar">
+    <div class="ttl"><div class="book">Сцени</div><div class="prog" id="prog"></div></div>
+    <input id="q" type="search" placeholder="Пошук…" autocomplete="off">
+    <a class="ghost" href="studio.html" target="_blank" rel="noopener">Нова сцена в Майстерні ↗</a>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+  <main class="body">
+    <section class="list" id="list"></section>
+    <section class="view" id="view">
+      <div class="empty dim" id="none">Сцен поки немає. Відкрий Майстерню → «Сцени» → «✨ З ідеї».</div>
+      <div id="sheet">
+        <div class="map" id="map"><img id="img" alt=""><div class="marks" id="marks"></div><div class="nomap" id="nomap">Мапи ще немає — встав картинку в Майстерні</div></div>
+        <div class="legend dim">🔴 пастка · 🟡 скриня · 🔵 NPC — після розгортання їх можна пересунути</div>
+        <div class="meta" id="meta"></div>
+        <h1 id="name"></h1>
+        <div class="titr" id="titr"></div>
+        <div class="box read" id="read-box"><b>Прочитати гравцям</b><p id="read"></p></div>
+        <div class="box" id="notes-box"><b>Для майстра</b><p id="notes"></p></div>
+        <div class="box" id="objs-box"><b>Що з'явиться на мапі</b><ul id="objs"></ul></div>
+        <div class="deploy">
+          <label class="tgl"><input type="checkbox" id="o-mood" checked> Увімкнути настрій</label>
+          <label class="tgl"><input type="checkbox" id="o-title" checked> Одразу показати титр</label>
+          <label class="tgl"><input type="checkbox" id="o-npc"> NPC одразу видно гравцям</label>
+          <div class="row">
+            <button type="button" class="go" id="go">Розгорнути на поточній сцені</button>
+            <button type="button" class="ghost" id="title-btn">Показати титр</button>
+            <button type="button" class="ghost danger" id="clear">Прибрати з мапи</button>
+          </div>
+          <div class="dim" id="status"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/scenes.js"></script>
+</body>
+</html>
