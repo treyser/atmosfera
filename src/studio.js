@@ -108,7 +108,7 @@ const KINDS = {
       : ITEM_STYLE(x.art ? `a single item — ${x.art}` : `a single item — «${x.name}»${x.desc ? ": " + x.desc : ""}`)),
   },
   loot: {
-    title: "Лут для скринь", file: "data/loot.json", dir: "loot", size: 512,
+    title: "Лут", file: "data/loot.json", dir: "loot", size: 512,
     items: (d) => d.items,
     filter: { all: "Усі знахідки", ...Object.fromEntries(Object.entries(POOLS).map(([k, v]) => ["p:" + k, v])) },
     match: (x, f) => f === "all" || (x.pools ?? []).includes(f.slice(2)),
@@ -149,10 +149,32 @@ const KINDS = {
         cols: [{ k: "name", label: "Назва", w: 2 }, { k: "tpl", label: "Вміст", opts: CHEST_TPL, w: 2 }, { k: "lock", label: "Замок, СК (0 — немає)", type: "number", w: 1 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }],
         blank: () => ({ name: "Скриня", tpl: "sea", lock: 0, x: 1, y: 1 }) },
       { k: "npcs", label: "NPC", type: "rows", add: "NPC",
-        cols: [{ k: "name", label: "Ім'я", w: 2 }, { k: "sub", label: "Хто це", w: 2 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "note", label: "Нотатка майстра", w: 3 }],
-        blank: () => ({ name: "Незнайомець", sub: "", x: 1, y: 1, note: "" }) },
+        cols: [{ k: "ref", label: "З Майстерні NPC", opts: () => npcOpts(), w: 2, pick: pickNpc }, { k: "name", label: "Ім'я", w: 2 }, { k: "sub", label: "Хто це", w: 2 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "note", label: "Роль у цій сцені", w: 3 }],
+        blank: () => ({ ref: "", name: "Незнайомець", sub: "", x: 1, y: 1, note: "" }) },
     ],
     prompt: (x) => `Generate an image: top-down tabletop RPG battle map, ${SHAPES[x.shape] ? `aspect ratio ${x.shape}` : "landscape 3:2"}, seen straight from above, ${x.art || `«${x.name}»${x.notes ? ": " + x.notes : ""}`}. Painterly dark-fantasy style, highly detailed, readable floor for token placement, clear walkable areas, consistent soft lighting. No grid lines, no text, no labels, no people, no creatures, no frame.`,
+  },
+  npcs: {
+    title: "NPC", file: "data/npcs.json", dir: "npc", size: 512, removable: true,
+    items: (d) => d.items,
+    filter: { all: "Усі NPC" },
+    match: () => true,
+    card: (x) => ({ title: x.name, sub: [x.sub, x.place].filter(Boolean).join(" · "), color: "#9fd6a8", round: true }),
+    blank: () => ({ id: "n" + stamp36(), name: "Новий NPC", sub: "", race: "Людина", place: "", look: "", manner: "", wants: "", knows: "", secret: "", quote: "", art: "", img: "" }),
+    fields: [
+      { k: "name", label: "Ім'я", w: 2 },
+      { k: "race", label: "Раса" },
+      { k: "sub", label: "Хто це — підпис на картці («капітан „Чайки“»)", w: 2 },
+      { k: "place", label: "Де зустріти" },
+      { k: "look", label: "Вигляд — що бачать гравці", type: "area", w: 3, rows: 2 },
+      { k: "manner", label: "Характер і манера говорити (як відігравати)", type: "area", w: 3, rows: 2 },
+      { k: "wants", label: "Чого хоче", type: "area", w: 3, rows: 2 },
+      { k: "knows", label: "Що знає й може розповісти", type: "area", w: 3, rows: 2 },
+      { k: "secret", label: "Таємниця — лише для майстра", type: "area", w: 3, rows: 2 },
+      { k: "quote", label: "Характерна фраза (без лапок)", type: "area", w: 3, rows: 2 },
+      { k: "art", label: "Вигляд для токена (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
+    ],
+    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `${x.race || "human"} «${x.name}», ${x.sub || "townsperson"}${x.look ? ": " + x.look : ""}`}. Chest-up portrait filling the circle, dramatic lighting, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
   },
   court: {
     title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true,
@@ -178,6 +200,24 @@ const KINDS = {
     prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Chest-up portrait filling the circle, warm candlelight, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
   },
 };
+
+// NPC для сцен: з розділу «NPC» і «Куртизанки»
+function npcOpts() {
+  const o = { "": "— свій, без картки —" };
+  for (const n of KINDS.npcs.items(st.data.npcs ?? { items: [] }) ?? []) o[n.id] = `👤 ${n.name}`;
+  for (const n of KINDS.court.items(st.data.court ?? { items: [] }) ?? []) o["court:" + n.id] = `🌹 ${n.name}`;
+  return o;
+}
+function npcById(ref) {
+  if (!ref) return null;
+  if (ref.startsWith("court:")) { const c = (st.data.court?.items ?? []).find((x) => x.id === ref.slice(6)); return c ? { ...c, sub: c.talent ? `${c.house || "куртизанка"} · ${c.talent}` : c.house } : null; }
+  return (st.data.npcs?.items ?? []).find((x) => x.id === ref) ?? null;
+}
+// вибрали NPC у рядку сцени — підставити ім'я й підпис
+function pickNpc(r) {
+  const n = npcById(r.ref);
+  if (n) { r.name = n.name; r.sub = n.sub ?? ""; }
+}
 
 // ---------- стан ----------
 let token = "";
@@ -464,7 +504,8 @@ function rowsField(x, f) {
       row.className = "rrow";
       for (const c of f.cols) {
         let el;
-        if (c.opts) { el = document.createElement("select"); for (const [k, v] of Object.entries(c.opts)) el.appendChild(new Option(v, k)); }
+        const opts = typeof c.opts === "function" ? c.opts() : c.opts;
+        if (opts) { el = document.createElement("select"); for (const [k, v] of Object.entries(opts)) el.appendChild(new Option(v, k)); }
         else { el = document.createElement("input"); el.type = c.type === "number" ? "number" : "text"; if (c.ph) el.placeholder = c.ph; }
         el.value = r[c.k] ?? "";
         el.title = c.label;
@@ -472,6 +513,7 @@ function rowsField(x, f) {
         el.addEventListener(c.opts ? "change" : "input", () => {
           r[c.k] = c.type === "number" ? (el.value === "" ? 0 : Number(String(el.value).replace(",", "."))) : el.value;
           touch(x);
+          if (c.pick) { c.pick(r); paint(); }
         });
         row.appendChild(el);
       }
@@ -757,7 +799,7 @@ function keyState() {
 function openIdea() {
   const spec = SPECS[kind];
   if (kind === "shops" && !curShop()) return toast("Спершу створи крамницю");
-  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар", court: "Дама", scenes: "Сцена" }[kind]} з ідеї`;
+  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар", court: "Дама", scenes: "Сцена", npcs: "NPC" }[kind]} з ідеї`;
   $("idea-text").placeholder = spec.placeholder;
   const box = $("idea-hints");
   box.innerHTML = "";
@@ -786,7 +828,8 @@ async function runIdea(avoid) {
   $("idea-status").innerHTML = `<i class="spin"></i>Gemini думає… (10–30 с)`;
   try {
     const list = itemsOf().filter((x) => !x._shop);
-    idea = await generate(kind, text, hints, list, avoid);
+    const roster = kind === "scenes" ? Object.entries(npcOpts()).filter(([k]) => k).map(([id, t]) => { const n = npcById(id); return { id, name: n?.name ?? t, sub: n?.sub ?? "", place: n?.place ?? "" }; }) : null;
+    idea = await generate(kind, text, hints, list, avoid, roster);
     showIdea();
     $("idea-status").textContent = "";
   } catch (e) {
@@ -798,7 +841,7 @@ async function runIdea(avoid) {
 }
 function label(k, v) {
   const f = [...(KINDS[kind].fields ?? [])].find((x) => x.k === k);
-  if (f?.type === "rows") return (v ?? []).map((r) => f.cols.map((c) => (c.opts ? c.opts[r[c.k]] ?? r[c.k] : r[c.k])).filter((t) => t !== "" && t != null).join(" · ")).join("\n");
+  if (f?.type === "rows") return (v ?? []).map((r) => f.cols.filter((c) => c.k !== "ref").map((c) => { const o = typeof c.opts === "function" ? c.opts() : c.opts; return o ? o[r[c.k]] ?? r[c.k] : r[c.k]; }).filter((t) => t !== "" && t != null).join(" · ")).join("\n");
   if (Array.isArray(v)) return f?.opts ? v.map((x) => f.opts[x] ?? x).join(", ") : v.join("\n");
   if (f?.opts) return f.opts[v] ?? v;
   return v;
@@ -816,12 +859,27 @@ function showIdea() {
   setTimeout(() => $("idea-acts").scrollIntoView({ behavior: "smooth", block: "end" }), 60);
   $("idea-fill").hidden = !current() || Boolean(current()?._shop);
 }
+// сцена з ідеї: наявних NPC — за id, нових — одразу в розділ «NPC», щоб у них була своя картка
+function linkNpcs(data) {
+  const book = (st.data.npcs ??= { v: 1, stamp: 0, items: [], removed: [] });
+  let made = 0;
+  data.npcs = (data.npcs ?? []).map((n) => {
+    const { ref, race, look, manner, wants, knows, secret, quote, art, ...row } = n;
+    if (ref && npcById(ref)) return { ...row, ref };
+    const card = { ...KINDS.npcs.blank(), name: n.name, sub: n.sub ?? "", race: race ?? "", place: data.title || data.name || "", look: look ?? "", manner: manner ?? "", wants: wants ?? "", knows: knows ?? "", secret: secret ?? "", quote: quote ?? "", art: art ?? "", rev: Date.now(), _dirty: true };
+    book.items.unshift(card);
+    st.dirty.npcs = true;
+    made++;
+    return { ...row, ref: card.id };
+  });
+  if (made) setTimeout(() => toast(`Нових NPC у розділі «NPC»: ${made} — додай їм токени`), 2800);
+}
 function applyIdea(asNew) {
   if (!idea) return;
   const K = KINDS[kind];
   const data = { ...idea };
   if (kind === "bestiary") data.rank = Math.min(5, Math.max(1, Number(data.rank) || 1));
-  if (kind === "scenes") delete data.shape;
+  if (kind === "scenes") linkNpcs(data);
   if (asNew) {
     const x = { ...K.blank(st.data[kind]), ...data };
     itemsOf().unshift(x);

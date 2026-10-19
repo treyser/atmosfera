@@ -10,6 +10,7 @@ import { newChest, putChest, fill, TEMPLATES, loadLoot } from "./chest-data.js";
 import { syncShops } from "./shop-data.js";
 import { fromPreset } from "./director.js";
 import { appendLog } from "./log.js";
+import { loadNpcs, npcCard } from "./npc-data.js";
 
 const $ = (id) => document.getElementById(id);
 const BASE = import.meta.env.BASE_URL;
@@ -18,7 +19,7 @@ let sel = null;
 let size = {};   // id → { w, h } картинки мапи
 
 OBR.onReady(async () => {
-  await loadScenes();
+  await Promise.all([loadScenes(), loadNpcs().catch(() => {})]);
   sel = SD.SCENES[0]?.id ?? null;
   $("close").onclick = () => OBR.modal.close(WIN);
   window.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.activeElement?.tagName !== "INPUT") OBR.modal.close(WIN); });
@@ -64,8 +65,8 @@ function drawView() {
   const li = [
     ...(s.traps ?? []).map((t) => `🔴 ${presetOf(t.kind).icon} ${t.name || presetOf(t.kind).name} — СК ${t.dc ?? presetOf(t.kind).dc}, клітинка ${t.x}:${t.y}${t.clue ? `. Уважний помітить: ${t.clue}` : ""}`),
     ...(s.chests ?? []).map((c) => `🟡 ${c.name}${SD.CHEST_TPL[c.tpl] && c.tpl !== "none" ? ` (${SD.CHEST_TPL[c.tpl].toLowerCase()})` : " (порожня)"}${Number(c.lock) ? `, замок СК ${c.lock}` : ""}`),
-    ...(s.npcs ?? []).map((n) => `🔵 ${n.name}${n.sub ? `, ${n.sub}` : ""}${n.note ? ` — ${n.note}` : ""}`),
   ];
+  drawWho(s);
   $("objs").innerHTML = li.map((t) => `<li>${esc(t)}</li>`).join("");
   $("objs-box").hidden = !li.length;
   $("title-btn").hidden = !s.title;
@@ -165,9 +166,17 @@ async function deploy() {
 
     for (const n of s.npcs ?? []) {
       const p = at(n.x, n.y);
-      items.push(buildImage({ url: asset("npc-token.svg"), width: 256, height: 256, mime: "image/svg+xml" }, { dpi: 256, offset: { x: 128, y: 128 } })
-        .position({ x: p.x + dpi / 2, y: p.y + dpi / 2 }).layer("CHARACTER").name(n.name).plainText(n.name)
-        .visible($("o-npc").checked).metadata({ ...tag, [NPC]: { name: n.name, sub: n.sub ?? "" } }).build());
+      const card = npcCard(n.ref);
+      const name = n.name || card?.name || "NPC";
+      const sub = n.sub || card?.sub || "";
+      // токен з картки NPC (портрет із Майстерні), інакше — силует
+      let img = { url: asset("npc-token.svg"), width: 256, height: 256, mime: "image/svg+xml" };
+      if (card?.img) {
+        try { const z = await imgSize(card.img); img = { url: card.img, width: z.w, height: z.h, mime: /\.png($|\?)/i.test(card.img) ? "image/png" : /\.jpe?g($|\?)/i.test(card.img) ? "image/jpeg" : "image/webp" }; } catch { /* лишаємо силует */ }
+      }
+      items.push(buildImage(img, { dpi: img.width, offset: { x: img.width / 2, y: img.height / 2 } })
+        .position({ x: p.x + dpi / 2, y: p.y + dpi / 2 }).layer("CHARACTER").name(name).plainText(name)
+        .visible($("o-npc").checked).metadata({ ...tag, [NPC]: { name, sub } }).build());
     }
 
     await OBR.scene.items.addItems(items);
@@ -197,6 +206,25 @@ async function clear(quiet = false) {
 async function showTitle(s) {
   if (!s?.title) return;
   await OBR.broadcast.sendMessage(TITLE, { big: s.title, small: s.sub ?? "" }, { destination: "ALL" }).catch(() => {});
+}
+
+// хто в сцені: картки NPC — як відігравати, що знають
+function drawWho(s) {
+  const box = $("who");
+  box.innerHTML = "";
+  for (const n of s.npcs ?? []) {
+    const c = npcCard(n.ref) ?? {};
+    const name = n.name || c.name || "NPC";
+    const d = document.createElement("div");
+    d.className = "npc";
+    const row = (t, v) => (v ? `<div><i>${t}</i> ${esc(v)}</div>` : "");
+    d.innerHTML = `<div class="ph">${c.img ? `<img alt="" src="${esc(c.img)}">` : "👤"}</div><div class="tx">
+      <b>${esc(name)}</b>${n.sub || c.sub ? `<span> · ${esc(n.sub || c.sub)}</span>` : ""}${n.ref ? "" : `<em> · без картки</em>`}
+      ${row("У цій сцені:", n.note)}${row("Вигляд:", c.look)}${row("Манера:", c.manner)}${row("Хоче:", c.wants)}${row("Знає:", c.knows)}${row("Таємниця:", c.secret)}
+      ${c.quote ? `<q>${esc(c.quote)}</q>` : ""}</div>`;
+    box.appendChild(d);
+  }
+  $("who-box").hidden = !box.children.length;
 }
 
 function status(t) { $("status").textContent = t; }

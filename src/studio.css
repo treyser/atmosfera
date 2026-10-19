@@ -171,3 +171,9 @@ textarea{resize:vertical; line-height:1.45}
 .drop.wide{aspect-ratio:3/2}
 .drop.wide img{object-fit:contain}
 @media (max-width:760px){ .rrow{flex-wrap:wrap} .rrow input, .rrow select{flex:1 1 40% !important} .rhead{display:none} }
+/* багато розділів: вкладки й «не опубліковано» стискаються, кнопки праворуч завжди видно */
+.top{flex-wrap:wrap; row-gap:8px}
+.tabs{flex-wrap:wrap; min-width:0}
+.tabs button{padding:7px 11px; white-space:nowrap}
+#dirty{max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.top .grow{min-width:0}
