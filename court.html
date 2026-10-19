@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оксамитова книга</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="bar">
+    <div class="ttl">
+      <div class="book">Оксамитова книга</div>
+      <div class="prog" id="prog"></div>
+    </div>
+    <nav class="chips" id="houses"></nav>
+    <select id="sort" title="Порядок"><option value="name">За іменем</option><option value="top">Найвищий рейтинг</option><option value="price">Дешевші спершу</option></select>
+    <input id="q" type="search" placeholder="Пошук…" autocomplete="off">
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+
+  <main class="body">
+    <section class="grid" id="grid"></section>
+    <aside class="card" id="card">
+      <div class="empty dim" id="none">Книга поки порожня. Майстер додає дам у Майстерні.</div>
+      <div id="sheet">
+        <div class="art"><img id="img" alt=""><span class="lock" id="lock" hidden>?</span></div>
+        <div class="meta" id="meta"></div>
+        <h1 id="name"></h1>
+        <div class="score" id="score"></div>
+        <div class="stats" id="stats"></div>
+        <p class="desc" id="desc"></p>
+        <p class="about" id="about"></p>
+        <div class="likes" id="likes-box"><b>Що їй до вподоби</b><p id="likes"></p></div>
+        <blockquote id="quote"></blockquote>
+
+        <section class="mine" id="mine" hidden>
+          <b>Твоя оцінка</b>
+          <div class="pick" id="pick"></div>
+          <textarea id="review" rows="2" maxlength="220" placeholder="Короткий відгук (не обов'язково)"></textarea>
+          <div class="row"><button type="button" class="go" id="rate">Зберегти</button><button type="button" class="ghost" id="unrate" hidden>Прибрати мою оцінку</button></div>
+        </section>
+        <section class="reviews" id="reviews"></section>
+
+        <div class="gm" id="gm" hidden>
+          <div class="secret" id="secret-box"><b>Таємниця · бачиш лише ти</b><p id="secret"></p></div>
+          <button type="button" class="go" id="show">Познайомити героїв</button>
+          <label class="tgl"><input type="checkbox" id="open"> Гравці бачать цю картку</label>
+          <div class="dim" id="gm-hint"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/court.js"></script>
+</body>
+</html>
