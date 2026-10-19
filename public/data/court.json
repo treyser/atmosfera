@@ -1,6 +1,6 @@
 {
  "v": 1,
- "stamp": 1,
+ "stamp": 1792415276694,
  "items": [
   {
    "id": "lira",
@@ -16,8 +16,8 @@
    "quote": "Заспівай мені, звідки ти приплив, — і я скажу, куди ти пливеш.",
    "secret": "Знає імена всіх капітанів, які заходили в порт за останній рік, і хто з ким пив. За гарну пісню може назвати корабель, що возив дивні бочки.",
    "art": "graceful young elven courtesan and singer, long silver-blonde hair woven with tiny pearls, pale lavender silk gown with long flowing sleeves and a high modest neckline, holding a small gilded lute, serene half-smile, soft candlelight glow",
-   "img": "",
-   "rev": 1
+   "img": "court/lira-mvf9rtf670.webp",
+   "rev": 1792415269554
   },
   {
    "id": "veronika",
@@ -33,8 +33,8 @@
    "quote": "Я не мухлюю, любчику. Просто ти граєш гірше, ніж думаєш.",
    "secret": "Тримає боргові розписки половини гільдії ремонтників. Їх можна виграти в неї в карти — або викрасти зі скриньки під її ліжком.",
    "art": "sharp-eyed human courtesan who runs the card table, dark auburn hair pinned up with a black lacquered comb, deep crimson velvet corset-vest over a black high-collared blouse, fingerless lace gloves, fanning a hand of playing cards, sly confident smirk, warm lamp light",
-   "img": "",
-   "rev": 1
+   "img": "court/veronika-mvf9ommeqv.webp",
+   "rev": 1792415120774
   },
   {
    "id": "safira",
@@ -50,8 +50,8 @@
    "quote": "Кожен, хто сюди заходить, щось залишає, серденько. Здебільшого — секрети.",
    "secret": "Колись працювала в борделях батьків Касіана Вольта і досі листується з його матір'ю. Упізнає Касіана з першого погляду — і напише про нього додому.",
    "art": "elegant older tiefling courtesan and information broker, deep violet skin, curved ram horns adorned with thin gold chains, silver-streaked black hair, emerald brocade robe with a fur-trimmed collar, holding a sealed letter and a long thin pipe with curling smoke, knowing heavy-lidded gaze",
-   "img": "",
-   "rev": 1
+   "img": "court/safira-mvf9qf5ad1.webp",
+   "rev": 1792415204398
   },
   {
    "id": "hilda",
@@ -67,8 +67,8 @@
    "quote": "На Півночі кажуть: хто не боїться холоду, того не зігріє жодне ліжко.",
    "secret": "Родом із Морозних Пусток. Бачила бочки з Полярного Експреса і знає, де їх розвантажують. Може стати провідницею — за ціну.",
    "art": "tall striking half-orc courtesan from the frozen north, braided dark hair with bone beads, small lower tusks, faint tattoos on her cheeks, wearing a long fitted midnight-blue wool dress under a heavy white wolf-fur mantle, arms crossed, a curved dagger at her belt, calm amused expression, cold blue rim light",
-   "img": "",
-   "rev": 1
+   "img": "court/hilda-mvf9nfhxzf.webp",
+   "rev": 1792415064885
   }
  ],
  "removed": []
