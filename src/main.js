@@ -1,7 +1,7 @@
 // Вікно майстра: пульт режисера, вибір настрою, повзунки, титр.
 import OBR from "@owlbear-rodeo/sdk";
 import "./style.css";
-import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, CHEST, BOARD, GOAL, RUMOR, ARSENAL, COURT, getState, setState, normalize, hudOf, STATE } from "./state.js";
+import { PRESETS, SLIDERS, TITLE, BEAT, GRADE_ON, HUD, ATLAS, MAP, JOURNAL, MUSIC, HUSH, FATE, SHOP, BEST, RUNE, STAR, CHEST, BOARD, GOAL, RUMOR, ARSENAL, COURT, SCENES, getState, setState, normalize, hudOf, STATE } from "./state.js";
 import { getVotes, onVotes } from "./votes.js";
 import { ADVENTURES } from "./beats.js";
 import { sceneMaps, match, pick, fromPreset, travel } from "./director.js";
@@ -178,6 +178,7 @@ function build() {
   $("gm-rumors").onclick = openRumors;
   $("gm-arsenal").onclick = openArsenal;
   $("gm-court").onclick = openCourt;
+  $("gm-scenes").onclick = () => OBR.modal.open({ id: SCENES, url: url("scenes.html"), width: 1240, height: 840 });
   $("gm-chest").onclick = () => OBR.modal.open({ id: CHEST, url: url("chest.html"), width: 1000, height: 760 });
   const shopSub = (m) => {
     const s = m[SHOP] ?? {};

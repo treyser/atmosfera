@@ -160,3 +160,14 @@ textarea{resize:vertical; line-height:1.45}
 .ikey input{margin:6px 0}
 .spin{display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.25); border-top-color:var(--gold); border-radius:50%; animation:sp 0.8s linear infinite; vertical-align:-2px; margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+.rowsfld{grid-column:1 / -1}
+.rows{display:flex; flex-direction:column; gap:5px; align-items:flex-start}
+.rrow{display:flex; gap:5px; width:100%; align-items:center}
+.rrow input, .rrow select{min-width:0; padding:6px 7px; font-size:13px}
+.rhead i{font-style:normal; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--dim); padding-left:2px}
+.rx{flex:none; width:28px; height:28px; border-radius:7px; border:1px solid rgba(255,255,255,.12); background:transparent; color:var(--dim); cursor:pointer}
+.rx:hover{color:#ff8a8a; border-color:#ff8a8a}
+.rhead .rx{border:0; visibility:hidden}
+.drop.wide{aspect-ratio:3/2}
+.drop.wide img{object-fit:contain}
+@media (max-width:760px){ .rrow{flex-wrap:wrap} .rrow input, .rrow select{flex:1 1 40% !important} .rhead{display:none} }

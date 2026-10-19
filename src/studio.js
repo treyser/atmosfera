@@ -3,6 +3,8 @@
 // Owlbear підтягує нове сам, щойно GitHub Pages перезбере сайт (~2 хвилини).
 import "./studio.css";
 import { SPECS, GKEY, GMODEL, generate } from "./studio-idea.js";
+import { PRESETS as TRAPS } from "./trap-data.js";
+import { MOODS, SHAPES, CHEST_TPL } from "./scene-data.js";
 
 const REPO = "treyser/atmosfera";
 const BRANCH = "main";
@@ -122,6 +124,35 @@ const KINDS = {
       { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     prompt: (x) => ITEM_STYLE(x.art ? `a single found treasure item — ${x.art}` : `a single found treasure item — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
+  },
+  scenes: {
+    title: "Сцени", file: "data/scenes.json", dir: "scene", size: 2400, removable: true, keepAspect: true,
+    items: (d) => d.items,
+    filter: { all: "Усі сцени" },
+    match: () => true,
+    card: (x) => ({ title: x.name, sub: `${MOODS[x.mood] ?? ""} · пасток ${(x.traps ?? []).length}, скринь ${(x.chests ?? []).length}, NPC ${(x.npcs ?? []).length}`, color: "#8fc1ff" }),
+    blank: () => ({ id: "s" + stamp36(), name: "Нова сцена", title: "", sub: "", mood: "clear", shape: "3:2", cols: 24, rows: 16, read: "", notes: "", art: "", traps: [], chests: [], npcs: [], img: "" }),
+    fields: [
+      { k: "name", label: "Назва (для тебе)", w: 2 },
+      { k: "mood", label: "Настрій «Атмосфери»", type: "select", opts: MOODS },
+      { k: "title", label: "Титр — великий рядок", w: 2 },
+      { k: "shape", label: "Форма мапи", type: "select", opts: SHAPES },
+      { k: "sub", label: "Титр — малий рядок", w: 2 },
+      { k: "cols", label: "Клітинок ушир", type: "number" },
+      { k: "read", label: "Прочитати гравцям уголос", type: "area", w: 3 },
+      { k: "notes", label: "Нотатки майстра (що тут відбувається, як розіграти)", type: "area", w: 3 },
+      { k: "art", label: "Мапа — що на ній і де (англійською, для Gemini)", type: "area", w: 3, rows: 4 },
+      { k: "traps", label: "Пастки (x, y — клітинка від лівого верхнього кута)", type: "rows", add: "Пастка",
+        cols: [{ k: "kind", label: "Тип", opts: Object.fromEntries(TRAPS.map((p) => [p.kind, `${p.icon} ${p.name}`])), w: 2 }, { k: "name", label: "Назва", w: 2 }, { k: "dc", label: "СК", type: "number", w: 0.7 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "size", label: "Розмір", type: "number", w: 0.7 }, { k: "clue", label: "Що помітить уважний", w: 3 }],
+        blank: () => ({ kind: "spikes", name: "Шипи в підлозі", dc: 13, x: 1, y: 1, size: 1, clue: "" }) },
+      { k: "chests", label: "Скрині", type: "rows", add: "Скриня",
+        cols: [{ k: "name", label: "Назва", w: 2 }, { k: "tpl", label: "Вміст", opts: CHEST_TPL, w: 2 }, { k: "lock", label: "Замок, СК (0 — немає)", type: "number", w: 1 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }],
+        blank: () => ({ name: "Скриня", tpl: "sea", lock: 0, x: 1, y: 1 }) },
+      { k: "npcs", label: "NPC", type: "rows", add: "NPC",
+        cols: [{ k: "name", label: "Ім'я", w: 2 }, { k: "sub", label: "Хто це", w: 2 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "note", label: "Нотатка майстра", w: 3 }],
+        blank: () => ({ name: "Незнайомець", sub: "", x: 1, y: 1, note: "" }) },
+    ],
+    prompt: (x) => `Generate an image: top-down tabletop RPG battle map, ${SHAPES[x.shape] ? `aspect ratio ${x.shape}` : "landscape 3:2"}, seen straight from above, ${x.art || `«${x.name}»${x.notes ? ": " + x.notes : ""}`}. Painterly dark-fantasy style, highly detailed, readable floor for token placement, clear walkable areas, consistent soft lighting. No grid lines, no text, no labels, no people, no creatures, no frame.`,
   },
   court: {
     title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true,
@@ -357,6 +388,7 @@ function drawForm() {
   const box = $("fields");
   box.innerHTML = "";
   for (const f of fields) {
+    if (f.type === "rows") { box.appendChild(rowsField(x, f)); continue; }
     const wrap = document.createElement("label");
     wrap.className = `fld w${f.w ?? 1}`;
     wrap.innerHTML = `<span>${esc(f.label)}</span>`;
@@ -395,17 +427,67 @@ function drawForm() {
       x[f.k] = read();
       touch(x);
       if (f.k === "name" || f.k === "price" || f.k === "qty" || f.k === "dmg" || f.k === "rarity" || f.k === "cat" || f.k === "rank" || f.k === "type" || f.k === "owner") drawListSoon();
-      if (["name", "desc", "type", "seen", "owner", "about", "art"].includes(f.k)) $("prompt").value = K.prompt(x);
+      if (f.k === "shape" && SHAPES[x.shape]) { const [a, b] = x.shape.split(":").map(Number); x.rows = Math.round((x.cols || 24) * b / a); }
+      if (f.k === "cols") { const [a, b] = (x.shape || "3:2").split(":").map(Number); x.rows = Math.round((x.cols || 24) * b / a); }
+      if (["name", "desc", "type", "seen", "owner", "about", "art", "shape", "notes"].includes(f.k)) $("prompt").value = K.prompt(x);
     });
     wrap.appendChild(inp);
     box.appendChild(wrap);
   }
   showPic(imgSrc(x.img));
+  $("drop").classList.toggle("wide", Boolean(K.keepAspect));
   $("prompt").value = K.prompt(x);
   $("trim").checked = false;
   $("dup").hidden = Boolean(x._shop);
   $("del").textContent = x._shop ? "Видалити крамницю" : "Видалити";
   $("item-state").textContent = x._dirty ? "змінено — не забудь «Опублікувати»" : x.rev > 1 ? `востаннє змінено ${new Date(x.rev).toLocaleString("uk-UA")}` : "";
+}
+// таблиця об'єктів (пастки, скрині, NPC сцени): рядок — об'єкт, колонки — його поля
+function rowsField(x, f) {
+  const wrap = document.createElement("div");
+  wrap.className = `fld w${f.w ?? 3} rowsfld`;
+  wrap.innerHTML = `<span>${esc(f.label)}</span>`;
+  const box = document.createElement("div");
+  box.className = "rows";
+  wrap.appendChild(box);
+  const paint = () => {
+    box.innerHTML = "";
+    const list = (x[f.k] ??= []);
+    if (list.length) {
+      const head = document.createElement("div");
+      head.className = "rrow rhead";
+      head.innerHTML = f.cols.map((c) => `<i style="flex:${c.w ?? 1}">${esc(c.label)}</i>`).join("") + `<i class="rx"></i>`;
+      box.appendChild(head);
+    }
+    list.forEach((r, i) => {
+      const row = document.createElement("div");
+      row.className = "rrow";
+      for (const c of f.cols) {
+        let el;
+        if (c.opts) { el = document.createElement("select"); for (const [k, v] of Object.entries(c.opts)) el.appendChild(new Option(v, k)); }
+        else { el = document.createElement("input"); el.type = c.type === "number" ? "number" : "text"; if (c.ph) el.placeholder = c.ph; }
+        el.value = r[c.k] ?? "";
+        el.title = c.label;
+        el.style.flex = c.w ?? 1;
+        el.addEventListener(c.opts ? "change" : "input", () => {
+          r[c.k] = c.type === "number" ? (el.value === "" ? 0 : Number(String(el.value).replace(",", "."))) : el.value;
+          touch(x);
+        });
+        row.appendChild(el);
+      }
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "rx"; del.textContent = "✕"; del.title = "Прибрати";
+      del.onclick = () => { list.splice(i, 1); touch(x); paint(); };
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+    const add = document.createElement("button");
+    add.type = "button"; add.className = "ghost sm"; add.textContent = `＋ ${f.add ?? "Додати"}`;
+    add.onclick = () => { list.push({ ...(f.blank?.() ?? {}) }); touch(x); paint(); };
+    box.appendChild(add);
+  };
+  paint();
+  return wrap;
 }
 let listTimer = null;
 const drawListSoon = () => { clearTimeout(listTimer); listTimer = setTimeout(drawList, 250); };
@@ -538,13 +620,22 @@ async function takeImage(file) {
   const K = KINDS[kind];
   try {
     const bmp = await createImageBitmap(file);
-    const side = Math.min(bmp.width, bmp.height);
-    const m = $("trim").checked ? Math.round(side * 0.05) : 0;
-    const sx = (bmp.width - side) / 2 + m, sy = (bmp.height - side) / 2 + m, s = side - 2 * m;
-    const n = Math.min(K.size, s);
     const c = document.createElement("canvas");
-    c.width = c.height = n;
-    c.getContext("2d").drawImage(bmp, sx, sy, s, s, 0, 0, n, n);
+    if (K.keepAspect) {
+      // мапа: цілком, без обрізання до квадрата; довша сторона — не більше K.size
+      const m = $("trim").checked ? Math.round(Math.min(bmp.width, bmp.height) * 0.02) : 0;
+      const sw = bmp.width - 2 * m, sh = bmp.height - 2 * m;
+      const k = Math.min(1, K.size / Math.max(sw, sh));
+      c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+      c.getContext("2d").drawImage(bmp, m, m, sw, sh, 0, 0, c.width, c.height);
+    } else {
+      const side = Math.min(bmp.width, bmp.height);
+      const m = $("trim").checked ? Math.round(side * 0.05) : 0;
+      const sx = (bmp.width - side) / 2 + m, sy = (bmp.height - side) / 2 + m, s = side - 2 * m;
+      const n = Math.min(K.size, s);
+      c.width = c.height = n;
+      c.getContext("2d").drawImage(bmp, sx, sy, s, s, 0, 0, n, n);
+    }
     const url = c.toDataURL("image/webp", 0.84);
     const slug = x._shop ? `${x.id}` : kind === "shops" ? `${curShop().id}-${x.id}` : x.id;
     const path = `${K.dir}/${slug}-${stamp36()}.webp`;   // нове ім'я щоразу — щоб ніде не залишилась стара з кешу
@@ -666,7 +757,7 @@ function keyState() {
 function openIdea() {
   const spec = SPECS[kind];
   if (kind === "shops" && !curShop()) return toast("Спершу створи крамницю");
-  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар", court: "Дама" }[kind]} з ідеї`;
+  $("idea-title").textContent = `✨ ${{ arsenal: "Зброя", bestiary: "Істота", loot: "Знахідка", shops: "Товар", court: "Дама", scenes: "Сцена" }[kind]} з ідеї`;
   $("idea-text").placeholder = spec.placeholder;
   const box = $("idea-hints");
   box.innerHTML = "";
@@ -695,7 +786,7 @@ async function runIdea(avoid) {
   $("idea-status").innerHTML = `<i class="spin"></i>Gemini думає… (10–30 с)`;
   try {
     const list = itemsOf().filter((x) => !x._shop);
-    idea = await generate(kind, text, hints, list.length ? list : itemsOf("arsenal"), avoid);
+    idea = await generate(kind, text, hints, list, avoid);
     showIdea();
     $("idea-status").textContent = "";
   } catch (e) {
@@ -707,6 +798,7 @@ async function runIdea(avoid) {
 }
 function label(k, v) {
   const f = [...(KINDS[kind].fields ?? [])].find((x) => x.k === k);
+  if (f?.type === "rows") return (v ?? []).map((r) => f.cols.map((c) => (c.opts ? c.opts[r[c.k]] ?? r[c.k] : r[c.k])).filter((t) => t !== "" && t != null).join(" · ")).join("\n");
   if (Array.isArray(v)) return f?.opts ? v.map((x) => f.opts[x] ?? x).join(", ") : v.join("\n");
   if (f?.opts) return f.opts[v] ?? v;
   return v;
@@ -729,6 +821,7 @@ function applyIdea(asNew) {
   const K = KINDS[kind];
   const data = { ...idea };
   if (kind === "bestiary") data.rank = Math.min(5, Math.max(1, Number(data.rank) || 1));
+  if (kind === "scenes") delete data.shape;
   if (asNew) {
     const x = { ...K.blank(st.data[kind]), ...data };
     itemsOf().unshift(x);

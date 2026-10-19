@@ -276,6 +276,8 @@ body.npcm input[type=text]{margin-bottom:6px}
 .arsenal-open:hover{background:linear-gradient(135deg, #2b313b, #1f2228)}
 .rumor-open:hover{background:linear-gradient(135deg, #3a2c1a, #28241f)}
 
+.scenes-open{border-color:rgba(143,193,255,.42); color:#d4e6ff; background:linear-gradient(135deg, #142033, #181c24)}
+.scenes-open:hover{background:linear-gradient(135deg, #1b2b45, #20252f)}
 .court-open{border-color:rgba(217,138,168,.42); color:#f4cfdc; background:linear-gradient(135deg, #2c1521, #1c1820)}
 .court-open:hover{background:linear-gradient(135deg, #3b1c2c, #26202a)}
 .studio-open{display:block; text-decoration:none; border-style:dashed; border-color:rgba(232,194,122,.4); color:#f3d595; background:rgba(232,194,122,.05)}
