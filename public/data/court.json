@@ -1,7 +1,24 @@
 {
  "v": 1,
- "stamp": 1792415404872,
+ "stamp": 1792577961308,
  "items": [
+  {
+   "id": "cmvhyl9ikty",
+   "name": "Сюзана",
+   "house": "Оксамитовий Ліхтар",
+   "race": "Напівельфійка",
+   "age": "близько двадцяти п'яти або більше...",
+   "talent": "Зоряні карти й вино",
+   "price": 35,
+   "desc": "Хвилясте мідне волосся, приколоте сапфіровою шпилькою-астролябією, та сукня кольору нічного моря із золотим шитвом. Пахне миррою, морською сіллю та старим пергаментом.",
+   "about": "Уважна й м'яка у спілкуванні, вміє розговорити навіть найпохмурішого шкіпера. Читає рух нічних світил і течій краще за більшість ліцензованих штурманів гільдії.",
+   "likes": "Пряні південні вина, креслення сузір'їв, розповіді про дивні вогні у відкритому морі.",
+   "quote": "Покажи мені, під якими зорями ти блукав, мореплавцю, — і я скажу, від кого ти тікаєш.",
+   "secret": "Колись була навігатором на судні контрабандистів Ордену; вона таємно змальовує заборонені безпечні маршрути крізь рифи й продає їх капітанам, які не бояться королівського мита.",
+   "img": "court/cmvhyl9ikty-mvhymdfsqn.webp",
+   "art": "elegant young half-elven courtesan with wavy copper hair pinned up by a brass and sapphire astrolabe hairpiece, wearing a modest midnight-blue velvet gown with long silk sleeves and intricate gold constellation embroidery, holding a crystal glass of deep red wine, warm candlelight glow, observant and gentle expression",
+   "rev": 1792577955320
+  },
   {
    "id": "lira",
    "name": "Ліра Сріблоголоса",
