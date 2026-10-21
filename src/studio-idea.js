@@ -3,6 +3,7 @@
 
 export const GKEY = "atmosfera.gemini-key";
 export const GMODEL = "atmosfera.gemini-text-model";
+const GALT = "atmosfera.gemini-alt";   // { from, model, until } — запасна модель, що відповіла, на годину
 const DEFAULT_MODEL = "gemini-3.8-flash";
 
 const WORLD = `Ти — помічник майстра D&D 5e в українській кампанії «Прокляття Неболіусу»: морські мандри, кораблі й порти, прокляття, руни й зорі, нежить, вогняні демони, ліси й гори.
@@ -145,19 +146,34 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
     catch { return { r: { ok: false, status: 0 }, j: { error: { message: "немає зв'язку з Google" } } }; }
   };
   const busy = (x) => !x.r.ok && (x.r.status === 503 || x.r.status === 500 || x.r.status === 0 || /high demand|overloaded|UNAVAILABLE|try again later/i.test(x.j?.error?.message || ""));
-  let res = await ask(model);
-  for (let i = 0, waits = [3, 6, 12]; i < waits.length && busy(res); i++) {
-    for (let s = waits[i]; s > 0; s--) { onStatus(`Gemini перевантажений — пробую ще раз через ${s} с (спроба ${i + 2} з ${waits.length + 1})…`); await sleep(1000); }
-    onStatus("Gemini думає… (10–30 с)");
-    res = await ask(model);
-  }
-  // досі перевантажений — пробуємо інші моделі flash, які є в цього ключа (лише цього разу, без запам'ятовування)
+  const limit = (x) => !x.r.ok && (x.r.status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit/i.test(x.j?.error?.message || ""));
+  // безкоштовний ключ: ~5 запитів за хвилину й ~20 на день на КОЖНУ модель — тож повтори бережемо,
+  // а коли модель перевантажена чи її ліміт вичерпано — одразу йдемо на іншу (у неї свій ліміт)
+  const sticky = (() => { try { const v = JSON.parse(localStorage.getItem(GALT) || "null"); return v && v.until > Date.now() && v.from === model ? v.model : null; } catch { return null; } })();
+  let used = sticky || model;
+  if (sticky) onStatus(`«${model}» нещодавно не відповідала — питаю «${sticky}»…`);
+  let res = await ask(used);
   if (busy(res)) {
-    for (const alt of await altModels(key, model)) {
-      onStatus(`«${model}» перевантажена — пробую «${alt}»…`);
+    for (let s = 5; s > 0; s--) { onStatus(`Gemini перевантажений — ще одна спроба через ${s} с…`); await sleep(1000); }
+    onStatus("Gemini думає… (10–30 с)");
+    res = await ask(used);
+  }
+  if (busy(res) || limit(res)) {
+    const why = limit(res) ? "вичерпала ліміт" : "перевантажена";
+    for (const alt of await altModels(key, used, model)) {
+      onStatus(`«${used}» ${why} — пробую «${alt}»…`);
       const x = await ask(alt);
-      if (x.r.ok) { res = x; onStatus(`Відповіла «${alt}» (основна була перевантажена)`); break; }
+      if (x.r.ok) {
+        res = x;
+        // запам'ятати на годину: наступні картки одразу йдуть на модель, що відповідає
+        try { localStorage.setItem(GALT, JSON.stringify({ from: model, model: alt, until: Date.now() + 3600e3 })); } catch {}
+        onStatus(`Відповіла «${alt}» («${used}» ${why})`);
+        break;
+      }
+      if (!busy(x) && !limit(x)) break;
     }
+  } else if (res.r.ok && sticky) {
+    onStatus(`Відповіла «${sticky}»`);
   }
   let r = res.r;
   let j = res.j;
@@ -171,7 +187,7 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
   }
   if (!r.ok) {
     const msg = j?.error?.message || `HTTP ${r.status}`;
-    throw Object.assign(new Error(busy({ r, j }) ? "Gemini зараз перевантажений (high demand) — і основна, і запасні моделі. Зачекай кілька хвилин і натисни ще раз." : /quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-3.8-flash). Відповідь Google: ${msg}` : msg), { code: r.status });
+    throw Object.assign(new Error(busy({ r, j }) ? "Gemini зараз перевантажений (high demand) — і основна, і запасні моделі. Зачекай кілька хвилин і натисни ще раз." : /quota|RESOURCE_EXHAUSTED/i.test(msg) ? (/per.?day|PerDay|daily/i.test(msg) ? "Денний ліміт безкоштовного ключа вичерпано на всіх доступних моделях (≈20 запитів на модель за добу). Ліміт оновиться завтра — або поповни кредити в AI Studio → Billing, тоді ліміти стануть у рази більші." : "Ліміт запитів за хвилину вичерпано (безкоштовний ключ — ≈5 на хвилину). Зачекай хвилину й натисни ще раз.") : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-3.8-flash). Відповідь Google: ${msg}` : msg), { code: r.status });
   }
   const text = (j?.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("");
   try { return JSON.parse(text); }
@@ -181,14 +197,14 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // запасні моделі: інші «flash», доступні цьому ключу, новіші — першими
-async function altModels(key, current) {
+async function altModels(key, ...skip) {
   try {
     const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
     const j = await r.json();
     const names = (j.models ?? [])
       .filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
       .map((m) => m.name.replace(/^models\//, ""))
-      .filter((n) => /flash/i.test(n) && n !== current && !/image|tts|audio|live|embed|vision|exp|preview-\d{2}-\d{2}/i.test(n));
+      .filter((n) => /flash/i.test(n) && !skip.includes(n) && !/image|tts|audio|live|embed|vision|exp|preview-\d{2}-\d{2}/i.test(n));
     const ver = (n) => Number((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
     return names.sort((a, b) => ver(b) - ver(a) || a.length - b.length).slice(0, 3);
   } catch { return []; }
