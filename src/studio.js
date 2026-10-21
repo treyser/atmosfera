@@ -27,6 +27,9 @@ const POOLS = { rogue: "Кишеня розбійника", sea: "Скриня �
 
 const ITEM_STYLE = (what) => `Generate an image: fantasy RPG item card illustration of ${what}. The object lies diagonally in the center, fully visible with margin around it, on a dark weathered parchment background with soft vignette and warm candlelight rim lighting. Painterly dark-fantasy style, highly detailed, square 1:1. No text, no hands, no people, no frame.`;
 
+// куртизанка має виглядати куртизанкою: спокуса, розкіш, гра поглядом (без відвертості)
+const COURT_LOOK = "She is a famous high-class courtesan of a luxury pleasure house, alluring and glamorous: dramatic evening makeup with kohl-lined eyes and deep red lips, bare shoulders, an off-the-shoulder gown with a low-cut bodice and a corset, lace and sheer silk, lots of jewelry, a seductive knowing gaze and a flirtatious half-smile.";
+
 // ---------- розділи ----------
 const KINDS = {
   arsenal: {
@@ -199,8 +202,8 @@ const KINDS = {
       { k: "secret", label: "Таємниця — бачить лише майстер (гачок для сюжету)", type: "area", w: 3 },
       { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
-    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Chest-up portrait filling the circle, warm candlelight, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
-    portrait: (x) => `Generate an image: elegant character portrait of ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Waist-up, three-quarter view, luxurious candlelit parlor with velvet drapes in the background, warm cinematic lighting, painterly fantasy style, highly detailed, portrait orientation 3:4. Tasteful, no nudity. No text, no frame, no border.`,
+    prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of ${x.art ? x.art : `a ${x.race || "human"} courtesan «${x.name}»${x.desc ? ": " + x.desc : ""}`}. ${COURT_LOOK} Chest-up portrait filling the circle, warm red-gold candlelight, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+    portrait: (x) => `Generate an image: portrait of ${x.art ? x.art : `a ${x.race || "human"} courtesan «${x.name}»${x.desc ? ": " + x.desc : ""}`}. ${COURT_LOOK} Waist-up, three-quarter view, lounging on a red velvet chaise in a lavish boudoir of a high-class pleasure house: silk drapes, rose petals, perfume bottles, a glass of wine, warm red-gold candlelight. Painterly fantasy style in the spirit of Belle Époque paintings, highly detailed, portrait orientation 3:4. Sensual but tasteful, no nudity. No text, no frame.`,
   },
 };
 
