@@ -829,7 +829,7 @@ async function runIdea(avoid) {
   try {
     const list = itemsOf().filter((x) => !x._shop);
     const roster = kind === "scenes" ? Object.entries(npcOpts()).filter(([k]) => k).map(([id, t]) => { const n = npcById(id); return { id, name: n?.name ?? t, sub: n?.sub ?? "", place: n?.place ?? "" }; }) : null;
-    idea = await generate(kind, text, hints, list, avoid, roster);
+    idea = await generate(kind, text, hints, list, avoid, roster, (t) => { $("idea-status").innerHTML = `<i class="spin"></i>${esc(t)}`; });
     showIdea();
     $("idea-status").textContent = "";
   } catch (e) {

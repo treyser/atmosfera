@@ -117,7 +117,7 @@ export function examples(kind, list, hints) {
   return pool.map(strip);
 }
 
-export async function generate(kind, idea, hints, list, avoid = "", roster = null) {
+export async function generate(kind, idea, hints, list, avoid = "", roster = null, onStatus = () => {}) {
   const key = (localStorage.getItem(GKEY) || "").replace(/\s+/g, "");
   if (!key) throw Object.assign(new Error("Потрібен ключ Gemini API"), { code: "nokey" });
   let model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
@@ -130,7 +130,7 @@ ${roster ? (roster.length ? `NPC, які вже є в кампанії (якщо
 ${JSON.stringify(roster)}` : "Готових NPC у кампанії ще немає — усі NPC нові.") : ""}
 ${list.length ? `Ось кілька карток із цієї ж книги — тримайся їхнього стилю, довжини й формату:
 ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
-  const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+  const call = (m = model) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
@@ -139,8 +139,28 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
       generationConfig: { responseMimeType: "application/json", responseSchema: spec.schema, temperature: 1 },
     }),
   });
-  let r = await call();
-  let j = await r.json().catch(() => ({}));
+  // запит із повторами: якщо Google каже «перевантажено» (503 / high demand) — чекаємо й пробуємо ще
+  const ask = async (m) => {
+    try { const res = await call(m); return { r: res, j: await res.json().catch(() => ({})) }; }
+    catch { return { r: { ok: false, status: 0 }, j: { error: { message: "немає зв'язку з Google" } } }; }
+  };
+  const busy = (x) => !x.r.ok && (x.r.status === 503 || x.r.status === 500 || x.r.status === 0 || /high demand|overloaded|UNAVAILABLE|try again later/i.test(x.j?.error?.message || ""));
+  let res = await ask(model);
+  for (let i = 0, waits = [3, 6, 12]; i < waits.length && busy(res); i++) {
+    for (let s = waits[i]; s > 0; s--) { onStatus(`Gemini перевантажений — пробую ще раз через ${s} с (спроба ${i + 2} з ${waits.length + 1})…`); await sleep(1000); }
+    onStatus("Gemini думає… (10–30 с)");
+    res = await ask(model);
+  }
+  // досі перевантажений — пробуємо інші моделі flash, які є в цього ключа (лише цього разу, без запам'ятовування)
+  if (busy(res)) {
+    for (const alt of await altModels(key, model)) {
+      onStatus(`«${model}» перевантажена — пробую «${alt}»…`);
+      const x = await ask(alt);
+      if (x.r.ok) { res = x; onStatus(`Відповіла «${alt}» (основна була перевантажена)`); break; }
+    }
+  }
+  let r = res.r;
+  let j = res.j;
   // Google зняв модель і сам підказує нову — переходимо на неї й запам'ятовуємо
   const next = /no longer available|not found/i.test(j?.error?.message || "") && (j.error.message.match(/models\/([\w.-]+)\s+for/) || [])[1];
   if (!r.ok && next && next !== model) {
@@ -151,9 +171,25 @@ ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
   }
   if (!r.ok) {
     const msg = j?.error?.message || `HTTP ${r.status}`;
-    throw Object.assign(new Error(/quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-3.8-flash). Відповідь Google: ${msg}` : msg), { code: r.status });
+    throw Object.assign(new Error(busy({ r, j }) ? "Gemini зараз перевантажений (high demand) — і основна, і запасні моделі. Зачекай кілька хвилин і натисни ще раз." : /quota|RESOURCE_EXHAUSTED/i.test(msg) ? "Gemini каже, що вичерпано ліміт — зачекай хвилину й спробуй ще (або вибери іншу модель нижче)" : /API key not valid|ACCESS_TOKEN_TYPE_UNSUPPORTED|UNAUTHENTICATED/i.test(msg) ? `Google не прийняв ключ (${key.slice(0, 3)}…, ${key.length} символів). Скопіюй його ще раз кнопкою копіювання в AI Studio. Відповідь Google: ${msg}` : /not found|no longer available/i.test(msg) ? `Модель «${model}» недоступна — впиши іншу в полі «Модель» нижче (наприклад, gemini-3.8-flash). Відповідь Google: ${msg}` : msg), { code: r.status });
   }
   const text = (j?.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("");
   try { return JSON.parse(text); }
   catch { throw new Error("Gemini відповів не так, як треба — спробуй ще раз"); }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// запасні моделі: інші «flash», доступні цьому ключу, новіші — першими
+async function altModels(key, current) {
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
+    const j = await r.json();
+    const names = (j.models ?? [])
+      .filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+      .map((m) => m.name.replace(/^models\//, ""))
+      .filter((n) => /flash/i.test(n) && n !== current && !/image|tts|audio|live|embed|vision|exp|preview-\d{2}-\d{2}/i.test(n));
+    const ver = (n) => Number((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+    return names.sort((a, b) => ver(b) - ver(a) || a.length - b.length).slice(0, 3);
+  } catch { return []; }
 }
