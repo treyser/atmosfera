@@ -118,11 +118,8 @@ export function examples(kind, list, hints) {
   return pool.map(strip);
 }
 
-export async function generate(kind, idea, hints, list, avoid = "", roster = null, onStatus = () => {}) {
-  const key = (localStorage.getItem(GKEY) || "").replace(/\s+/g, "");
-  if (!key) throw Object.assign(new Error("Потрібен ключ Gemini API"), { code: "nokey" });
-  let model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
-  const spec = SPECS[kind];
+// запит майстра: правила розділу + ідея + приклади (спільне для API і чату)
+function buildUser(kind, idea, hints, list, avoid, roster) {
   const want = Object.entries(hints).filter(([, v]) => v).map(([k, v]) => `${k} = ${v}`).join(", ");
   const user = `Ідея майстра: ${idea}
 ${want ? `Обов'язково: ${want}.` : ""}
@@ -131,6 +128,67 @@ ${roster ? (roster.length ? `NPC, які вже є в кампанії (якщо
 ${JSON.stringify(roster)}` : "Готових NPC у кампанії ще немає — усі NPC нові.") : ""}
 ${list.length ? `Ось кілька карток із цієї ж книги — тримайся їхнього стилю, довжини й формату:
 ${JSON.stringify(examples(kind, list, hints), null, 1)}` : ""}`;
+  return user;
+}
+
+// поля схеми — людською мовою, для чату (там немає responseSchema)
+function schemaText(sc, pad = "") {
+  const t = (x) => x.enum ? `одне з: ${x.enum.map((v) => (v === "" ? "«»" : v)).join(" | ")}` : x.type === "ARRAY" ? (x.items.type === "OBJECT" ? `масив об'єктів:\n${schemaText(x.items, pad + "    ")}` : `масив (${t(x.items)})`) : { STRING: "текст", NUMBER: "число", INTEGER: "ціле число", OBJECT: "об'єкт" }[x.type] ?? x.type;
+  return Object.entries(sc.properties).map(([k, x]) => `${pad}- ${k}: ${t(x)}`).join("\n");
+}
+
+// «💬 Через чат Gemini»: усе одним текстом — вставити в gemini.google.com
+export function chatPrompt(kind, idea, hints, list, avoid = "", roster = null) {
+  const spec = SPECS[kind];
+  return `${WORLD}
+
+${spec.rules}
+
+${buildUser(kind, idea, hints, list, avoid, roster)}
+
+ФОРМАТ ВІДПОВІДІ: лише ОДИН JSON-об'єкт у блоці коду \`\`\`json … \`\`\` — без пояснень до чи після. Ключі — англійською, точно як нижче; усі обов'язкові (якщо нема чого писати — порожній рядок "" або порожній масив []):
+${schemaText(spec.schema)}`;
+}
+
+// розібрати відповідь із чату: знайти JSON, пробачити дрібні огріхи, доповнити пропущені поля
+export function parseAnswer(kind, text) {
+  let s = String(text ?? "").replace(/\u00a0/g, " ");
+  const fence = s.match(/\`\`\`(?:json)?\s*([\s\S]*?)\`\`\`/i);
+  if (fence) s = fence[1];
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if (a < 0 || b <= a) throw new Error("У відповіді немає JSON — скопіюй увесь блок коду (кнопка копіювання над ним у Gemini)");
+  s = s.slice(a, b + 1);
+  let obj;
+  try { obj = JSON.parse(s); }
+  catch {
+    const t = s.replace(/,\s*([}\]])/g, "$1");
+    try { obj = JSON.parse(t); }
+    catch {
+      try { obj = JSON.parse(t.replace(/[“”]/g, '"')); }
+      catch { throw new Error("JSON обрізаний чи зіпсований — скопіюй відповідь ще раз або попроси Gemini повторити"); }
+    }
+  }
+  return fix(SPECS[kind].schema, obj);
+}
+function fix(sc, v) {
+  if (sc.type === "OBJECT") {
+    const o = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+    const out = {};
+    for (const [k, x] of Object.entries(sc.properties)) out[k] = fix(x, o[k]);
+    return out;
+  }
+  if (sc.type === "ARRAY") return Array.isArray(v) ? v.map((x) => fix(sc.items, x)) : [];
+  if (sc.type === "NUMBER" || sc.type === "INTEGER") { const n = Number(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? (sc.type === "INTEGER" ? Math.round(n) : n) : 0; }
+  const t = v == null ? "" : String(v);
+  return sc.enum && !sc.enum.includes(t) ? sc.enum[0] : t;
+}
+
+export async function generate(kind, idea, hints, list, avoid = "", roster = null, onStatus = () => {}) {
+  const key = (localStorage.getItem(GKEY) || "").replace(/\s+/g, "");
+  if (!key) throw Object.assign(new Error("Потрібен ключ Gemini API"), { code: "nokey" });
+  let model = localStorage.getItem(GMODEL) || DEFAULT_MODEL;
+  const spec = SPECS[kind];
+  const user = buildUser(kind, idea, hints, list, avoid, roster);
   const call = (m = model) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },

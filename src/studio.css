@@ -178,3 +178,10 @@ textarea{resize:vertical; line-height:1.45}
 #dirty{max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .top .grow{min-width:0}
 #portrait-box{margin-top:12px; padding-top:10px; border-top:1px dashed rgba(232,194,122,.25); display:flex; flex-direction:column; gap:6px}
+.imode{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.imode button{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); color:var(--dim); font-weight:600; text-align:left; cursor:pointer}
+.imode button small{font-weight:400; font-size:11.5px; opacity:.8}
+.imode button.on{color:var(--fg); border-color:rgba(150,170,255,.6); background:rgba(120,140,255,.12)}
+.ichat{padding:10px 12px; border-radius:12px; border:1px dashed rgba(150,170,255,.4); background:rgba(120,140,255,.05); display:flex; flex-direction:column; gap:8px}
+.ichat ol{margin:0; padding-left:18px; line-height:1.55; font-size:13.5px}
+.ichat textarea{width:100%; resize:vertical; font-family:ui-monospace, monospace; font-size:12px}

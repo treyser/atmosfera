@@ -2,7 +2,7 @@
 // Читає й пише public/data/*.json і картинки прямо в репозиторій GitHub — одним комітом на «Опублікувати».
 // Owlbear підтягує нове сам, щойно GitHub Pages перезбере сайт (~2 хвилини).
 import "./studio.css";
-import { SPECS, GKEY, GMODEL, generate } from "./studio-idea.js";
+import { SPECS, GKEY, GMODEL, generate, chatPrompt, parseAnswer } from "./studio-idea.js";
 import { PRESETS as TRAPS } from "./trap-data.js";
 import { cutToken, cutAI, trimSquare, cutShare } from "./bg-cut.js";
 import { MOODS, SHAPES, CHEST_TPL } from "./scene-data.js";
@@ -862,7 +862,71 @@ function initIdea() {
   $("idea-text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runIdea(""); });
   $("idea-new").onclick = () => applyIdea(true);
   $("idea-fill").onclick = () => applyIdea(false);
+  for (const b of $("idea-mode").children) b.onclick = () => { lsSet(MODE, b.dataset.m); paintMode(); };
+  $("idea-read").onclick = () => readAnswer($("idea-answer").value, true);
+  $("idea-answer").addEventListener("paste", () => setTimeout(() => readAnswer($("idea-answer").value, true), 30));
+  $("idea-copy").onclick = () => copyText(chat.prompt).then(() => toast("Запит скопійовано — встав у Gemini"));
+  $("idea-win").onclick = () => openGemini(false);
+  // повернувся з вікна Gemini — пробуємо взяти відповідь із буфера сам
+  window.addEventListener("focus", () => { if (chat.waiting && !$("idea").hidden) setTimeout(tryClipboard, 150); });
 }
+
+// ---------- «💬 Через чат Gemini» ----------
+const MODE = "atmosfera.idea-mode";
+const chat = { prompt: "", waiting: false, win: null };
+const mode = () => (ls(MODE) || "chat");
+function paintMode() {
+  const m = mode();
+  for (const b of $("idea-mode").children) b.classList.toggle("on", b.dataset.m === m);
+  $("idea-keybox").hidden = m !== "api";
+  $("idea-go").textContent = m === "api" ? "Придумати" : "Скопіювати запит і відкрити Gemini";
+  if (m === "api") $("idea-chat").hidden = true;
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); }
+}
+// Google не дає вбудувати Gemini в сторінку (заборона на iframe), тож — окреме вікно праворуч, без вкладок і адреси
+function openGemini(fresh) {
+  if (!fresh && chat.win && !chat.win.closed) { chat.win.focus(); return; }
+  const W = screen.availWidth, H = screen.availHeight;
+  const w = Math.round(Math.min(760, Math.max(480, W * 0.42))), h = Math.round(H * 0.92);
+  chat.win = window.open("https://gemini.google.com/app", "atmosfera-gemini", `popup=yes,width=${w},height=${h},left=${(screen.availLeft ?? 0) + W - w},top=${(screen.availTop ?? 0) + Math.round(H * 0.04)}`);
+  if (!chat.win) toast("Браузер заблокував вікно — дозволь спливаючі вікна для цієї сторінки");
+}
+async function chatIdea(avoid) {
+  const text = $("idea-text").value.trim();
+  if (!text) { $("idea-text").focus(); return; }
+  const hints = Object.fromEntries([...$("idea-hints").querySelectorAll("select")].map((s) => [s.dataset.k, s.value]));
+  const list = itemsOf().filter((x) => !x._shop);
+  chat.prompt = chatPrompt(kind, text, hints, list, avoid, rosterNow());
+  await copyText(chat.prompt);
+  chat.waiting = true;
+  $("idea-answer").value = "";
+  $("idea-chat").hidden = false;
+  $("idea-result").hidden = true; $("idea-acts").hidden = true;
+  $("idea-status").textContent = "Запит у буфері — встав його в Gemini (Ctrl+V → Enter)";
+  openGemini(true);
+}
+async function tryClipboard() {
+  try {
+    const t = await navigator.clipboard.readText();
+    if (t && t !== chat.prompt && /[{]/.test(t)) readAnswer(t, false);
+  } catch { /* браузер не дав прочитати буфер — тоді вставлять вручну */ }
+}
+function readAnswer(t, loud) {
+  if (!t.trim()) { if (loud) toast("Встав відповідь Gemini"); return; }
+  try {
+    idea = parseAnswer(kind, t);
+    chat.waiting = false;
+    $("idea-answer").value = t;
+    $("idea-status").textContent = "Відповідь прочитано ✓";
+    showIdea();
+  } catch (e) {
+    if (loud) $("idea-status").textContent = e.message;
+  }
+}
+const rosterNow = () => (kind === "scenes" ? Object.entries(npcOpts()).filter(([k]) => k).map(([id, t]) => { const n = npcById(id); return { id, name: n?.name ?? t, sub: n?.sub ?? "", place: n?.place ?? "" }; }) : null);
 function keyState() {
   const has = Boolean(ls(GKEY));
   $("idea-keystate").textContent = has ? "· збережено" : "· потрібен";
@@ -887,12 +951,16 @@ function openIdea() {
   $("idea-key").value = ls(GKEY);
   $("idea-model").value = ls(GMODEL);
   keyState();
+  chat.waiting = false;
+  $("idea-chat").hidden = true;
+  paintMode();
   $("idea-result").hidden = true; $("idea-acts").hidden = true; $("idea-status").textContent = "";
   $("idea-fill").hidden = !current() || Boolean(current()?._shop);
   $("idea").hidden = false;
   setTimeout(() => $("idea-text").focus(), 30);
 }
 async function runIdea(avoid) {
+  if (mode() === "chat") return chatIdea(avoid);
   const text = $("idea-text").value.trim();
   if (!text) { $("idea-text").focus(); return; }
   const hints = Object.fromEntries([...$("idea-hints").querySelectorAll("select")].map((s) => [s.dataset.k, s.value]));
@@ -900,8 +968,7 @@ async function runIdea(avoid) {
   $("idea-status").innerHTML = `<i class="spin"></i>Gemini думає… (10–30 с)`;
   try {
     const list = itemsOf().filter((x) => !x._shop);
-    const roster = kind === "scenes" ? Object.entries(npcOpts()).filter(([k]) => k).map(([id, t]) => { const n = npcById(id); return { id, name: n?.name ?? t, sub: n?.sub ?? "", place: n?.place ?? "" }; }) : null;
-    idea = await generate(kind, text, hints, list, avoid, roster, (t) => { $("idea-status").innerHTML = `<i class="spin"></i>${esc(t)}`; });
+    idea = await generate(kind, text, hints, list, avoid, rosterNow(), (t) => { $("idea-status").innerHTML = `<i class="spin"></i>${esc(t)}`; });
     showIdea();
     $("idea-status").textContent = "";
   } catch (e) {
@@ -951,7 +1018,11 @@ function applyIdea(asNew) {
   const K = KINDS[kind];
   const data = { ...idea };
   if (kind === "bestiary") data.rank = Math.min(5, Math.max(1, Number(data.rank) || 1));
-  if (kind === "scenes") linkNpcs(data);
+  if (kind === "scenes") {
+    if (!data.cols) data.cols = 24;
+    if (!data.rows) { const [p, q] = (data.shape || "3:2").split(":").map(Number); data.rows = Math.round((data.cols * q) / p) || 16; }
+    linkNpcs(data);
+  }
   if (asNew) {
     const x = { ...K.blank(st.data[kind]), ...data };
     itemsOf().unshift(x);
