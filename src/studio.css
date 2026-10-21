@@ -177,3 +177,4 @@ textarea{resize:vertical; line-height:1.45}
 .tabs button{padding:7px 11px; white-space:nowrap}
 #dirty{max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .top .grow{min-width:0}
+#portrait-box{margin-top:12px; padding-top:10px; border-top:1px dashed rgba(232,194,122,.25); display:flex; flex-direction:column; gap:6px}

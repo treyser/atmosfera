@@ -77,6 +77,7 @@ const KINDS = {
       { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy creature — ${x.art ? x.art : `«${x.name}» (${x.type || "creature"})${x.seen ? ": " + x.seen : ""}`}. The creature fills the circle, seen from above at a slight angle, dramatic lighting, painterly dark-fantasy style, highly detailed, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+    portrait: (x) => `Generate an image: dark-fantasy bestiary illustration of a creature — ${x.art ? x.art : `«${x.name}» (${x.type || "creature"})${x.seen ? ": " + x.seen : ""}`}. Full body in its natural habitat, dramatic three-quarter view, moody cinematic lighting, painterly dark-fantasy style, highly detailed, portrait orientation 3:4. No text, no frame, no border.`,
   },
   shops: {
     title: "Крамниці", file: "data/shops.json", dir: "shop", size: 512, removable: true,
@@ -175,6 +176,7 @@ const KINDS = {
       { k: "art", label: "Вигляд для токена (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `${x.race || "human"} «${x.name}», ${x.sub || "townsperson"}${x.look ? ": " + x.look : ""}`}. Chest-up portrait filling the circle, dramatic lighting, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+    portrait: (x) => `Generate an image: character portrait of ${x.art ? x.art : `${x.race || "human"} «${x.name}», ${x.sub || "townsperson"}${x.look ? ": " + x.look : ""}`}. Waist-up, three-quarter view, expressive face, background hinting at ${x.place || "a fantasy port town"}, cinematic lighting, painterly dark-fantasy style, highly detailed, portrait orientation 3:4. No text, no frame, no border.`,
   },
   court: {
     title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true,
@@ -198,6 +200,7 @@ const KINDS = {
       { k: "art", label: "Вигляд для картинки (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Chest-up portrait filling the circle, warm candlelight, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
+    portrait: (x) => `Generate an image: elegant character portrait of ${x.art ? x.art : `an elegant ${x.race || "human"} courtesan «${x.name}», fully and tastefully dressed${x.desc ? ": " + x.desc : ""}`}. Waist-up, three-quarter view, luxurious candlelit parlor with velvet drapes in the background, warm cinematic lighting, painterly fantasy style, highly detailed, portrait orientation 3:4. Tasteful, no nudity. No text, no frame, no border.`,
   },
 };
 
@@ -469,14 +472,14 @@ function drawForm() {
       if (f.k === "name" || f.k === "price" || f.k === "qty" || f.k === "dmg" || f.k === "rarity" || f.k === "cat" || f.k === "rank" || f.k === "type" || f.k === "owner") drawListSoon();
       if (f.k === "shape" && SHAPES[x.shape]) { const [a, b] = x.shape.split(":").map(Number); x.rows = Math.round((x.cols || 24) * b / a); }
       if (f.k === "cols") { const [a, b] = (x.shape || "3:2").split(":").map(Number); x.rows = Math.round((x.cols || 24) * b / a); }
-      if (["name", "desc", "type", "seen", "owner", "about", "art", "shape", "notes"].includes(f.k)) $("prompt").value = K.prompt(x);
+      if (["name", "desc", "type", "seen", "owner", "about", "art", "shape", "notes", "look", "sub", "race", "place"].includes(f.k)) setPrompts(K, x);
     });
     wrap.appendChild(inp);
     box.appendChild(wrap);
   }
   showPic(imgSrc(x.img));
   $("drop").classList.toggle("wide", Boolean(K.keepAspect));
-  $("prompt").value = K.prompt(x);
+  setPrompts(K, x);
   $("trim").checked = false;
   $("dup").hidden = Boolean(x._shop);
   $("del").textContent = x._shop ? "Видалити крамницю" : "Видалити";
@@ -648,6 +651,17 @@ function initPic() {
     try { await navigator.clipboard.writeText($("prompt").value); toast("Підказку скопійовано — встав у Gemini"); }
     catch { $("prompt").select(); document.execCommand("copy"); toast("Підказку скопійовано"); }
   };
+  $("copy-prompt2").onclick = async () => {
+    try { await navigator.clipboard.writeText($("prompt2").value); toast("Підказку портрета скопійовано — встав у Gemini"); }
+    catch { $("prompt2").select(); document.execCommand("copy"); toast("Підказку портрета скопійовано"); }
+  };
+}
+// підказки для Gemini: токен (або картинка) і, де є, окремо портрет
+function setPrompts(K, x) {
+  $("prompt").value = K.prompt(x);
+  $("portrait-box").hidden = !K.portrait || Boolean(x._shop);
+  $("prompt-label").textContent = K.portrait ? "Токен для мапи" : "Картинка з Gemini";
+  if (K.portrait) $("prompt2").value = K.portrait(x);
 }
 function showPic(src) {
   $("pic").hidden = !src;
