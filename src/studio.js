@@ -4,6 +4,7 @@
 import "./studio.css";
 import { SPECS, GKEY, GMODEL, generate } from "./studio-idea.js";
 import { PRESETS as TRAPS } from "./trap-data.js";
+import { cutToken, cutAI, trimSquare, cutShare } from "./bg-cut.js";
 import { MOODS, SHAPES, CHEST_TPL } from "./scene-data.js";
 
 const REPO = "treyser/atmosfera";
@@ -56,7 +57,7 @@ const KINDS = {
     prompt: (x) => ITEM_STYLE(x.art ? `a single weapon — ${x.art}` : `a single weapon — «${x.name}»${x.desc ? ": " + x.desc : ""}`),
   },
   bestiary: {
-    title: "Бестіарій", file: "data/bestiary.json", dir: "best", size: 384, removable: true,
+    title: "Бестіарій", file: "data/bestiary.json", dir: "best", size: 384, removable: true, token: true,
     items: (d) => d.items,
     filter: { all: "Усі істоти", ...Object.fromEntries(Object.entries(BIOME).map(([k, v]) => ["b:" + k, v])) },
     match: (x, f) => f === "all" || x.biome === f.slice(2),
@@ -160,7 +161,7 @@ const KINDS = {
     prompt: (x) => `Generate an image: top-down tabletop RPG battle map, ${SHAPES[x.shape] ? `aspect ratio ${x.shape}` : "landscape 3:2"}, seen straight from above, ${x.art || `«${x.name}»${x.notes ? ": " + x.notes : ""}`}. Painterly dark-fantasy style, highly detailed, readable floor for token placement, clear walkable areas, consistent soft lighting. No grid lines, no text, no labels, no people, no creatures, no frame.`,
   },
   npcs: {
-    title: "NPC", file: "data/npcs.json", dir: "npc", size: 512, removable: true,
+    title: "NPC", file: "data/npcs.json", dir: "npc", size: 512, removable: true, token: true,
     items: (d) => d.items,
     filter: { all: "Усі NPC" },
     match: () => true,
@@ -183,7 +184,7 @@ const KINDS = {
     portrait: (x) => `Generate an image: character portrait of ${x.art ? x.art : `${x.race || "human"} «${x.name}», ${x.sub || "townsperson"}${x.look ? ": " + x.look : ""}`}. Waist-up, three-quarter view, expressive face, background hinting at ${x.place || "a fantasy port town"}, cinematic lighting, painterly dark-fantasy style, highly detailed, portrait orientation 3:4. No text, no frame, no border.`,
   },
   court: {
-    title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true,
+    title: "Куртизанки", file: "data/court.json", dir: "court", size: 512, removable: true, token: true,
     items: (d) => d.items,
     filter: { all: "Усі дами" },
     match: () => true,
@@ -483,6 +484,8 @@ function drawForm() {
   }
   showPic(imgSrc(x.img));
   $("drop").classList.toggle("wide", Boolean(K.keepAspect));
+  $("cut-row").hidden = !K.token;
+  $("ai-cut").hidden = Boolean(K.keepAspect);
   setPrompts(K, x);
   $("trim").checked = false;
   $("dup").hidden = Boolean(x._shop);
@@ -650,6 +653,7 @@ function initPic() {
     e.preventDefault();
     takeImage(f);
   });
+  $("ai-cut").onclick = aiCut;
   $("pic-clear").onclick = () => { const x = current(); if (!x) return; x.img = ""; touch(x); showPic(""); drawList(); };
   $("copy-prompt").onclick = async () => {
     try { await navigator.clipboard.writeText($("prompt").value); toast("Підказку скопійовано — встав у Gemini"); }
@@ -696,6 +700,28 @@ async function takeImage(file) {
       c.width = c.height = n;
       c.getContext("2d").drawImage(bmp, sx, sy, s, s, 0, 0, n, n);
     }
+    let out = c;
+    if (K.token && $("cut").checked) {
+      // токен із Gemini: прибрати однотонне тло навколо кільця
+      const cut = cutToken(c);
+      if (cutShare(cut) > 0.04) out = fit(cut, K.size);
+    }
+    saveCanvas(out, x, K);
+  } catch (e) {
+    toast("Не вдалося прочитати картинку");
+  }
+}
+// квадрат не більший за size
+function fit(c, size) {
+  if (c.width <= size && c.height <= size) return c;
+  const k = size / Math.max(c.width, c.height);
+  const o = document.createElement("canvas");
+  o.width = Math.round(c.width * k); o.height = Math.round(c.height * k);
+  o.getContext("2d").drawImage(c, 0, 0, o.width, o.height);
+  return o;
+}
+function saveCanvas(c, x, K) {
+  {
     const url = c.toDataURL("image/webp", 0.84);
     const slug = x._shop ? `${x.id}` : kind === "shops" ? `${curShop().id}-${x.id}` : x.id;
     const path = `${K.dir}/${slug}-${stamp36()}.webp`;   // нове ім'я щоразу — щоб ніде не залишилась стара з кешу
@@ -706,8 +732,36 @@ async function takeImage(file) {
     showPic(url);
     drawList();
     toast(`Картинку додано (${Math.round(url.length * 0.75 / 1024)} КБ)`);
+  }
+}
+
+// «✨ Прибрати фон»: нейромережа в браузері, для будь-якої картинки поточної картки
+async function aiCut() {
+  const x = current();
+  if (!x?.img) return toast("Спершу встав картинку");
+  const K = KINDS[kind];
+  const btn = $("ai-cut");
+  btn.disabled = true;
+  const say = (t) => { btn.textContent = t; };
+  try {
+    say("Готую…");
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error("картинка не завантажилась")); img.src = imgSrc(x.img); });
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext("2d").drawImage(img, 0, 0);
+    say("Прибираю фон… (перший раз — до хвилини)");
+    let out = await cutAI(c, say);
+    if (!K.keepAspect) out = trimSquare(out);
+    saveCanvas(fit(out, K.size), x, K);
+    toast("Фон прибрано");
   } catch (e) {
-    toast("Не вдалося прочитати картинку");
+    console.error(e);
+    toast(`Не вийшло прибрати фон: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✨ Прибрати фон (ШІ)";
   }
 }
 
