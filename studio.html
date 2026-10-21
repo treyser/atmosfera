@@ -103,6 +103,10 @@
   <div class="modal" id="idea" hidden>
     <div class="mbox">
       <div class="mhead"><b id="idea-title">✨ Картка з ідеї</b><button type="button" class="icon" id="idea-close" title="Закрити">✕</button></div>
+      <div class="imode" id="idea-mode">
+        <button type="button" data-m="chat">💬 Через чат Gemini <small>безкоштовно, без лімітів API</small></button>
+        <button type="button" data-m="api">⚡ Через API <small>одним кліком, з ключем</small></button>
+      </div>
       <label class="fld"><span>Опиши, що має бути — своїми словами</span>
         <textarea id="idea-text" rows="4" placeholder=""></textarea></label>
       <div class="ihints" id="idea-hints"></div>
@@ -110,13 +114,26 @@
         <button type="button" class="go" id="idea-go">Придумати</button>
         <span class="dim" id="idea-status"></span>
       </div>
+      <div class="ichat" id="idea-chat" hidden>
+        <ol>
+          <li>Запит уже скопійовано, а Gemini відкрився вікном поруч. Там: <b>Ctrl+V</b> → Enter.</li>
+          <li>Коли відповість — натисни кнопку копіювання над блоком коду.</li>
+          <li>Повернись сюди — Майстерня сама прочитає відповідь. Або встав її нижче.</li>
+        </ol>
+        <textarea id="idea-answer" rows="3" placeholder="Сюди — відповідь Gemini (Ctrl+V)"></textarea>
+        <div class="irow">
+          <button type="button" class="ghost sm" id="idea-read">Прочитати відповідь</button>
+          <button type="button" class="ghost sm" id="idea-copy">📋 Скопіювати запит ще раз</button>
+          <button type="button" class="ghost sm" id="idea-win">Показати вікно Gemini</button>
+        </div>
+      </div>
       <div class="iresult" id="idea-result" hidden></div>
       <div class="irow" id="idea-acts" hidden>
         <button type="button" class="go" id="idea-new">Створити картку</button>
         <button type="button" class="ghost" id="idea-fill">Заповнити поточну</button>
         <button type="button" class="ghost" id="idea-again">Інший варіант</button>
       </div>
-      <details class="ikey" id="idea-keybox">
+      <details class="ikey" id="idea-keybox" data-api>
         <summary>Ключ Gemini API <span class="dim" id="idea-keystate"></span></summary>
         <p class="dim">Безкоштовний: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → Create API key. Текстова модель працює без оплати. Ключ зберігається лише в цьому браузері.</p>
         <input id="idea-key" type="password" placeholder="AQ.… або AIza…" autocomplete="off">
