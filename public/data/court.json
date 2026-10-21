@@ -1,7 +1,24 @@
 {
  "v": 1,
- "stamp": 1792613490238,
+ "stamp": 1792614389331,
  "items": [
+  {
+   "id": "cmvika16lcn",
+   "name": "Оріана",
+   "house": "Оксамитовий Ліхтар",
+   "race": "Людина",
+   "age": "молода",
+   "talent": "Бездоганна увага",
+   "price": 20,
+   "desc": "Класична врода: довге русяве волосся, м'які риси обличчя та великі теплі карі очі. Одягнена у просту, але вишукану шовкову сукню кольору слонової кістки з тонкою золотою вишивкою.",
+   "about": "Здається сором'язливою, ніжною та наївною — справжнє втілення затишку після шторму. Вона ідеальна слухачка, поруч із якою суворі боцмани миттєво розслабляються й викладають душу.",
+   "likes": "Зацукровані фрукти, сентиментальні вірші про кохання, плітки про дивні випадки на кораблях.",
+   "quote": "Який важкий тягар на твоїх плечах... Розкажи мені все, тут твої секрети в безпеці.",
+   "secret": "Таємно працює на Орден мисливців за нежиттю. Обіймаючи клієнтів, шукає ознаки прокляття Неболіусу (холодну шкіру, чорні вени) і непомітно ставить крейдяну рунічну мітку на їхніх плащах.",
+   "img": "court/cmvika16lcn-mvikb97hhc.webp",
+   "art": "beautiful young human courtesan, long flowing light-brown hair, soft classic facial features, large brown eyes, wearing a simple yet elegant ivory silk gown with delicate gold embroidery, modest neckline, sweet and attentive expression, warm candlelit parlor background, high quality fantasy portrait",
+   "rev": 1792614371165
+  },
   {
    "id": "cmvijr6ufpx",
    "name": "Каліста",
