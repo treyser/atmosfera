@@ -70,13 +70,19 @@
             <button type="button" class="ghost sm" id="pic-clear">Прибрати</button>
           </div>
           <div class="gem">
-            <b>Картинка з Gemini</b>
+            <b id="prompt-label">Картинка з Gemini</b>
             <textarea id="prompt" rows="5" readonly></textarea>
             <div class="picbtns">
               <button type="button" class="ghost sm" id="copy-prompt">📋 Копіювати підказку</button>
               <a class="ghost sm" href="https://gemini.google.com/app" target="_blank" rel="noopener">Відкрити Gemini ↗</a>
             </div>
             <div class="dim">Готову картинку в Gemini: правою кнопкою → «Копіювати зображення» → тут Ctrl+V.</div>
+            <div id="portrait-box" hidden>
+              <b>Портрет</b>
+              <textarea id="prompt2" rows="5" readonly></textarea>
+              <div class="picbtns"><button type="button" class="ghost sm" id="copy-prompt2">📋 Копіювати підказку портрета</button></div>
+              <div class="dim">Портрет — для себе чи показати гравцям; у картку йде токен.</div>
+            </div>
           </div>
         </div>
         <div class="fields" id="fields"></div>
