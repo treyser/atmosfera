@@ -31,6 +31,7 @@ export default defineConfig({
         studio: resolve(__dirname, "studio.html"),
         court: resolve(__dirname, "court.html"),
         scenes: resolve(__dirname, "scenes.html"),
+        acq: resolve(__dirname, "acq.html"),
         "rumor-tell": resolve(__dirname, "rumor-tell.html"),
         trap: resolve(__dirname, "trap.html"),
         "trap-hit": resolve(__dirname, "trap-hit.html"),
