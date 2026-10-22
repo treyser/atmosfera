@@ -4,6 +4,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import "./court.css";
 import { COURT as WIN, COURT_DATA, COURT_REQ, COURT_SHOW, COURT_RATE } from "./state.js";
 import * as CD from "./court-data.js";
+import { introduce } from "./acq-data.js";
 import { loadCourt, lady, opened, saveOpened, seen, saveSeen, rates, saveRates, RATES, SEEN, FOCUS, applyRate, pack, avg, stars, gp, MAX_REVIEW } from "./court-data.js";
 
 const $ = (id) => document.getElementById(id);
@@ -201,6 +202,7 @@ function initGM() {
     const x = lady(sel);
     setOpen(x.id, true);
     await OBR.broadcast.sendMessage(COURT_SHOW, { id: x.id }, { destination: "REMOTE" }).catch(() => {});
+    introduce(room, { name: x.name, sub: [x.house, x.talent].filter(Boolean).join(" · "), img: x.img });
     toast(`Герої знайомляться: ${x.name}`);
   };
 }

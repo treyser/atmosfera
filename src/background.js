@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, COURT, COURT_REQ, COURT_DATA, COURT_SHOW, COURT_RATE, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, COURT, COURT_REQ, COURT_DATA, COURT_SHOW, COURT_RATE, ACQ_REQ, ACQ_DATA, ACQ_DEL, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -24,6 +24,7 @@ import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
+import { introduce, mergeAcq, acqList, saveAcq, setWhere, keyOf } from "./acq-data.js";
 import { lady, loadCourt, opened as courtOpened, saveSeen as saveCourtSeen, seen as courtSeen, rates as courtRates, saveRates as saveCourtRates, applyRate, pack as packCourt, FOCUS as CFOCUS } from "./court-data.js";
 import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
 
@@ -95,7 +96,8 @@ OBR.onReady(async () => {
       embed: { url: url("npc-menu.html"), height: 150 },
     });
   } catch (err) { console.error("Картка персонажа: меню не зареєструвалось", err); }
-  OBR.broadcast.onMessage(NPC, (event) => showNpc(event.data));
+  OBR.broadcast.onMessage(NPC, (event) => { showNpc(event.data); meet(event.data); });
+  startAcq().catch((err) => console.error("Записник знайомств:", err));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
   startShop().catch((err) => console.error("Крамниця:", err));
   startBestiary().catch((err) => console.error("Бестіарій:", err));
@@ -404,6 +406,7 @@ async function lookAt(data) {
 async function showCard(data) {
   const big = String(data?.big ?? "").trim();
   if (!big) return;
+  setWhere(big);   // записник знайомств: «де зустріли»
   const small = String(data?.small ?? "").trim();
 
   if (cardTimer) {
@@ -970,4 +973,43 @@ async function startCourt() {
     openModal();
   });
   if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(COURT_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 5000);
+}
+
+// Записник знайомств: «Представити» й «Познайомити» самі заносять NPC у записник
+async function meet(d) {
+  const room = OBR.room.id;
+  if (!d?.name || !d.intro) return;   // «Лише мені» — це перегляд, не знайомство
+  const fresh = introduce(room, { name: d.name, sub: d.sub ?? "", img: d.img ?? "" });
+  if (fresh && (await OBR.player.getRole()) !== "GM") OBR.notification.show(`📖 Новий запис у записнику знайомств: ${d.name}`).catch(() => {});
+}
+async function startAcq() {
+  const room = OBR.room.id;
+  const isGM = async () => (await OBR.player.getRole()) === "GM";
+  // майстер: віддати весь список (частинами, щоб не перевищити 16 кБ на повідомлення)
+  OBR.broadcast.onMessage(ACQ_REQ, async () => {
+    if (!(await isGM())) return;
+    const entries = Object.entries(acqList(room));
+    const parts = [];
+    let cur = {}, size = 0;
+    for (const [k, v] of entries) {
+      const b = JSON.stringify(v).length + k.length + 8;
+      if (size + b > 12000 && size) { parts.push(cur); cur = {}; size = 0; }
+      cur[k] = v; size += b;
+    }
+    parts.push(cur);
+    for (const [i, list] of parts.entries()) await OBR.broadcast.sendMessage(ACQ_DATA, { list, part: i, of: parts.length }, { destination: "REMOTE" }).catch(() => {});
+  });
+  OBR.broadcast.onMessage(ACQ_DATA, async (event) => { if (!(await isGM())) mergeAcq(room, event.data?.list); });
+  OBR.broadcast.onMessage(ACQ_DEL, async (event) => {
+    if (await isGM()) return;
+    const all = acqList(room); delete all[keyOf(event.data?.k)]; saveAcq(room, all);
+  });
+  // гравець: знайомство з дамою в Оксамитовій книзі
+  OBR.broadcast.onMessage(COURT_SHOW, async (event) => {
+    if (await isGM()) return;
+    await loadCourt().catch(() => {});
+    const l = lady(event.data?.id);
+    if (l) meet({ name: l.name, sub: [l.house, l.talent].filter(Boolean).join(" · "), img: l.img });
+  });
+  if (!(await isGM())) setTimeout(() => OBR.broadcast.sendMessage(ACQ_REQ, {}, { destination: "REMOTE" }).catch(() => {}), 5500);
 }

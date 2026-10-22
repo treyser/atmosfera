@@ -28,6 +28,6 @@ async function show(destination) {
   if (!name) { $("name").focus(); return; }
   const sub = $("sub").value.trim();
   await OBR.scene.items.updateItems([item.id], (ds) => { for (const d of ds) d.metadata[NPC] = { name, sub }; });
-  await OBR.broadcast.sendMessage(NPC, { img: item.image?.url ?? "", name, sub }, { destination });
+  await OBR.broadcast.sendMessage(NPC, { img: item.image?.url ?? "", name, sub, intro: destination === "ALL" }, { destination });
   $("hint").textContent = destination === "ALL" ? "показано всім ✓" : "лише вам ✓";
 }
