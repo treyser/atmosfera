@@ -866,7 +866,7 @@ function initIdea() {
   $("idea-read").onclick = () => readAnswer($("idea-answer").value, true);
   $("idea-answer").addEventListener("paste", () => setTimeout(() => readAnswer($("idea-answer").value, true), 30));
   $("idea-copy").onclick = () => copyText(chat.prompt).then(() => toast("Запит скопійовано — встав у Gemini"));
-  $("idea-win").onclick = () => openGemini(false);
+  $("idea-win").onclick = () => openGemini(true);
   // повернувся з вікна Gemini — пробуємо взяти відповідь із буфера сам
   window.addEventListener("focus", () => { if (chat.waiting && !$("idea").hidden) setTimeout(tryClipboard, 150); });
 }
@@ -886,13 +886,27 @@ async function copyText(t) {
   try { await navigator.clipboard.writeText(t); }
   catch { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); }
 }
-// Google не дає вбудувати Gemini в сторінку (заборона на iframe), тож — окреме вікно праворуч, без вкладок і адреси
-function openGemini(fresh) {
-  if (!fresh && chat.win && !chat.win.closed) { chat.win.focus(); return; }
+// Google не дає вбудувати Gemini в сторінку (заборона на iframe), тож — окреме вікно праворуч, без вкладок і адреси.
+// Gemini ще й «відрізає» вікно від Майстерні (COOP): ні знайти, ні закрити його звідси не можна —
+// тому відкриваємо ОДНЕ вікно на сесію, а далі лише копіюємо запит туди ж.
+const GWIN = "atmosfera.gemini-win";
+const winOpen = () => { try { return sessionStorage.getItem(GWIN) === "1"; } catch { return false; } };
+function openGemini(force) {
+  if (!force && winOpen()) return false;
   const W = screen.availWidth, H = screen.availHeight;
   const w = Math.round(Math.min(760, Math.max(480, W * 0.42))), h = Math.round(H * 0.92);
   chat.win = window.open("https://gemini.google.com/app", "atmosfera-gemini", `popup=yes,width=${w},height=${h},left=${(screen.availLeft ?? 0) + W - w},top=${(screen.availTop ?? 0) + Math.round(H * 0.04)}`);
-  if (!chat.win) toast("Браузер заблокував вікно — дозволь спливаючі вікна для цієї сторінки");
+  if (!chat.win) { toast("Браузер заблокував вікно — дозволь спливаючі вікна для цієї сторінки"); return false; }
+  try { sessionStorage.setItem(GWIN, "1"); } catch {}
+  paintWin();
+  return true;
+}
+function paintWin() {
+  const open = winOpen();
+  $("idea-step1").innerHTML = open
+    ? "Запит уже скопійовано. Перейди у <b>вже відкрите вікно Gemini</b> (Alt+Tab) → <b>Ctrl+V</b> → Enter. Для нової картки можна натиснути там «Новий чат», але не обов'язково."
+    : "Запит уже скопійовано, а Gemini відкрився вікном поруч. Там: <b>Ctrl+V</b> → Enter.";
+  $("idea-win").textContent = open ? "Відкрити нове вікно Gemini" : "Відкрити вікно Gemini";
 }
 async function chatIdea(avoid) {
   const text = $("idea-text").value.trim();
@@ -906,7 +920,8 @@ async function chatIdea(avoid) {
   $("idea-chat").hidden = false;
   $("idea-result").hidden = true; $("idea-acts").hidden = true;
   $("idea-status").textContent = "Запит у буфері — встав його в Gemini (Ctrl+V → Enter)";
-  openGemini(true);
+  openGemini(false);
+  paintWin();
 }
 async function tryClipboard() {
   try {
@@ -1039,4 +1054,5 @@ function applyIdea(asNew) {
   draw();
   setTimeout(() => $("form").scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   toast(asNew ? "Картку створено — додай картинку й натисни «Опублікувати»" : "Картку заповнено");
+  chat.waiting = false;
 }
