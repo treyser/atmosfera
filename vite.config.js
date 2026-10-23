@@ -33,6 +33,8 @@ export default defineConfig({
         scenes: resolve(__dirname, "scenes.html"),
         acq: resolve(__dirname, "acq.html"),
         triggers: resolve(__dirname, "triggers.html"),
+        graph: resolve(__dirname, "graph.html"),
+        choice: resolve(__dirname, "choice.html"),
         "npc-ai": resolve(__dirname, "npc-ai.html"),
         "rumor-tell": resolve(__dirname, "rumor-tell.html"),
         trap: resolve(__dirname, "trap.html"),

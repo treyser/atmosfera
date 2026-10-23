@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Блупрінти</title>
+<link rel="stylesheet" href="/litegraph.css">
+<script src="/litegraph.min.js"></script>
+</head>
+<body>
+  <header class="gbar">
+    <b class="logo">Блупрінти</b>
+    <select id="pick"></select>
+    <button type="button" id="new">＋ Граф</button>
+    <input id="name" maxlength="60">
+    <label class="tgl"><input type="checkbox" id="on"> увімкнено</label>
+    <button type="button" id="run" class="go">▶ Запустити</button>
+    <div class="grow"></div>
+    <button type="button" id="del" class="danger">Видалити граф</button>
+    <button type="button" id="close" title="Закрити">✕</button>
+  </header>
+  <main class="gmain">
+    <aside class="pal" id="pal"></aside>
+    <div class="cwrap" id="cwrap"><canvas id="cv"></canvas><div class="help" id="help"></div></div>
+    <aside class="side">
+      <section><b>Змінні</b><div id="vars"></div></section>
+      <section><b>Що спрацювало</b><div id="log"></div></section>
+    </aside>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/graph.js"></script>
+</body>
+</html>
