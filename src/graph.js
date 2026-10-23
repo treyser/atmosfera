@@ -24,7 +24,7 @@ const CHOICE = {
     { k: "a", l: "Кнопка 1", t: "text" }, { k: "b", l: "Кнопка 2", t: "text" },
     { k: "c", l: "Кнопка 3", t: "text" }, { k: "d", l: "Кнопка 4", t: "text" },
     { k: "to", l: "Кому", t: "sel", o: { who: "тому, хто спрацював", all: "усім (хто перший)", pick: "вибраному гравцю" } },
-    { k: "player", l: "Гравець", t: "player" },
+    { k: "player", l: "Гравець", t: "player", show: (p) => p.to === "pick" },
     { k: "time", l: "Секунд на відповідь", t: "num", d: 90 },
   ],
 };
@@ -76,19 +76,18 @@ function register() {
       if (kind === "ev") Object.assign(this.properties, { cd: 0, once: false });
       for (const i of ins) this.addInput(i, "exec");
       for (const o of typeof outs === "function" ? outs(this.properties) : outs) this.addOutput(o, "exec");
-      widgets(this, spec, kind);
       this.color = COLORS[kind][0]; this.bgcolor = COLORS[kind][1];
-      this.size = this.computeSize(); this.size[0] = Math.max(this.size[0], 250);
+      widgets(this, spec, kind);
     }
     Node.title = spec.name;
-    Node.prototype.onConfigure = function () { syncWidgets(this, spec); if (typeof outs === "function") reshape(this, outs(this.properties)); };
+    Node.prototype.onConfigure = function () { if (typeof outs === "function") reshape(this, outs(this.properties)); widgets(this, spec, kind); };
     LG.registerNodeType(type, Node);
   };
   for (const [k, s] of Object.entries(EVENTS)) make(`ev/${k}`, s, "ev", [], ["▶"]);
   for (const [k, s] of Object.entries(CONDS)) make(`if/${k}`, s, "if", ["▶"], ["так", "ні"]);
   for (const [k, s] of Object.entries(ACTIONS)) make(`act/${k}`, s, "act", ["▶"], ["▶"]);
   make("flow/random", RANDOM, "flow", ["▶"], (p) => Array.from({ length: Math.max(2, Math.min(4, Number(p.n) || 2)) }, (_, i) => `${i + 1}`));
-  make("flow/choice", CHOICE, "flow", ["▶"], (p) => [...[p.a, p.b, p.c, p.d].map((x) => String(x ?? "").trim()).filter(Boolean).map((x) => x.slice(0, 18)), "⏳ час вийшов"]);
+  make("flow/choice", CHOICE, "flow", ["▶"], (p) => [...[p.a, p.b, p.c, p.d].map((x) => String(x ?? "").trim()).filter(Boolean).map((x) => (x.length > 24 ? x.slice(0, 23).trimEnd() + "…" : x)), "⏳ час вийшов"]);
 }
 function reshape(node, names2) {
   while (node.outputs.length > names2.length) node.removeOutput(node.outputs.length - 1);
@@ -97,59 +96,115 @@ function reshape(node, names2) {
 }
 
 const nameOrDash = (id) => (id ? nameOf(id) : "—");
-const clearName = (f, node) => { const ids = node.properties[f.k] ?? []; return ids.length ? `${f.l}: ${ids.map(nameOf).join(", ").slice(0, 34)} · ✕ очистити` : `${f.l}: нікого`; };
+// віджети вузла: лише ті поля, що зараз мають сенс (show), значення — з properties
 function widgets(node, spec, kind) {
+  node.widgets = [];
+  const p = node.properties;
   for (const f of spec.f) {
+    if (f.show && !f.show(p)) continue;
     const set = (v) => {
-      node.properties[f.k] = v;
-      if (node.type === "flow/random" || node.type === "flow/choice") node.onConfigure();
+      p[f.k] = v;
+      // від цього поля залежать інші (show) або виходи вузла — перебудувати
+      if (spec.f.some((x) => x.show) || node.type === "flow/random" || node.type === "flow/choice") setTimeout(() => node.onConfigure(), 0);
+      else fitNode(node);
     };
+    let w;
     if (f.t === "sel") {
-      const labels = Object.values(f.o);
-      node.addWidget("combo", f.l || "режим", f.o[node.properties[f.k]] ?? labels[0], (v) => set(Object.keys(f.o).find((k) => f.o[k] === v)), { values: labels });
+      w = node.addWidget("combo", f.l || "режим", f.o[p[f.k]] ?? Object.values(f.o)[0], (v) => set(Object.keys(f.o).find((k) => f.o[k] === v)), { values: Object.values(f.o) });
     } else if (f.t === "player") {
-      node.addWidget("combo", f.l, "—", (v) => set(players.find((p) => p.name === v)?.id ?? ""), { values: ["—", ...players.map((p) => p.name)] });
+      w = node.addWidget("combo", f.l, players.find((x) => x.id === p[f.k])?.name ?? "—", (v) => set(players.find((x) => x.name === v)?.id ?? ""), { values: ["—", ...players.map((x) => x.name)] });
     } else if (f.t === "num") {
-      node.addWidget("number", f.l, node.properties[f.k] ?? 0, (v) => set(v), { precision: 0, step: 10 });
+      w = node.addWidget("number", f.l, p[f.k] ?? 0, (v) => set(v), { precision: 0, step: 10 });
     } else if (f.t === "zone" || f.t === "token") {
       // список зі сцени (вікно на весь екран — виділяти на мапі незручно)
-      const w = node.addWidget("combo", f.l, nameOrDash(node.properties[f.k]), (v) => {
+      w = node.addWidget("combo", f.l, nameOrDash(p[f.k]), (v) => {
         const o = listFor(f.t).find((x) => x.label === v);
         set(o?.id ?? "");
         if (o) flash([o.id]);
       }, { values: () => ["—", ...listFor(f.t).map((o) => o.label)] });
-      w._pick = f;
     } else if (f.t === "tokens") {
-      const w = node.addWidget("combo", `＋ ${f.l}`, "додати…", (v) => {
+      const add = node.addWidget("combo", `＋ ${f.l}`, "додати…", (v) => {
         const o = listFor("token").find((x) => x.label === v);
-        if (o && !(node.properties[f.k] ?? []).includes(o.id)) set([...(node.properties[f.k] ?? []), o.id]);
-        w.value = "додати…";
-        clear.name = clearName(f, node);
-        node.setDirtyCanvas(true, true);
+        if (o && !(p[f.k] ?? []).includes(o.id)) set([...(p[f.k] ?? []), o.id]);
+        add.value = "додати…";
+        node.onConfigure();
       }, { values: () => listFor("token").map((o) => o.label) });
-      const clear = node.addWidget("button", clearName(f, node), null, () => { set([]); clear.name = clearName(f, node); node.setDirtyCanvas(true, true); });
-      w._pick = f; clear._clear = f;
+      add.draw = drawWidget;
+      const ids = p[f.k] ?? [];
+      w = node.addWidget("button", ids.length ? `✕  ${ids.map(nameOf).join(", ")}` : `${f.l}: нікого`, null, () => { if (ids.length) { set([]); node.onConfigure(); } });
     } else {
-      node.addWidget("text", f.l, node.properties[f.k] ?? "", (v) => set(v));
+      w = node.addWidget("text", f.l, p[f.k] ?? "", (v) => set(v));
     }
+    w.draw = drawWidget;
   }
   if (kind === "ev") {
-    node.addWidget("number", "пауза, с", node.properties.cd ?? 0, (v) => (node.properties.cd = v), { precision: 0, step: 10 });
-    node.addWidget("toggle", "лише раз", Boolean(node.properties.once), (v) => (node.properties.once = v));
+    node.addWidget("number", "пауза, с", p.cd ?? 0, (v) => (p.cd = v), { precision: 0, step: 10 }).draw = drawWidget;
+    node.addWidget("toggle", "лише раз", Boolean(p.once), (v) => (p.once = v)).draw = drawWidget;
   }
+  fitNode(node);
 }
-// після завантаження: показати збережені значення у віджетах
-function syncWidgets(node, spec) {
+
+// ширина вузла — під найдовший рядок, але в межах 260…460 px; решту тексту обрізає «…»
+const meas = document.createElement("canvas").getContext("2d");
+const FONT = "12px Inter, Arial, sans-serif";
+meas.font = FONT;
+const tw = (s) => meas.measureText(String(s)).width;
+function fitNode(node) {
+  let need = tw(node.title) + 70;
   for (const w of node.widgets ?? []) {
-    const f = spec.f.find((x) => x.l === w.name || (w._pick && w._pick === x)) ?? null;
-    if (w._clear) { w.name = clearName(w._clear, node); continue; }
-    if (w._pick) { if (w._pick.t !== "tokens") w.value = nameOrDash(node.properties[w._pick.k]); continue; }
-    if (w.name === "пауза, с") { w.value = node.properties.cd ?? 0; continue; }
-    if (w.name === "лише раз") { w.value = Boolean(node.properties.once); continue; }
-    if (!f) continue;
-    const v = node.properties[f.k];
-    w.value = f.t === "sel" ? f.o[v] ?? w.value : f.t === "player" ? players.find((p) => p.id === v)?.name ?? "—" : v ?? w.value;
+    const v = valueText(w);
+    need = Math.max(need, (w.type === "button" ? tw(w.name) + 40 : tw(w.label || w.name) + tw(v) + 90));
   }
+  for (const o of node.outputs ?? []) need = Math.max(need, tw(o.name) + 80);
+  const h = node.computeSize()[1];
+  node.size = [Math.round(Math.min(460, Math.max(260, need))), h];
+  node.setDirtyCanvas?.(true, true);
+}
+const valueText = (w) => (w.type === "number" ? String(Math.round(Number(w.value) || 0)) : w.type === "toggle" ? (w.value ? "так" : "ні") : String(w.value ?? ""));
+function clip(ctx, s, max) {
+  s = String(s);
+  if (max <= 8) return "";
+  if (ctx.measureText(s).width <= max) return s;
+  let lo = 0, hi = s.length;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ctx.measureText(s.slice(0, mid) + "…").width <= max) lo = mid; else hi = mid - 1; }
+  return s.slice(0, lo).trimEnd() + "…";
+}
+// власне малювання віджета: підпис ліворуч, значення праворуч — без накладання, довге обрізається
+function drawWidget(ctx, node, width, y, H) {
+  const w = this;
+  const x = 15, ww = width - 30;
+  ctx.save();
+  ctx.font = FONT;
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = LG.WIDGET_BGCOLOR; ctx.strokeStyle = LG.WIDGET_OUTLINE_COLOR;
+  ctx.beginPath(); (ctx.roundRect ? ctx.roundRect(x, y, ww, H, H / 2) : ctx.rect(x, y, ww, H)); ctx.fill(); ctx.stroke();
+  const cy = y + H / 2;
+  if (w.type === "button") {
+    ctx.fillStyle = LG.WIDGET_TEXT_COLOR; ctx.textAlign = "center";
+    ctx.fillText(clip(ctx, w.name, ww - 20), x + ww / 2, cy);
+    ctx.restore(); return;
+  }
+  const arrows = w.type === "combo" || w.type === "number";
+  if (arrows) {
+    ctx.fillStyle = LG.WIDGET_TEXT_COLOR;
+    ctx.beginPath(); ctx.moveTo(x + 16, cy - 5); ctx.lineTo(x + 6, cy); ctx.lineTo(x + 16, cy + 5); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + ww - 16, cy - 5); ctx.lineTo(x + ww - 6, cy); ctx.lineTo(x + ww - 16, cy + 5); ctx.fill();
+  }
+  const pad = arrows ? 22 : 12;
+  const inner = ww - pad * 2;
+  let val = valueText(w);
+  if (w.type === "toggle") {
+    ctx.fillStyle = w.value ? "#7fd1c7" : "#555";
+    ctx.beginPath(); ctx.arc(x + ww - 14, cy, H * 0.3, 0, Math.PI * 2); ctx.fill();
+  }
+  const right = w.type === "toggle" ? 18 : 0;
+  const label = w.label || w.name;
+  const lw = Math.min(tw(label), val ? inner * 0.5 : inner);
+  ctx.textAlign = "left"; ctx.fillStyle = LG.WIDGET_SECONDARY_TEXT_COLOR;
+  ctx.fillText(clip(ctx, label, lw), x + pad, cy);
+  ctx.textAlign = "right"; ctx.fillStyle = LG.WIDGET_TEXT_COLOR;
+  ctx.fillText(clip(ctx, val, inner - lw - 12 - right), x + ww - pad - right, cy);
+  ctx.restore();
 }
 
 // ---------- палітра ----------
