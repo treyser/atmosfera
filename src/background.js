@@ -24,6 +24,7 @@ import { boards, saveBoards, publicList, chunks, apply as applyBoard, seenBoards
 import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyGoals, owner as goalOwner } from "./goal-data.js";
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
+import { startNpcAi } from "./npc-ai.js";
 import { introduce, mergeAcq, acqList, saveAcq, setWhere, keyOf } from "./acq-data.js";
 import { lady, loadCourt, opened as courtOpened, saveSeen as saveCourtSeen, seen as courtSeen, rates as courtRates, saveRates as saveCourtRates, applyRate, pack as packCourt, FOCUS as CFOCUS } from "./court-data.js";
 import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
@@ -96,6 +97,15 @@ OBR.onReady(async () => {
       embed: { url: url("npc-menu.html"), height: 150 },
     });
   } catch (err) { console.error("Картка персонажа: меню не зареєструвалось", err); }
+  // «Живі» NPC: ПКМ на токені(ах) → «Поведінка» (лише майстер)
+  try {
+    OBR.contextMenu.create({
+      id: `${ID}/ai-menu`,
+      icons: [{ icon: url("ai.svg"), label: "Поведінка NPC", filter: { roles: ["GM"], every: [{ key: "type", value: "IMAGE" }, { key: "layer", value: "CHARACTER" }] } }],
+      embed: { url: url("npc-ai.html"), height: 430 },
+    });
+  } catch (err) { console.error("Живі NPC: меню не зареєструвалось", err); }
+  startNpcAi().catch((err) => console.error("Живі NPC:", err));
   OBR.broadcast.onMessage(NPC, (event) => { showNpc(event.data); meet(event.data); });
   startAcq().catch((err) => console.error("Записник знайомств:", err));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));

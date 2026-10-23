@@ -61,15 +61,17 @@ export const SPECS = {
 - traps — 0–4 пастки. kind: spikes, bolt, fire, needle, gas, net, pit, rocks. name — назва українською. dc 12–16. x, y — клітинка (від 1 до cols, від 1 до rows, від лівого верхнього кута), узгоджена з описом у art (де вузьке місце, двері, скарб). size — 1–3 клітинки. clue — що помітить уважний, 1 речення.
 - chests — 0–3 скрині. tpl: none (порожня), rogue, sea, captain, undead. lock — СК замка або 0. x, y — як у пасток.
 - npcs — 0–4 NPC: name, sub (хто це, 2–5 слів), x, y, note (його роль саме в цій сцені — для майстра).
-  ref — id наявного NPC зі списку нижче, або порожньо для нового. Для НОВОГО NPC заповни його картку: race, look (вигляд, 1 речення), manner (характер і як говорить), wants (чого хоче), knows (що знає), secret (таємниця або порожньо), quote (характерна фраза), art (англійською: зовнішність, одяг, вираз — для токена). Для наявного ці поля порожні.
+  ai — як NPC поводиться, коли герої поруч: none (стоїть), wander (блукає), chat (балакучий — сходиться з іншими балакучими й говорить), merchant (торговець біля лотка, вигукує). talkset — набір реплік сцени: bazaar, port, tavern, train, street.
+  ref — id наявного NPC зі списку нижче, або порожньо для нового. Для НОВОГО NPC заповни його картку: race, look (вигляд, 1 речення), manner (характер і як говорить), wants (чого хоче), knows (що знає), secret (таємниця або порожньо), quote (характерна фраза), chatter (4–6 коротких реплік у його манері для «живого» NPC), art (англійською: зовнішність, одяг, вираз — для токена). Для наявного ці поля порожні.
 Пастки став там, де герої ходитимуть: проходи, двері, біля скринь.`,
     schema: { type: "OBJECT", properties: {
       name: str, title: str, sub: str, mood: S("STRING", { enum: ["clear", "day", "rain", "storm", "fog", "night", "calm", "dusk", "warm", "frost", "blizzard", "alarm", "breach", "core", "surge"] }),
       shape: S("STRING", { enum: ["3:2", "4:3", "16:9", "1:1", "2:3"] }), cols: int, rows: int, read: str, notes: str, art: str,
       traps: S("ARRAY", { items: S("OBJECT", { properties: { kind: S("STRING", { enum: ["spikes", "bolt", "fire", "needle", "gas", "net", "pit", "rocks"] }), name: str, dc: int, x: int, y: int, size: int, clue: str }, required: ["kind", "name", "dc", "x", "y", "size", "clue"] }) }),
       chests: S("ARRAY", { items: S("OBJECT", { properties: { name: str, tpl: S("STRING", { enum: ["none", "rogue", "sea", "captain", "undead"] }), lock: int, x: int, y: int }, required: ["name", "tpl", "lock", "x", "y"] }) }),
-      npcs: S("ARRAY", { items: S("OBJECT", { properties: { ref: str, name: str, sub: str, x: int, y: int, note: str, race: str, look: str, manner: str, wants: str, knows: str, secret: str, quote: str, art: str }, required: ["ref", "name", "sub", "x", "y", "note", "race", "look", "manner", "wants", "knows", "secret", "quote", "art"] }) }),
-    }, required: ["name", "title", "sub", "mood", "shape", "cols", "rows", "read", "notes", "art", "traps", "chests", "npcs"] },
+      talkset: S("STRING", { enum: ["bazaar", "port", "tavern", "train", "street"] }),
+      npcs: S("ARRAY", { items: S("OBJECT", { properties: { ref: str, name: str, sub: str, ai: S("STRING", { enum: ["none", "wander", "chat", "merchant"] }), x: int, y: int, note: str, race: str, look: str, manner: str, wants: str, knows: str, secret: str, quote: str, chatter: S("ARRAY", { items: str }), art: str }, required: ["ref", "name", "sub", "ai", "x", "y", "note", "race", "look", "manner", "wants", "knows", "secret", "quote", "chatter", "art"] }) }),
+    }, required: ["name", "title", "sub", "mood", "shape", "cols", "rows", "read", "notes", "art", "traps", "chests", "talkset", "npcs"] },
     hints: { mood: { label: "Настрій", opts: [["", "Хай вирішить сам"], ["warm", "Ліхтарі (інтер'єр)"], ["night", "Ніч"], ["fog", "Туман"], ["rain", "Дощ"], ["storm", "Шторм"], ["frost", "Сніг за вікном"], ["blizzard", "Хуртовина"], ["calm", "Тихе море"], ["dusk", "Захід"], ["day", "День"]] } },
     placeholder: "Напр.: вантажний вагон Полярного Експреса, бочки з печатками, двоє охоронців Ордену грають у кості; пастка-сітка над дверима",
     show: [["name", "Назва"], ["title", "Титр"], ["sub", "Підзаголовок"], ["mood", "Настрій"], ["shape", "Форма"], ["read", "Уголос"], ["notes", "Для майстра"], ["traps", "Пастки"], ["chests", "Скрині"], ["npcs", "NPC"], ["art", "Для мапи"]],
@@ -79,11 +81,12 @@ export const SPECS = {
 - name — ім'я (пасує світу: моряки, портові міста, північ, церква й Орден). sub — хто це, 2–5 слів («боцман „Сірої Чайки“»). race — раса 5e українською. place — де його зустріти.
 - look — вигляд, 1–2 речення, те, що одразу бачать гравці. manner — характер і манера говорити: звички, слівця, жести, 1–2 речення — щоб майстер одразу «почув» голос.
 - wants — чого хоче саме зараз. knows — що знає й може розповісти героям (1–3 факти, зачіпки). secret — таємниця для майстра або порожньо. quote — характерна фраза.
+- chatter — 5–7 коротких реплік (до 60 символів) у його манері: що він бурмоче, вигукує чи каже співрозмовнику, коли герої просто проходять повз. 1–2 з них — ледь помітна зачіпка до того, що він знає.
 - art — англійською: зовнішність, одяг, аксесуари, вираз обличчя, світло — для токена.`,
-    schema: { type: "OBJECT", properties: { name: str, sub: str, race: str, place: str, look: str, manner: str, wants: str, knows: str, secret: str, quote: str, art: str }, required: ["name", "sub", "race", "place", "look", "manner", "wants", "knows", "secret", "quote", "art"] },
+    schema: { type: "OBJECT", properties: { name: str, sub: str, race: str, place: str, look: str, manner: str, wants: str, knows: str, secret: str, quote: str, chatter: S("ARRAY", { items: str }), art: str }, required: ["name", "sub", "race", "place", "look", "manner", "wants", "knows", "secret", "quote", "chatter", "art"] },
     hints: {},
     placeholder: "Напр.: провідник Полярного Експреса, гном-пліткар, бере хабарі чаєм; знає, у якому вагоні їде Орден",
-    show: [["name", "Ім'я"], ["sub", "Хто це"], ["race", "Раса"], ["place", "Де"], ["look", "Вигляд"], ["manner", "Манера"], ["wants", "Хоче"], ["knows", "Знає"], ["secret", "Таємниця"], ["quote", "Фраза"], ["art", "Для токена"]],
+    show: [["name", "Ім'я"], ["sub", "Хто це"], ["race", "Раса"], ["place", "Де"], ["look", "Вигляд"], ["manner", "Манера"], ["wants", "Хоче"], ["knows", "Знає"], ["secret", "Таємниця"], ["quote", "Фраза"], ["chatter", "Репліки"], ["art", "Для токена"]],
   },
   court: {
     rules: `Створи КУРТИЗАНКУ — NPC елітного закладу втіх у портовому місті (усе пристойно, без відвертих сцен: шарм, розмова, таємниці).

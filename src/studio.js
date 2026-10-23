@@ -145,6 +145,7 @@ const KINDS = {
       { k: "shape", label: "Форма мапи", type: "select", opts: SHAPES },
       { k: "sub", label: "Титр — малий рядок", w: 2 },
       { k: "cols", label: "Клітинок ушир", type: "number" },
+      { k: "talkset", label: "Що говорять живі NPC", type: "select", opts: { bazaar: "Базар", port: "Порт і доки", tavern: "Таверна / заклад", train: "Полярний Експрес", street: "Вулиця міста" } },
       { k: "read", label: "Прочитати гравцям уголос", type: "area", w: 3 },
       { k: "notes", label: "Нотатки майстра (що тут відбувається, як розіграти)", type: "area", w: 3 },
       { k: "art", label: "Мапа — що на ній і де (англійською, для Gemini)", type: "area", w: 3, rows: 4 },
@@ -155,7 +156,7 @@ const KINDS = {
         cols: [{ k: "name", label: "Назва", w: 2 }, { k: "tpl", label: "Вміст", opts: CHEST_TPL, w: 2 }, { k: "lock", label: "Замок, СК (0 — немає)", type: "number", w: 1 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }],
         blank: () => ({ name: "Скриня", tpl: "sea", lock: 0, x: 1, y: 1 }) },
       { k: "npcs", label: "NPC", type: "rows", add: "NPC",
-        cols: [{ k: "ref", label: "З Майстерні NPC", opts: () => npcOpts(), w: 2, pick: pickNpc }, { k: "name", label: "Ім'я", w: 2 }, { k: "sub", label: "Хто це", w: 2 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "note", label: "Роль у цій сцені", w: 3 }],
+        cols: [{ k: "ref", label: "З Майстерні NPC", opts: () => npcOpts(), w: 2, pick: pickNpc }, { k: "name", label: "Ім'я", w: 2 }, { k: "sub", label: "Хто це", w: 2 }, { k: "ai", label: "Поведінка", opts: { "": "⏸ стоїть", wander: "🚶 блукає", chat: "💬 балакучий", merchant: "🧺 торговець" }, w: 1.4 }, { k: "x", label: "x", type: "number", w: 0.6 }, { k: "y", label: "y", type: "number", w: 0.6 }, { k: "note", label: "Роль у цій сцені", w: 3 }],
         blank: () => ({ ref: "", name: "Незнайомець", sub: "", x: 1, y: 1, note: "" }) },
     ],
     prompt: (x) => `Generate an image: top-down tabletop RPG battle map, ${SHAPES[x.shape] ? `aspect ratio ${x.shape}` : "landscape 3:2"}, seen straight from above, ${x.art || `«${x.name}»${x.notes ? ": " + x.notes : ""}`}. Painterly dark-fantasy style, highly detailed, readable floor for token placement, clear walkable areas, consistent soft lighting. No grid lines, no text, no labels, no people, no creatures, no frame.`,
@@ -178,6 +179,7 @@ const KINDS = {
       { k: "knows", label: "Що знає й може розповісти", type: "area", w: 3, rows: 2 },
       { k: "secret", label: "Таємниця — лише для майстра", type: "area", w: 3, rows: 2 },
       { k: "quote", label: "Характерна фраза (без лапок)", type: "area", w: 3, rows: 2 },
+      { k: "chatter", label: "Репліки «живого» NPC — бурмоче, вигукує, каже в розмові (кожна з нового рядка)", type: "lines", w: 3, rows: 4, ph: "Солонина, синку!\nХто там шастає біля бочок?\nОх, мої коліна…" },
       { k: "art", label: "Вигляд для токена (англійською, не обов'язково)", type: "area", w: 3, rows: 2 },
     ],
     prompt: (x) => `Generate an image: top-down circular tabletop battle-map token of a fantasy character — ${x.art ? x.art : `${x.race || "human"} «${x.name}», ${x.sub || "townsperson"}${x.look ? ": " + x.look : ""}`}. Chest-up portrait filling the circle, dramatic lighting, painted fantasy illustration style, rich detail, inside an ornate copper-bronze ring border on a plain dark background. Square 1:1. No text.`,
@@ -1018,9 +1020,10 @@ function linkNpcs(data) {
   const book = (st.data.npcs ??= { v: 1, stamp: 0, items: [], removed: [] });
   let made = 0;
   data.npcs = (data.npcs ?? []).map((n) => {
-    const { ref, race, look, manner, wants, knows, secret, quote, art, ...row } = n;
+    const { ref, race, look, manner, wants, knows, secret, quote, chatter, art, ...raw } = n;
+    const row = { ...raw, ai: raw.ai === "none" ? "" : raw.ai ?? "" };
     if (ref && npcById(ref)) return { ...row, ref };
-    const card = { ...KINDS.npcs.blank(), name: n.name, sub: n.sub ?? "", race: race ?? "", place: data.title || data.name || "", look: look ?? "", manner: manner ?? "", wants: wants ?? "", knows: knows ?? "", secret: secret ?? "", quote: quote ?? "", art: art ?? "", rev: Date.now(), _dirty: true };
+    const card = { ...KINDS.npcs.blank(), name: n.name, sub: n.sub ?? "", race: race ?? "", place: data.title || data.name || "", look: look ?? "", manner: manner ?? "", wants: wants ?? "", knows: knows ?? "", secret: secret ?? "", quote: quote ?? "", chatter: chatter ?? [], art: art ?? "", rev: Date.now(), _dirty: true };
     book.items.unshift(card);
     st.dirty.npcs = true;
     made++;

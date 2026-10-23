@@ -2,7 +2,7 @@
 // мапа (по сітці), приховані пастки, скрині з лутом, NPC, настрій «Атмосфери» й титр.
 import OBR, { buildImage, buildShape } from "@owlbear-rodeo/sdk";
 import "./scenes.css";
-import { SCENES as WIN, SCENE_ITEM, TRAP, CHEST, NPC, TITLE, PRESETS, setState } from "./state.js";
+import { AI, AI_ON, SCENES as WIN, SCENE_ITEM, TRAP, CHEST, NPC, TITLE, PRESETS, setState } from "./state.js";
 import * as SD from "./scene-data.js";
 import { loadScenes, sceneOf, MOODS } from "./scene-data.js";
 import { newTrap, presetOf } from "./trap-data.js";
@@ -176,10 +176,12 @@ async function deploy() {
       }
       items.push(buildImage(img, { dpi: img.width, offset: { x: img.width / 2, y: img.height / 2 } })
         .position({ x: p.x + dpi / 2, y: p.y + dpi / 2 }).layer("CHARACTER").name(name).plainText(name)
-        .visible($("o-npc").checked).metadata({ ...tag, [NPC]: { name, sub } }).build());
+        .visible($("o-npc").checked).metadata({ ...tag, [NPC]: { name, sub },
+          ...(n.ai ? { [AI]: { b: n.ai, set: s.talkset || "bazaar", radius: 4, home: { x: p.x + dpi / 2, y: p.y + dpi / 2 }, lines: card?.chatter ?? [] } } : {}) }).build());
     }
 
     await OBR.scene.items.addItems(items);
+    if ((s.npcs ?? []).some((n) => n.ai)) await OBR.scene.setMetadata({ [AI_ON]: true });   // живі NPC — одразу в рух
     if ($("o-mood").checked && s.mood) {
       const p = PRESETS.find((x) => x.id === s.mood);
       if (p) await setState(fromPreset(p));

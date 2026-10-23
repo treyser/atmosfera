@@ -13,7 +13,14 @@ export function npcCard(ref) {
   if (!ref) return null;
   if (String(ref).startsWith("court:")) {
     const c = LADIES.find((x) => x.id === ref.slice(6));
-    return c ? { name: c.name, sub: [c.house, c.talent].filter(Boolean).join(" · "), race: c.race, look: c.desc, manner: c.about, wants: c.likes ? `До вподоби: ${c.likes}` : "", knows: "", secret: c.secret, quote: c.quote, img: c.img } : null;
+    return c ? { name: c.name, sub: [c.house, c.talent].filter(Boolean).join(" · "), race: c.race, look: c.desc, manner: c.about, wants: c.likes ? `До вподоби: ${c.likes}` : "", knows: "", secret: c.secret, quote: c.quote, img: c.img, chatter: c.chatter ?? [] } : null;
   }
   return NPCS.find((x) => x.id === ref) ?? null;
+}
+
+// за ім'ям (токен NPC → картка з Майстерні): для реплік «живого» NPC
+export function npcByName(name) {
+  const k = String(name ?? "").trim().toLowerCase();
+  if (!k) return null;
+  return NPCS.find((x) => x.name?.trim().toLowerCase() === k) ?? null;
 }

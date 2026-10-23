@@ -1,7 +1,7 @@
 // Пастки у фоні. Майстер (його фоновий скрипт) стежить, чи токен героя ступив у заряджену пастку,
 // і запускає її для всіх. Гравці бачать вікно з рятівним кидком, а помічені ними пастки — червоним пунктиром.
 import OBR, { buildShape } from "@owlbear-rodeo/sdk";
-import { TRAP, TRAP_FIRE, TRAP_DMG, TRAP_CHECK, TRAP_SEEN, ZONE, ID } from "./state.js";
+import { AI, TRAP, TRAP_FIRE, TRAP_DMG, TRAP_CHECK, TRAP_SEEN, ZONE, ID } from "./state.js";
 import { FX } from "./zone-fx.js";
 import { appendLog, uid } from "./log.js";
 import { playSecret } from "./sfx.js";
@@ -121,7 +121,7 @@ async function watch(traps) {
   const armed = traps.filter((t) => t.metadata[TRAP].armed);
   const boxes = new Map();
   for (const t of armed) { try { boxes.set(t.id, await OBR.scene.items.getItemBounds([t.id])); } catch { /* щойно видалили */ } }
-  const tokens = await OBR.scene.items.getItems((i) => i.layer === "CHARACTER" && i.type === "IMAGE" && i.visible);
+  const tokens = await OBR.scene.items.getItems((i) => i.layer === "CHARACTER" && i.type === "IMAGE" && i.visible && !i.metadata?.[AI]);
   const next = new Map();
   const fire = [];
   for (const tok of tokens) {
