@@ -2,6 +2,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import "./trig.css";
 import { TRIGGERS, TRIG_RUN } from "./state.js";
+import { loadPick, nameOf, listFor, flash } from "./scene-pick.js";
 import { triggers, saveTriggers, vars, saveVars, tlog, TLOG, VARS, EVENTS, CONDS, ACTIONS, blankTrigger, blankOf, summary } from "./trig-data.js";
 
 const $ = (id) => document.getElementById(id);
@@ -9,7 +10,6 @@ let room = "";
 let list = [];
 let sel = null;
 let players = [];
-const names = new Map();   // id елемента сцени → назва (для кнопок «з виділеного»)
 
 OBR.onReady(async () => {
   room = OBR.room.id;
@@ -37,7 +37,8 @@ OBR.onReady(async () => {
   });
   players = (await OBR.party.getPlayers().catch(() => [])).filter((p) => p.role !== "GM");
   OBR.party.onChange((ps) => { players = ps.filter((p) => p.role !== "GM"); });
-  await loadNames();
+  await loadPick();
+  OBR.scene.items.onChange(async () => { await loadPick(); if (!document.activeElement || !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) drawForm(); });
   draw();
 });
 
@@ -46,10 +47,6 @@ let saveT = null;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => saveTriggers(room, list), 120); }
 const firedText = () => { const t = triggers(room).find((x) => x.id === sel); return t?.fired ? `спрацював ${t.fired}×` : "ще не спрацьовував"; };
 
-async function loadNames() {
-  if (!(await OBR.scene.isReady())) return;
-  for (const it of await OBR.scene.items.getItems()) names.set(it.id, it.text?.plainText || it.name || it.type);
-}
 
 function adder(id, ph, specs, push) {
   const s = $(id);
@@ -127,24 +124,43 @@ function fields(spec, obj) {
       el.value = obj[fd.k] ?? "";
       el.onchange = () => { obj[fd.k] = el.value; save(); };
     } else if (fd.t === "zone" || fd.t === "token" || fd.t === "tokens") {
+      // список зі сцени + «з виділеного»
       el = document.createElement("div");
       el.className = "pick";
       const many = fd.t === "tokens";
       const ids = many ? obj[fd.k] ?? [] : obj[fd.k] ? [obj[fd.k]] : [];
-      const lab = document.createElement("span");
-      lab.textContent = ids.length ? ids.map((id) => names.get(id) ?? "(прибрано зі сцени)").join(", ") : "нічого не вибрано";
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "ghost sm"; b.textContent = "◎ З виділеного на мапі";
-      b.onclick = async () => {
-        const s = (await OBR.player.getSelection()) ?? [];
-        if (!s.length) return toast(fd.t === "zone" ? "Виділи фігуру на мапі" : "Виділи токен(и) на мапі");
-        await loadNames();
-        const items = await OBR.scene.items.getItems(s);
-        if (fd.t === "zone" && !items.some((i) => ["SHAPE", "CURVE", "PATH"].includes(i.type))) return toast("Зона — це намальована фігура");
-        obj[fd.k] = many ? s : s[0];
+      const sel = document.createElement("select");
+      const opts = listFor(fd.t);
+      sel.appendChild(new Option(many ? "＋ додати…" : opts.length ? "— вибери —" : fd.t === "zone" ? "— на сцені немає фігур —" : "— на сцені немає токенів —", ""));
+      for (const o of opts) if (!many || !ids.includes(o.id)) sel.appendChild(new Option(o.label, o.id));
+      if (!many && ids[0] && !opts.some((o) => o.id === ids[0])) sel.appendChild(new Option("(прибрано зі сцени)", ids[0]));
+      if (!many) sel.value = ids[0] ?? "";
+      sel.onchange = () => {
+        if (!sel.value) return;
+        obj[fd.k] = many ? [...ids, sel.value] : sel.value;
+        flash([sel.value]);
         redraw();
       };
-      el.append(lab, b);
+      el.appendChild(sel);
+      if (many) for (const id of ids) {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = nameOf(id);
+        const x = document.createElement("button"); x.type = "button"; x.textContent = "✕";
+        x.onclick = () => { obj[fd.k] = ids.filter((i) => i !== id); redraw(); };
+        chip.appendChild(x);
+        el.appendChild(chip);
+      }
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "ghost sm"; b.title = "Взяти те, що зараз виділено на мапі"; b.textContent = "◎";
+      b.onclick = async () => {
+        const s = (await OBR.player.getSelection()) ?? [];
+        if (!s.length) return toast(fd.t === "zone" ? "Нічого не виділено — вибери фігуру зі списку" : "Нічого не виділено — вибери токен зі списку");
+        await loadPick();
+        obj[fd.k] = many ? [...new Set([...ids, ...s])] : s[0];
+        redraw();
+      };
+      el.appendChild(b);
     } else {
       el = document.createElement(fd.t === "area" ? "textarea" : "input");
       if (fd.t === "area") el.rows = 3;

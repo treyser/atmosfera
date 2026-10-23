@@ -76,3 +76,8 @@ textarea{width:100%; resize:vertical}
 .ghost.sm{padding:4px 9px; font-size:12px}
 .ghost:hover{color:var(--fg); border-color:var(--gold)}
 .danger:hover{color:#ff8a8a; border-color:#ff8a8a}
+
+.pick select{max-width:260px}
+.chip{display:inline-flex; align-items:center; gap:4px; padding:3px 4px 3px 9px; border-radius:999px; background:rgba(127,209,199,.12); border:1px solid rgba(127,209,199,.35); font-size:12px}
+.chip button{border:0; background:none; color:var(--dim); font-size:11px; cursor:pointer}
+.chip button:hover{color:#ff8a8a}

@@ -5,6 +5,7 @@ import "./graph.css";
 import { GRAPH, TRIG_RUN } from "./state.js";
 import { EVENTS, CONDS, ACTIONS, vars, tlog, TLOG, VARS } from "./trig-data.js";
 import { graphs, saveGraphs, blankGraph, GRAPHS } from "./graph-data.js";
+import { loadPick, nameOf, listFor, flash } from "./scene-pick.js";
 
 const LG = window.LiteGraph;
 const $ = (id) => document.getElementById(id);
@@ -14,7 +15,6 @@ let cur = null;
 let graph = null;
 let canvas = null;
 let players = [];
-const names = new Map();
 let lastJson = "";
 
 const CHOICE = {
@@ -34,7 +34,8 @@ const COLORS = { ev: ["#1d4a45", "#2b6b63"], if: ["#5a4415", "#7d5f1f"], flow: [
 OBR.onReady(async () => {
   room = OBR.room.id;
   players = (await OBR.party.getPlayers().catch(() => [])).filter((p) => p.role !== "GM");
-  await loadNames();
+  await loadPick();
+  OBR.scene.items.onChange(async () => { await loadPick(); for (const n of graph?._nodes ?? []) n.onConfigure?.(); canvas?.setDirty(true, true); });
   register();
   list = graphs(room);
   if (!list.length) { list = [blankGraph()]; saveGraphs(room, list); }
@@ -66,10 +67,6 @@ function fit() {
   canvas.resize(w.clientWidth, w.clientHeight);
 }
 
-async function loadNames() {
-  if (!(await OBR.scene.isReady())) return;
-  for (const it of await OBR.scene.items.getItems()) names.set(it.id, it.text?.plainText || it.name || it.type);
-}
 
 // ---------- типи вузлів з описів ----------
 function register() {
@@ -99,7 +96,8 @@ function reshape(node, names2) {
   node.setDirtyCanvas(true, true);
 }
 
-const pickLabel = (ids) => (ids.length ? ids.map((id) => names.get(id) ?? "(прибрано)").join(", ").slice(0, 28) : "нічого");
+const nameOrDash = (id) => (id ? nameOf(id) : "—");
+const clearName = (f, node) => { const ids = node.properties[f.k] ?? []; return ids.length ? `${f.l}: ${ids.map(nameOf).join(", ").slice(0, 34)} · ✕ очистити` : `${f.l}: нікого`; };
 function widgets(node, spec, kind) {
   for (const f of spec.f) {
     const set = (v) => {
@@ -108,21 +106,29 @@ function widgets(node, spec, kind) {
     };
     if (f.t === "sel") {
       const labels = Object.values(f.o);
-      node.addWidget("combo", f.l || f.k, f.o[node.properties[f.k]] ?? labels[0], (v) => set(Object.keys(f.o).find((k) => f.o[k] === v)), { values: labels });
+      node.addWidget("combo", f.l || "режим", f.o[node.properties[f.k]] ?? labels[0], (v) => set(Object.keys(f.o).find((k) => f.o[k] === v)), { values: labels });
     } else if (f.t === "player") {
       node.addWidget("combo", f.l, "—", (v) => set(players.find((p) => p.name === v)?.id ?? ""), { values: ["—", ...players.map((p) => p.name)] });
     } else if (f.t === "num") {
       node.addWidget("number", f.l, node.properties[f.k] ?? 0, (v) => set(v), { precision: 0, step: 10 });
-    } else if (f.t === "zone" || f.t === "token" || f.t === "tokens") {
-      const w = node.addWidget("button", `◎ ${f.l}: ${pickLabel([])}`, null, async () => {
-        const s = (await OBR.player.getSelection()) ?? [];
-        if (!s.length) return toast("Спершу виділи на мапі");
-        await loadNames();
-        set(f.t === "tokens" ? s : s[0]);
-        w.name = `◎ ${f.l}: ${pickLabel(f.t === "tokens" ? s : [s[0]])}`;
-        node.setDirtyCanvas(true, true);
-      });
+    } else if (f.t === "zone" || f.t === "token") {
+      // список зі сцени (вікно на весь екран — виділяти на мапі незручно)
+      const w = node.addWidget("combo", f.l, nameOrDash(node.properties[f.k]), (v) => {
+        const o = listFor(f.t).find((x) => x.label === v);
+        set(o?.id ?? "");
+        if (o) flash([o.id]);
+      }, { values: () => ["—", ...listFor(f.t).map((o) => o.label)] });
       w._pick = f;
+    } else if (f.t === "tokens") {
+      const w = node.addWidget("combo", `＋ ${f.l}`, "додати…", (v) => {
+        const o = listFor("token").find((x) => x.label === v);
+        if (o && !(node.properties[f.k] ?? []).includes(o.id)) set([...(node.properties[f.k] ?? []), o.id]);
+        w.value = "додати…";
+        clear.name = clearName(f, node);
+        node.setDirtyCanvas(true, true);
+      }, { values: () => listFor("token").map((o) => o.label) });
+      const clear = node.addWidget("button", clearName(f, node), null, () => { set([]); clear.name = clearName(f, node); node.setDirtyCanvas(true, true); });
+      w._pick = f; clear._clear = f;
     } else {
       node.addWidget("text", f.l, node.properties[f.k] ?? "", (v) => set(v));
     }
@@ -136,7 +142,8 @@ function widgets(node, spec, kind) {
 function syncWidgets(node, spec) {
   for (const w of node.widgets ?? []) {
     const f = spec.f.find((x) => x.l === w.name || (w._pick && w._pick === x)) ?? null;
-    if (w._pick) { const v = node.properties[w._pick.k]; w.name = `◎ ${w._pick.l}: ${pickLabel(Array.isArray(v) ? v : v ? [v] : [])}`; continue; }
+    if (w._clear) { w.name = clearName(w._clear, node); continue; }
+    if (w._pick) { if (w._pick.t !== "tokens") w.value = nameOrDash(node.properties[w._pick.k]); continue; }
     if (w.name === "пауза, с") { w.value = node.properties.cd ?? 0; continue; }
     if (w.name === "лише раз") { w.value = Boolean(node.properties.once); continue; }
     if (!f) continue;
