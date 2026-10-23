@@ -41,11 +41,20 @@ export const ACTIONS = {
   show: { name: "👁 Показати / сховати", f: [{ k: "tokens", l: "Що", t: "tokens" }, { k: "vis", l: "", t: "sel", o: { show: "показати гравцям", hide: "сховати" } }] },
   log: { name: "📖 Запис у журнал", f: [{ k: "text", l: "Текст", t: "text" }] },
   var: { name: "🔢 Змінна", f: [{ k: "v", l: "Назва", t: "text" }, { k: "op", l: "", t: "sel", o: { add: "додати", set: "встановити" } }, { k: "n", l: "Число", t: "num", d: 1 }] },
+  battle: { name: "⚔ Почати бій", f: [
+    { k: "foes", l: "Хто вороги", t: "sel", o: { near: "усі не-герої поруч із героями", zone: "усі не-герої в зоні", tokens: "лише вибрані токени", all: "усі не-герої на сцені" } },
+    { k: "dist", l: "Поруч — у межах клітинок", t: "num", d: 8, show: (a) => (a.foes ?? "near") === "near" },
+    { k: "zone", l: "Зона", t: "zone", show: (a) => a.foes === "zone" },
+    { k: "tokens", l: "Вороги", t: "tokens", show: (a) => a.foes === "tokens" },
+    { k: "reveal", l: "Сховані вороги", t: "sel", o: { yes: "показати гравцям", no: "лишити схованими" } },
+    { k: "npc", l: "Живих NPC", t: "sel", o: { skip: "не брати в бій", foe: "брати як ворогів" } },
+  ] },
+  battleEnd: { name: "🏳 Завершити бій", f: [] },
   remind: { name: "📌 Нагадати мені", f: [{ k: "text", l: "Що нагадати", t: "text" }] },
   wait: { name: "⏳ Зачекати", f: [{ k: "s", l: "Секунд", t: "num", d: 3 }] },
 };
 
-export const blankTrigger = () => ({ id: "t" + uid(), name: "Новий тригер", on: true, once: false, cd: 30, ev: { t: "enter", who: "hero" }, if: [], do: [], fired: 0 });
+export const blankTrigger = () => ({ id: "t" + uid(), name: "Новий тригер", on: true, once: false, cd: 0, ev: { t: "enter", who: "hero" }, if: [], do: [], fired: 0 });
 export const blankOf = (spec) => Object.fromEntries(spec.f.map((f) => [f.k, f.d ?? (f.t === "sel" ? Object.keys(f.o)[0] : f.t === "tokens" ? [] : "")]));
 
 // {хто} — ім'я того, хто спрацював; {назва змінної} — її значення

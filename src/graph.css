@@ -1,0 +1,34 @@
+:root{color-scheme:dark; --line:rgba(232,194,122,.22); --gold:#e8c27a; --gold2:#f3d595; --fg:#ece6d8; --dim:#9aa3ad}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0}
+body{background:#0f1418; color:var(--fg); font-family:Inter,system-ui,sans-serif; font-size:13px; display:grid; grid-template-rows:auto 1fr; overflow:hidden}
+button,input,select{font:inherit; color:inherit}
+button{cursor:pointer}
+[hidden]{display:none !important}
+.dim{color:var(--dim); font-size:12px}
+.gbar{display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); background:#151b20}
+.logo{font-size:18px; color:var(--gold2); margin-right:4px}
+.gbar input, .gbar select{padding:5px 8px; border-radius:7px; border:1px solid rgba(255,255,255,.14); background:#0f1418}
+#name{width:220px}
+.gbar button{padding:5px 11px; border-radius:7px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04)}
+.gbar .go{background:linear-gradient(180deg,#f3d595,#d7a957); color:#1b1408; font-weight:700; border-color:rgba(232,194,122,.6)}
+.gbar .danger:hover{color:#ff8a8a; border-color:#ff8a8a}
+.tgl{display:flex; gap:5px; align-items:center}
+.grow{flex:1}
+.gmain{display:grid; grid-template-columns:190px 1fr 230px; min-height:0}
+.pal{overflow:auto; padding:8px; border-right:1px solid var(--line); background:#121820; display:flex; flex-direction:column; gap:3px}
+.pal h4{margin:8px 0 2px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+.pal button{text-align:left; padding:5px 8px; border-radius:6px; border:1px solid rgba(255,255,255,.08); font-size:12px}
+.pal .ev{background:#1d3a37} .pal .if{background:#3f3115} .pal .flow{background:#2c2242} .pal .act{background:#2b261c}
+.pal button:hover{filter:brightness(1.3)}
+.cwrap{position:relative; min-width:0; min-height:0; overflow:hidden}
+.help{position:absolute; left:50%; top:40%; transform:translate(-50%,-50%); text-align:center; line-height:1.7; color:var(--dim); pointer-events:none; max-width:460px}
+.help b{color:var(--gold2)}
+.side{overflow:auto; padding:10px; border-left:1px solid var(--line); background:#121820; display:flex; flex-direction:column; gap:14px}
+.side section > b{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:#7fd1c7}
+#vars div{display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed rgba(255,255,255,.06)}
+#log{display:flex; flex-direction:column; gap:3px; font-size:12px; line-height:1.4; margin-top:4px}
+#log i{font-style:normal; color:var(--dim)}
+.toast{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); padding:9px 14px; border-radius:9px; background:#1b2029; border:1px solid var(--line)}
+/* LiteGraph: контекстні меню й діалоги поверх темної теми */
+.litegraph.litecontextmenu{font-family:Inter,system-ui,sans-serif}

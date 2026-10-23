@@ -1,6 +1,6 @@
 // Тримає екранні ефекти відповідно до настрою сцени, грає переходи між моментами і показує титри.
 import OBR, { buildEffect } from "@owlbear-rodeo/sdk";
-import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, COURT, COURT_REQ, COURT_DATA, COURT_SHOW, COURT_RATE, ACQ_REQ, ACQ_DATA, ACQ_DEL, normalize, isClear, hudOf } from "./state.js";
+import { ID, STATE, GRADE_ON, TITLE, CUT, CARD, HUD, ATLAS, VISITED, MAP, VOTE_RESET, HERE, ROUTE, VOYAGE, LOG_ADD, LOG_DEL, LOG_PUSH, LOG_DROP, LOG_ALL, LOG_REQ, NOTE, NOTE_ACK, TUNE, HEARD, RIDDLE, RIDDLE_OPEN, RIDDLE_TAP, MUSIC, HUSH, NPC, NPC_CARD, FATE, FATE_CARD, SHOP, SHOP_DATA, SHOP_REQ, SHOP_BUY, SHOP_SOLD, SHOP_OFFER, SHOP_DEAL, BEST, BEST_REQ, BEST_DATA, BEST_SHOW, RUNE, RUNE_REQ, RUNE_DATA, RUNE_SHOW, STAR, STAR_REQ, STAR_LINE, STAR_STATE, CHEST, CHEST_REQ, CHEST_DATA, CHEST_TRY, CHEST_TAKE, CHEST_SPLIT, CHEST_GOT, CHEST_SHOW, BOARD, BOARD_OP, BOARD_REQ, BOARD_FULL, BOARD_SHOW, GOAL, GOAL_DATA, GOAL_REQ, GOAL_CLAIM, RUMOR, RUMOR_DATA, RUMOR_REQ, RUMOR_TELL, RUMOR_VOTE, ARSENAL, ARSENAL_REQ, ARSENAL_DATA, ARSENAL_SHOW, ARSENAL_GIVE, COURT, COURT_REQ, COURT_DATA, COURT_SHOW, COURT_RATE, ACQ_REQ, ACQ_DATA, ACQ_DEL, CHOICE, normalize, isClear, hudOf } from "./state.js";
 import { appendLog, removeLog, sendAll, migrate, takeAll, book, saveLocal, BOOK, MAX_TEXT } from "./log.js";
 import { receiveNote, noteAck, resendNotes } from "./notes.js";
 import { setVote } from "./votes.js";
@@ -26,6 +26,7 @@ import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from ".
 import { pack as packData } from "./trap-data.js";
 import { startNpcAi } from "./npc-ai.js";
 import { startTriggers } from "./trig-run.js";
+import { pack as packTrap } from "./trap-data.js";
 import { introduce, mergeAcq, acqList, saveAcq, setWhere, keyOf } from "./acq-data.js";
 import { lady, loadCourt, opened as courtOpened, saveSeen as saveCourtSeen, seen as courtSeen, rates as courtRates, saveRates as saveCourtRates, applyRate, pack as packCourt, FOCUS as CFOCUS } from "./court-data.js";
 import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
@@ -108,6 +109,25 @@ OBR.onReady(async () => {
   } catch (err) { console.error("Живі NPC: меню не зареєструвалось", err); }
   startNpcAi().catch((err) => console.error("Живі NPC:", err));
   startTriggers().catch((err) => console.error("Тригери:", err));
+  // вибір із блупрінта: вікно з кнопками в тих, кого питають
+  OBR.broadcast.onMessage(CHOICE, async (event) => {
+    const d = event.data ?? {};
+    if ((await OBR.player.getRole()) === "GM") return;
+    if (d.close) {
+      await OBR.popover.close(`${CHOICE}-win`).catch(() => {});
+      if (d.pick) OBR.notification.show(`${d.who ?? "Хтось"} вибирає: «${d.pick}»`).catch(() => {});
+      return;
+    }
+    if (Array.isArray(d.to) && !d.to.includes(await OBR.player.getId())) return;
+    const w = await OBR.viewport.getWidth();
+    await OBR.popover.close(`${CHOICE}-win`).catch(() => {});
+    OBR.popover.open({
+      id: `${CHOICE}-win`, url: url(`choice.html?d=${encodeURIComponent(packTrap(d))}`), width: Math.min(520, w - 40), height: 120 + Math.ceil((d.opts?.length ?? 1) / 2) * 52 + Math.ceil(String(d.text ?? "").length / 42) * 28,
+      anchorReference: "POSITION", anchorPosition: { top: 90, left: w / 2 },
+      anchorOrigin: { horizontal: "CENTER", vertical: "TOP" }, transformOrigin: { horizontal: "CENTER", vertical: "TOP" },
+      hidePaper: true, disableClickAway: true, marginThreshold: 0,
+    }).catch(() => {});
+  });
   OBR.broadcast.onMessage(NPC, (event) => { showNpc(event.data); meet(event.data); });
   startAcq().catch((err) => console.error("Записник знайомств:", err));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
