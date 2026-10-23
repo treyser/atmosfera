@@ -9,7 +9,8 @@ button{cursor:pointer}
 .gbar{display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); background:#151b20}
 .logo{font-size:18px; color:var(--gold2); margin-right:4px}
 .gbar input, .gbar select{padding:5px 8px; border-radius:7px; border:1px solid rgba(255,255,255,.14); background:#0f1418}
-#name{width:220px}
+#name{width:200px}
+#as{max-width:190px}
 .gbar button{padding:5px 11px; border-radius:7px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04)}
 .gbar .go{background:linear-gradient(180deg,#f3d595,#d7a957); color:#1b1408; font-weight:700; border-color:rgba(232,194,122,.6)}
 .gbar .danger:hover{color:#ff8a8a; border-color:#ff8a8a}

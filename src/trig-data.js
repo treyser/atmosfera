@@ -31,6 +31,9 @@ export const CONDS = {
   chance: { name: "🎲 Шанс", f: [{ k: "p", l: "%", t: "num", d: 50 }] },
   name: { name: "👤 Це саме він", f: [{ k: "name", l: "Ім'я токена містить", t: "text" }] },
   var: { name: "🔢 Змінна", f: [{ k: "v", l: "Назва", t: "text" }, { k: "op", l: "", t: "sel", o: { ">=": "≥", "<=": "≤", "==": "=", "!=": "≠" } }, { k: "n", l: "Число", t: "num", d: 1 }] },
+  inzone: { name: "📍 Стоїть у зоні", f: [{ k: "who", l: "Хто", t: "sel", o: { who: "той, хто спрацював", tok: "вибраний токен", any: "будь-який герой" } }, { k: "tok", l: "Токен", t: "token", show: (c) => c.who === "tok" }, { k: "zone", l: "Зона", t: "zone" }] },
+  battle: { name: "⚔ Іде бій", f: [{ k: "on", l: "", t: "sel", o: { yes: "так, бій іде", no: "ні, бою немає" } }] },
+  visible: { name: "👁 Токен видно гравцям", f: [{ k: "tok", l: "Токен", t: "token" }] },
 };
 export const ACTIONS = {
   title: { name: "🎬 Титр усім", f: [{ k: "big", l: "Великий рядок", t: "text" }, { k: "small", l: "Малий рядок", t: "text" }] },
@@ -50,6 +53,17 @@ export const ACTIONS = {
     { k: "npc", l: "Живих NPC", t: "sel", o: { skip: "не брати в бій", foe: "брати як ворогів" } },
   ] },
   battleEnd: { name: "🏳 Завершити бій", f: [] },
+  move: { name: "🚶 Пересунути токен", f: [
+    { k: "who", l: "Кого", t: "sel", o: { who: "того, хто спрацював", tok: "вибраний токен" } }, { k: "tok", l: "Токен", t: "token", show: (a) => a.who === "tok" },
+    { k: "to", l: "Куди", t: "sel", o: { token: "до токена", zone: "у центр зони" } },
+    { k: "target", l: "До кого", t: "token", show: (a) => (a.to ?? "token") === "token" }, { k: "zone", l: "Зона", t: "zone", show: (a) => a.to === "zone" },
+  ] },
+  ai: { name: "🤖 Поведінка NPC", f: [{ k: "tokens", l: "Кому", t: "tokens" }, { k: "b", l: "Поведінка", t: "sel", o: { "": "⏸ стоїть", wander: "🚶 блукає", chat: "💬 балакучий", merchant: "🧺 торговець", patrol: "🛡 патруль" } }, { k: "live", l: "Рух на сцені", t: "sel", o: { keep: "не чіпати", on: "увімкнути", off: "зупинити всіх" } }] },
+  damage: { name: "💥 Шкода / лікування", f: [{ k: "who", l: "Кому", t: "sel", o: { who: "тому, хто спрацював", tok: "вибраному токену" } }, { k: "tok", l: "Токен", t: "token", show: (a) => a.who === "tok" }, { k: "dice", l: "Скільки (2к6+1; мінус — лікування)", t: "text" }] },
+  music: { name: "🎵 Музика", f: [{ k: "m", l: "", t: "sel", o: { battle: "⚔ бойова", boss: "☠ бос", silence: "🤫 тиша", mood: "↩ за настроєм" } }] },
+  card: { name: "🪪 Картка NPC усім", f: [{ k: "tok", l: "Хто", t: "token" }, { k: "sub", l: "Підпис (не обов'язково)", t: "text" }] },
+  fx: { name: "✨ Ефект зони", f: [{ k: "zone", l: "Зона", t: "zone" }, { k: "fx", l: "Ефект", t: "sel", o: { fire: "🔥 вогонь", fog: "🌫 туман", poison: "☠ отрута", dark: "🌑 темрява", ice: "❄ крига", water: "💧 вода", magic: "✨ магічне коло", off: "✕ прибрати ефект" } }] },
+  trap: { name: "🪤 Пастка", f: [{ k: "zone", l: "Пастка (фігура)", t: "zone" }, { k: "arm", l: "", t: "sel", o: { on: "зарядити", off: "знешкодити", show: "показати гравцям" } }] },
   remind: { name: "📌 Нагадати мені", f: [{ k: "text", l: "Що нагадати", t: "text" }] },
   wait: { name: "⏳ Зачекати", f: [{ k: "s", l: "Секунд", t: "num", d: 3 }] },
 };

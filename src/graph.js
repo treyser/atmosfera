@@ -2,7 +2,7 @@
 // що й тригери: події, умови, дії + розгалуження, випадковість і вибір гравців. Граф зберігається сам.
 import OBR from "@owlbear-rodeo/sdk";
 import "./graph.css";
-import { GRAPH, TRIG_RUN } from "./state.js";
+import { GRAPH, TRIG_RUN, TRACE } from "./state.js";
 import { EVENTS, CONDS, ACTIONS, vars, tlog, TLOG, VARS } from "./trig-data.js";
 import { graphs, saveGraphs, blankGraph, GRAPHS } from "./graph-data.js";
 import { loadPick, nameOf, listFor, flash } from "./scene-pick.js";
@@ -29,6 +29,20 @@ const CHOICE = {
   ],
 };
 const RANDOM = { name: "🎲 Випадково", f: [{ k: "n", l: "Скільки виходів (2–4)", t: "num", d: 2 }] };
+const WAIT = { name: "⏳ Чекати, доки…", f: [
+  { k: "what", l: "Доки", t: "sel", o: { enter: "хтось зайде в зону", near: "хтось підійде до токена", var: "змінна досягне значення" } },
+  { k: "zone", l: "Зона", t: "zone", show: (p) => (p.what ?? "enter") === "enter" },
+  { k: "target", l: "До кого", t: "token", show: (p) => p.what === "near" },
+  { k: "dist", l: "Ближче ніж, клітинок", t: "num", d: 2, show: (p) => p.what === "near" },
+  { k: "who", l: "Хто", t: "sel", o: { hero: "будь-хто з героїв", any: "будь-хто (і NPC)" }, show: (p) => p.what !== "var" },
+  { k: "v", l: "Змінна", t: "text", show: (p) => p.what === "var" },
+  { k: "op", l: "", t: "sel", o: { ">=": "≥", "<=": "≤", "==": "=" }, show: (p) => p.what === "var" },
+  { k: "n", l: "Число", t: "num", d: 1, show: (p) => p.what === "var" },
+  { k: "secs", l: "Чекати не довше, с", t: "num", d: 300 },
+] };
+const ONCE = { name: "1️⃣ Лише перший раз", f: [] };
+const EVERY = { name: "🔁 Кожен N-й раз", f: [{ k: "n", l: "N", t: "num", d: 2 }] };
+const ROLL = { name: "🎲 Кидок d20 проти СК", f: [{ k: "dc", l: "СК", t: "num", d: 12 }, { k: "mod", l: "Бонус", t: "num", d: 0 }, { k: "show", l: "Гравцям", t: "sel", o: { yes: "показати кубик і настрій", no: "кинути потай" } }, { k: "q", l: "Що вирішується", t: "text", show: (p) => p.show !== "no" }] };
 const COLORS = { ev: ["#1d4a45", "#2b6b63"], if: ["#5a4415", "#7d5f1f"], flow: ["#3b2a5a", "#563f80"], act: ["#3a3324", "#51472f"] };
 
 OBR.onReady(async () => {
@@ -56,6 +70,27 @@ OBR.onReady(async () => {
   $("on").onchange = () => { cur.on = $("on").checked; if (cur.on) cur._reset = true; persist(); };
   $("del").onclick = () => { if (list.length < 2) return toast("Це останній граф"); list = list.filter((g) => g.id !== cur.id); persist(); open(list[0].id); };
   $("run").onclick = async () => { await OBR.broadcast.sendMessage(TRIG_RUN, { graph: cur.id }, { destination: "LOCAL" }); toast("Запущено вузли «Я натискаю кнопку»"); };
+  // тест: запустити виділені вузли-події (або всі) від імені вибраного токена — без пауз і «лише раз»
+  const fillAs = () => { const v = $("as").value; $("as").replaceChildren(new Option("— тест без токена —", ""), ...listFor("token").map((o) => new Option(o.label, o.id))); $("as").value = v; };
+  fillAs(); OBR.scene.items.onChange(() => setTimeout(fillAs, 300));
+  $("test").onclick = async () => {
+    const sel = Object.values(canvas.selected_nodes ?? {}).filter((n) => n.type.startsWith("ev/")).map((n) => n.id);
+    const nodes = sel.length ? sel : graph._nodes.filter((n) => n.type.startsWith("ev/")).map((n) => n.id);
+    if (!nodes.length) return toast("У графі немає жодного вузла «Коли…»");
+    await OBR.broadcast.sendMessage(TRIG_RUN, { graph: cur.id, nodes, token: $("as").value || null, test: true }, { destination: "LOCAL" });
+    toast(sel.length ? "Тест виділених подій" : "Тест усіх подій графа");
+  };
+  OBR.broadcast.onMessage(TRACE, (e) => {
+    const d = e.data ?? {};
+    if (d.g !== cur?.id) return;
+    const n = graph.getNodeById(d.node);
+    if (n) n._flash = Date.now();
+    if (d.from != null) for (const l of Object.values(graph.links ?? {})) if (l && l.origin_id === d.from && l.origin_slot === d.slot && l.target_id === d.node) {
+      canvas.highlighted_links[l.id] = true;
+      setTimeout(() => { delete canvas.highlighted_links[l.id]; canvas.setDirty(true, true); }, 1600);
+    }
+    canvas.setDirty(true, true);
+  });
   window.addEventListener("storage", (e) => { if (e.key === TLOG(room)) drawLog(); if (e.key === VARS(room)) drawVars(); });
   setInterval(autosave, 700);
   open(list[0].id);
@@ -80,12 +115,27 @@ function register() {
       widgets(this, spec, kind);
     }
     Node.title = spec.name;
+    // підсвітка: вузол щойно спрацював
+    Node.prototype.onDrawForeground = function (ctx) {
+      const age = Date.now() - (this._flash ?? 0);
+      if (age > 1600) return;
+      ctx.save();
+      ctx.globalAlpha = 1 - age / 1600;
+      ctx.strokeStyle = "#ffd36b"; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(-3, -LG.NODE_TITLE_HEIGHT - 3, this.size[0] + 6, this.size[1] + LG.NODE_TITLE_HEIGHT + 6, 10); ctx.stroke();
+      ctx.restore();
+      this.setDirtyCanvas(true, false);
+    };
     Node.prototype.onConfigure = function () { if (typeof outs === "function") reshape(this, outs(this.properties)); widgets(this, spec, kind); };
     LG.registerNodeType(type, Node);
   };
   for (const [k, s] of Object.entries(EVENTS)) make(`ev/${k}`, s, "ev", [], ["▶"]);
   for (const [k, s] of Object.entries(CONDS)) make(`if/${k}`, s, "if", ["▶"], ["так", "ні"]);
   for (const [k, s] of Object.entries(ACTIONS)) make(`act/${k}`, s, "act", ["▶"], ["▶"]);
+  make("flow/wait", WAIT, "flow", ["▶"], ["сталося", "⏳ час вийшов"]);
+  make("flow/once", ONCE, "flow", ["▶"], ["перший раз", "вже було"]);
+  make("flow/every", EVERY, "flow", ["▶"], ["N-й раз", "інакше"]);
+  make("flow/roll", ROLL, "flow", ["▶"], ["успіх", "провал"]);
   make("flow/random", RANDOM, "flow", ["▶"], (p) => Array.from({ length: Math.max(2, Math.min(4, Number(p.n) || 2)) }, (_, i) => `${i + 1}`));
   make("flow/choice", CHOICE, "flow", ["▶"], (p) => [...[p.a, p.b, p.c, p.d].map((x) => String(x ?? "").trim()).filter(Boolean).map((x) => (x.length > 24 ? x.slice(0, 23).trimEnd() + "…" : x)), "⏳ час вийшов"]);
 }
@@ -221,7 +271,7 @@ function palette() {
   };
   group("Коли", Object.entries(EVENTS).map(([k, s]) => [`ev/${k}`, s.name]));
   group("Якщо", Object.entries(CONDS).map(([k, s]) => [`if/${k}`, s.name]));
-  group("Потік", [["flow/random", RANDOM.name], ["flow/choice", CHOICE.name]]);
+  group("Потік", [["flow/choice", CHOICE.name], ["flow/random", RANDOM.name], ["flow/roll", ROLL.name], ["flow/wait", WAIT.name], ["flow/once", ONCE.name], ["flow/every", EVERY.name]]);
   group("То", Object.entries(ACTIONS).map(([k, s]) => [`act/${k}`, s.name]));
 }
 function add(type) {

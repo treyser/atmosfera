@@ -50,7 +50,7 @@ export async function startTraps(toUrl) {
   OBR.broadcast.onMessage(TRAP_DMG, async (event) => {
     const d = event.data ?? {};
     if (gm) {
-      if (d.n) appendLog({ k: "g", t: `${d.token} отримує ${d.n} шкоди від пастки «${d.name ?? ""}»${d.failed ? "" : " (половина — рятунок вдався)"}.`, w: "Майстер" }).catch(() => {});
+      if (d.n && !d.src) appendLog({ k: "g", t: `${d.token} отримує ${d.n} шкоди від пастки «${d.name ?? ""}»${d.failed ? "" : " (половина — рятунок вдався)"}.`, w: "Майстер" }).catch(() => {});
       return applyCond(d);
     }
     if (!d.n || !sameName(readSheet(room)?.data?.name, d.token)) return;
