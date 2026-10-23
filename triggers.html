@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тригери</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="bar">
+    <div class="ttl"><div class="book">Тригери</div><div class="prog">Коли… · Якщо… · То…</div></div>
+    <div class="grow"></div>
+    <button type="button" class="close" id="close" title="Закрити (Esc)">✕</button>
+  </header>
+  <main class="body">
+    <aside class="side">
+      <button type="button" class="add" id="add">＋ Новий тригер</button>
+      <div class="list" id="list"></div>
+      <section class="vars"><b>Змінні</b><div id="vars"></div><button type="button" class="ghost sm" id="var-add">＋ змінна</button></section>
+      <section class="logbox"><b>Що спрацювало</b><div id="log"></div></section>
+    </aside>
+    <section class="edit" id="edit">
+      <div class="empty" id="empty">Створи тригер ліворуч. Наприклад: «Коли герой заходить у зону "Склад" → якщо це Ґрундур → таємний лист: "Печатка в кишені теплішає…"».</div>
+      <div id="form" hidden>
+        <div class="row top">
+          <input id="t-name" class="name" maxlength="60">
+          <label class="tgl"><input type="checkbox" id="t-on"> увімкнено</label>
+          <label class="tgl"><input type="checkbox" id="t-once"> лише раз</label>
+          <label class="tgl">пауза <input type="number" id="t-cd" min="0" max="3600" class="num"> с</label>
+        </div>
+        <div class="blk when"><h3>Коли</h3><select id="ev-type"></select><div class="fields" id="ev-fields"></div></div>
+        <div class="blk if"><h3>Якщо <small>(усі умови разом; порожньо — завжди)</small></h3><div id="conds"></div><select class="adder" id="cond-add"></select></div>
+        <div class="blk then"><h3>То <small>(по черзі, згори вниз)</small></h3><div id="acts"></div><select class="adder" id="act-add"></select></div>
+        <div class="hint">У текстах: <code>{хто}</code> — ім'я того, хто спрацював; <code>{Тривога}</code> — значення змінної «Тривога».</div>
+        <div class="row foot">
+          <button type="button" class="go" id="run">▶ Запустити зараз</button>
+          <span class="dim" id="fired"></span>
+          <div class="grow"></div>
+          <button type="button" class="ghost" id="dup">Дублювати</button>
+          <button type="button" class="ghost danger" id="del">Видалити</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/src/trig.js"></script>
+</body>
+</html>
