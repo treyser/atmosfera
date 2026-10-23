@@ -25,6 +25,7 @@ import { allGoals, saveAll as saveGoals, forPlayer, myGoals, saveMine as saveMyG
 import { rumors, saveRumors, forPlayers as rumorsForPlayers, saveHeard } from "./rumor-data.js";
 import { pack as packData } from "./trap-data.js";
 import { startNpcAi } from "./npc-ai.js";
+import { startTriggers } from "./trig-run.js";
 import { introduce, mergeAcq, acqList, saveAcq, setWhere, keyOf } from "./acq-data.js";
 import { lady, loadCourt, opened as courtOpened, saveSeen as saveCourtSeen, seen as courtSeen, rates as courtRates, saveRates as saveCourtRates, applyRate, pack as packCourt, FOCUS as CFOCUS } from "./court-data.js";
 import { weapon, loadArsenal, opened, saveSeen as saveArsenalSeen, seen as arsenalSeen, FOCUS as AFOCUS, gearOf } from "./arsenal-data.js";
@@ -106,6 +107,7 @@ OBR.onReady(async () => {
     });
   } catch (err) { console.error("Живі NPC: меню не зареєструвалось", err); }
   startNpcAi().catch((err) => console.error("Живі NPC:", err));
+  startTriggers().catch((err) => console.error("Тригери:", err));
   OBR.broadcast.onMessage(NPC, (event) => { showNpc(event.data); meet(event.data); });
   startAcq().catch((err) => console.error("Записник знайомств:", err));
   OBR.broadcast.onMessage(FATE, (event) => showFate(event.data));
