@@ -32,6 +32,7 @@ export default defineConfig({
         court: resolve(__dirname, "court.html"),
         scenes: resolve(__dirname, "scenes.html"),
         acq: resolve(__dirname, "acq.html"),
+        "npc-ai": resolve(__dirname, "npc-ai.html"),
         "rumor-tell": resolve(__dirname, "rumor-tell.html"),
         trap: resolve(__dirname, "trap.html"),
         "trap-hit": resolve(__dirname, "trap-hit.html"),

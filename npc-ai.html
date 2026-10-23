@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Поведінка NPC</title></head>
+<body class="trapm">
+  <div class="thead"><b>Поведінка NPC</b><span id="status"></span></div>
+  <div class="tgrid" id="kinds"></div>
+  <div id="form" hidden>
+    <div class="trow">
+      <label class="tl grow">Що говорять<select id="a-set"></select></label>
+      <label class="tl sm" id="radius-row">Радіус<input id="a-radius" type="number" min="1" max="30"></label>
+    </div>
+    <label class="tl" id="zone-row">Або ходити в межах фігури<select id="a-zone"></select></label>
+    <div id="route-row" hidden>
+      <div class="trow route"><span id="route-n"></span><button type="button" id="r-add">＋ Точка тут</button><button type="button" id="r-clear">Очистити</button></div>
+      <div class="hint">Постав токен у точку маршруту → «＋ Точка тут». Повтори для кожної точки.</div>
+    </div>
+    <label class="tl">Власні репліки — кожна з нового рядка<textarea id="a-lines" rows="3" placeholder="Якщо порожньо — береться з набору (і з картки NPC у Майстерні, якщо ім'я збігається)"></textarea></label>
+  </div>
+  <div class="tbtns">
+    <button type="button" id="live"></button>
+  </div>
+  <script type="module" src="/src/npc-ai-menu.js"></script>
+</body>
+</html>
