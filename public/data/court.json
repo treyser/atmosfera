@@ -1,6 +1,6 @@
 {
  "v": 1,
- "stamp": 1792614389331,
+ "stamp": 1794998103246,
  "items": [
   {
    "id": "cmvika16lcn",
@@ -89,7 +89,7 @@
   },
   {
    "id": "veronika",
-   "name": "Вероніка «Козир»",
+   "name": "Вероніка «Туз»",
    "house": "Оксамитовий Ліхтар",
    "race": "Людина",
    "age": "близько тридцяти",
@@ -102,7 +102,7 @@
    "secret": "Тримає боргові розписки половини гільдії ремонтників. Їх можна виграти в неї в карти — або викрасти зі скриньки під її ліжком.",
    "art": "sharp-eyed human courtesan who runs the card table, dark auburn hair pinned up with a black lacquered comb, deep crimson velvet corset-vest over a black high-collared blouse, fingerless lace gloves, fanning a hand of playing cards, sly confident smirk, warm lamp light",
    "img": "court/veronika-mvf9ommeqv.webp",
-   "rev": 1792415394883
+   "rev": 1794998100442
   },
   {
    "id": "safira",
